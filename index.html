@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#0B6B43" />
+
+    <!-- Preload self-hosted display weights used above the fold (LCP) -->
+    <link
+      rel="preload"
+      href="/fonts/clash-display-700.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/clash-display-600.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <!-- Primary SEO (homepage baseline; React updates these per-route in-app).
+         Kept static so non-JS social scrapers (WhatsApp/Facebook/X) get previews. -->
+    <title>MR Print World — Printing, Signage & Branding Execution Partner | Nagpur</title>
+    <meta
+      name="description"
+      content="MR Print World is a complete brand-execution partner in Nagpur — premium printing, signage, fabrication, corporate gifting and large-scale event branding, end-to-end under one roof. 12+ years, 50+ professionals."
+    />
+    <link rel="canonical" href="https://www.mrprintworld.com/" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="MR Print World" />
+    <meta
+      property="og:title"
+      content="MR Print World — Complete Printing & Branding Execution Partner"
+    />
+    <meta
+      property="og:description"
+      content="Premium printing, signage, fabrication, corporate gifting and large-scale branding execution — end-to-end under one roof. Nagpur, India."
+    />
+    <meta property="og:url" content="https://www.mrprintworld.com/" />
+    <meta property="og:locale" content="en_IN" />
+    <meta property="og:image" content="https://www.mrprintworld.com/og-cover.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="MR Print World — Complete Printing & Branding Execution Partner"
+    />
+    <meta
+      name="twitter:description"
+      content="Premium printing, signage, fabrication, corporate gifting and large-scale branding execution — end-to-end under one roof. Nagpur, India."
+    />
+    <meta name="twitter:image" content="https://www.mrprintworld.com/og-cover.jpg" />
+
+    <!-- Structured data: only verified facts. Phone/street/GST omitted until supplied. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "@id": "https://www.mrprintworld.com/#business",
+        "name": "MR Print World",
+        "description": "Complete brand-execution partner offering printing, signage, fabrication, corporate gifting and large-scale event branding under one roof.",
+        "slogan": "One Stop Solution For All Your Printing & Branding Needs",
+        "url": "https://www.mrprintworld.com/",
+        "image": "https://www.mrprintworld.com/og-cover.jpg",
+        "founder": { "@type": "Person", "name": "Abid M. Khan" },
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Nagpur",
+          "addressRegion": "Maharashtra",
+          "addressCountry": "IN"
+        },
+        "areaServed": ["Nagpur", "Vidarbha", "Maharashtra", "India"],
+        "knowsAbout": [
+          "Printing",
+          "Signage",
+          "Fabrication",
+          "Corporate Gifting",
+          "Event Branding",
+          "Vehicle Branding"
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
