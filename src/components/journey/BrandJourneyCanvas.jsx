@@ -90,10 +90,9 @@ function PaperPlane({ scroll, wrapRef }) {
     <group ref={plane} scale={fitScale}>
       <mesh geometry={geo}>
         <meshStandardMaterial
-          color="#f2efe7"
-          roughness={0.72}
+          color="#7f8d84"
+          roughness={0.78}
           metalness={0.0}
-          envMapIntensity={0.85}
           flatShading
           side={THREE.DoubleSide}
         />
@@ -105,9 +104,9 @@ function PaperPlane({ scroll, wrapRef }) {
 function Scene({ scroll, wrapRef }) {
   return (
     <>
-      <hemisphereLight args={['#ffffff', '#2c3a35', 0.95]} />
-      <directionalLight position={[3, 5, 4]} intensity={1.7} />
-      <directionalLight position={[-4, -1, 2]} intensity={0.5} color="#d4af37" />
+      <hemisphereLight args={['#ffffff', '#243029', 0.55]} />
+      <directionalLight position={[4, 6, 5]} intensity={2.1} />
+      <directionalLight position={[-5, -2, 2]} intensity={0.45} color="#d4af37" />
       <PaperPlane scroll={scroll} wrapRef={wrapRef} />
     </>
   )
@@ -116,40 +115,51 @@ function Scene({ scroll, wrapRef }) {
 export default function BrandJourneyCanvas() {
   const scroll = useBrandJourneyScroll()
   const wrap = useRef(null)
-  const [onScreen, setOnScreen] = useState(false)
-  const [visible, setVisible] = useState(true)
+  const [active, setActive] = useState(false)
 
+  // Active = scrolled within the About→Contact band. Computed from the scroll
+  // position against cached offsets (no per-scroll reflow, no tab-visibility
+  // dependency — browsers already throttle hidden tabs). setState bails when the
+  // boolean is unchanged, so this re-renders only at the two band edges.
   useEffect(() => {
-    const aboutEl = document.getElementById('about')
-    const contactEl = document.getElementById('contact')
-    if (!aboutEl || !contactEl) return
-    const compute = () => {
-      const aTop = aboutEl.getBoundingClientRect().top
-      const cBottom = contactEl.getBoundingClientRect().bottom
-      setOnScreen(aTop < window.innerHeight * 0.65 && cBottom > 0)
+    const about = document.getElementById('about')
+    const contact = document.getElementById('contact')
+    if (!about || !contact) return
+    let start = 0
+    let end = 0
+    const inBand = () => {
+      const y = window.scrollY
+      return y > start && y < end
     }
-    const io = new IntersectionObserver(compute, { threshold: 0 })
-    io.observe(aboutEl)
-    io.observe(contactEl)
-    compute()
-    const onVis = () => setVisible(!document.hidden)
-    document.addEventListener('visibilitychange', onVis)
+    const update = () => {
+      const on = inBand()
+      setActive(on)
+      scroll.activeRef.current = on
+    }
+    const measure = () => {
+      start =
+        about.getBoundingClientRect().top + window.scrollY - window.innerHeight * 0.6
+      end = contact.getBoundingClientRect().bottom + window.scrollY
+      update()
+    }
+    measure()
+    window.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', measure)
+    const ro = new ResizeObserver(measure)
+    ro.observe(document.body)
+    if (document.fonts?.ready) document.fonts.ready.then(measure).catch(() => {})
     return () => {
-      io.disconnect()
-      document.removeEventListener('visibilitychange', onVis)
+      window.removeEventListener('scroll', update)
+      window.removeEventListener('resize', measure)
+      ro.disconnect()
     }
-  }, [])
-
-  const active = onScreen && visible
-  useEffect(() => {
-    scroll.activeRef.current = active
-  }, [active, scroll])
+  }, [scroll])
 
   return (
     <div
       ref={wrap}
       aria-hidden="true"
-      className={`pointer-events-none fixed left-0 top-0 z-30 hidden transition-opacity duration-700 xl:block ${
+      className={`pointer-events-none fixed left-0 top-0 z-30 hidden transition-opacity duration-700 lg:block ${
         active ? 'opacity-100' : 'opacity-0'
       }`}
       style={{

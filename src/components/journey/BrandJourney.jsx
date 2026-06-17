@@ -4,7 +4,7 @@ import { useDeviceCapability } from '../../lib/useDeviceCapability'
 // Code-split: three.js scene loads on demand, only on capable wide desktops.
 const BrandJourneyCanvas = lazy(() => import('./BrandJourneyCanvas'))
 
-const MIN_WIDTH = 1280 // a docked pod only has room at xl+ widths
+const MIN_WIDTH = 1024 // show on laptops too (Windows display scaling can shrink the CSS viewport)
 
 /**
  * Gate for the scroll-driven 3D brand journey. Renders nothing — and never
