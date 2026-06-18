@@ -11,7 +11,7 @@ import { useBrandJourneyScroll } from '../../lib/useBrandJourneyScroll'
    ========================================================================= */
 
 // --- Tunables (safe to tweak in-browser) ---
-const TARGET_SIZE = 4.0 // world units the plane's largest dimension fills
+const TARGET_SIZE = 2.4 // world units the plane's largest dimension fills
 const CYCLES = 4 // how many times it weaves left ↔ right across the journey
 const BASE_PITCH = 0.16
 
@@ -163,8 +163,8 @@ export default function BrandJourneyCanvas() {
         active ? 'opacity-100' : 'opacity-0'
       }`}
       style={{
-        width: 'clamp(240px,24vw,360px)',
-        height: 'clamp(240px,24vw,360px)',
+        width: 'clamp(150px,15vw,220px)',
+        height: 'clamp(150px,15vw,220px)',
         willChange: 'transform',
         transform: 'translate3d(5vw, 40vh, 0)',
       }}

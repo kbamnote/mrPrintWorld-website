@@ -132,10 +132,8 @@ export default function Footer() {
       <div className="border-t border-dark-line">
         <div className="container-page flex flex-col gap-2 py-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {year} {company.name}. All rights reserved. · GST {company.gst}
-            {pending.gst && <Pending />}
+            © {year} {company.name}. All rights reserved.
           </p>
-          <p>Crafted in {company.city}, {company.region}.</p>
         </div>
       </div>
     </footer>
