@@ -129,13 +129,15 @@ export default function ContactSection({ embedded = false }) {
                 {pending.email && <Pending />}
               </span>
             </li>
-            <li className="flex gap-3">
-              <Icon name="map-pin" size={18} className="mt-0.5 shrink-0 text-accent" />
-              <span className="text-white/70">
-                {company.addressLines.join(', ')}
-                {pending.address && <Pending />}
-              </span>
-            </li>
+            {company.addresses.map((addr) => (
+              <li key={addr.label} className="flex gap-3">
+                <Icon name="map-pin" size={18} className="mt-0.5 shrink-0 text-accent" />
+                <span className="text-white/70">
+                  <span className="block font-medium text-white/85">{addr.label}</span>
+                  {addr.lines.join(' ')}
+                </span>
+              </li>
+            ))}
           </ul>
 
           {/* Map */}

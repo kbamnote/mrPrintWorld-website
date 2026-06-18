@@ -44,7 +44,7 @@ export default function WorkMarqueeSection() {
                 alt={i < images.length ? 'MR Print World — previous work' : ''}
                 aria-hidden={i >= images.length}
                 loading="lazy"
-                className="h-44 w-64 rounded-[var(--radius-lg)] border border-line object-cover sm:h-56 sm:w-80"
+                className="h-44 w-64 rounded-[var(--radius-lg)] object-cover sm:h-56 sm:w-80"
               />
             </li>
           ))}

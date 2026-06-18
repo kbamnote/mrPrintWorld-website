@@ -24,13 +24,32 @@ export const company = {
   url: 'https://www.mrprintworld.com',
 
   // --- Contact channels (placeholders until client confirms) --------------
-  phoneDisplay: '+91 00000 00000',
-  phoneHref: 'tel:+910000000000',
-  whatsapp: '910000000000', // intl digits only, used for wa.me links
-  email: 'enquiry@mrprintworld.com',
-  addressLines: ['Address line to be confirmed', 'Nagpur, Maharashtra, India'],
-  gst: 'GSTIN to be confirmed',
-  mapEmbedUrl: '', // Google Maps "embed" iframe src — supplied before launch
+  phoneDisplay: '+91 78418 40840',
+  phoneHref: 'tel:+917841840840',
+  whatsapp: '917841840840', // intl digits only, used for wa.me links
+  email: 'info@mrprintworld.com',
+  addresses: [
+    {
+      label: 'Reg. Office',
+      lines: [
+        'Bungalow No. 22B, Kalawati Kunj, Kalawati Nagar,',
+        'Pipla, Nagpur, Maharashtra, India 440034',
+      ],
+    },
+    {
+      label: 'Factory',
+      lines: [
+        'Shailesh Nagar, Behind Kohinoor Lawn,',
+        'Wathoda, Nagpur, Maharashtra, India 440008',
+      ],
+    },
+  ],
+  mapEmbedUrl:
+    'https://maps.google.com/maps?q=' +
+    encodeURIComponent(
+      'Kalawati Kunj, Kalawati Nagar, Pipla, Nagpur, Maharashtra 440034',
+    ) +
+    '&output=embed',
   hours: 'Mon – Sat · 10:00 – 19:00',
 
   social: {
@@ -53,12 +72,11 @@ export const leadership = {
 }
 
 export const pending = {
-  phone: true,
-  whatsapp: true,
-  email: true,
-  address: true,
-  gst: true,
-  map: true,
+  phone: false,
+  whatsapp: false,
+  email: false,
+  address: false,
+  map: false,
 }
 
 export const headlineStats = [

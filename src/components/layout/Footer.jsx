@@ -103,13 +103,15 @@ export default function Footer() {
             Contact
           </h3>
           <ul className="mt-5 space-y-4 text-sm text-white/55">
-            <li className="flex gap-3">
-              <Icon name="map-pin" size={18} className="mt-0.5 shrink-0 text-accent" />
-              <span>
-                {company.addressLines.join(', ')}
-                {pending.address && <Pending />}
-              </span>
-            </li>
+            {company.addresses.map((addr) => (
+              <li key={addr.label} className="flex gap-3">
+                <Icon name="map-pin" size={18} className="mt-0.5 shrink-0 text-accent" />
+                <span>
+                  <span className="block font-medium text-white/75">{addr.label}</span>
+                  {addr.lines.join(' ')}
+                </span>
+              </li>
+            ))}
             <li className="flex gap-3">
               <Icon name="phone" size={18} className="mt-0.5 shrink-0 text-accent" />
               <a href={company.phoneHref} className="hover:text-white">

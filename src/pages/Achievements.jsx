@@ -52,25 +52,27 @@ export default function Achievements() {
 
       <section className="section-y bg-white">
         <Container>
-          <div className="columns-1 gap-5 sm:columns-2 lg:columns-3 [&>*]:mb-5">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {achievements.map((a, i) => (
               <button
                 key={i}
                 type="button"
                 onClick={() => setActive(i)}
                 aria-label={`View: ${a.title}`}
-                className="group block w-full break-inside-avoid overflow-hidden rounded-[var(--radius-lg)] border border-line bg-surface text-left transition-shadow duration-300 hover:shadow-card"
+                className="group block overflow-hidden rounded-[var(--radius-lg)] border border-line bg-surface text-left transition-shadow duration-300 hover:shadow-card"
               >
-                <span className="block overflow-hidden">
+                <span className="block aspect-[3/4] overflow-hidden">
                   <img
                     src={a.src}
                     alt={`MR Print World — ${a.title}`}
                     loading="lazy"
-                    className="w-full transition-transform duration-500 group-hover:scale-[1.04]"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                   />
                 </span>
                 <span className="flex items-center justify-between gap-3 p-4">
-                  <span className="text-sm font-medium text-ink">{a.title}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
+                    {a.title}
+                  </span>
                   <Icon
                     name="arrow-up-right"
                     size={16}
