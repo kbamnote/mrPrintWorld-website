@@ -12,14 +12,21 @@ function TileInner({ p }) {
   return (
     <>
       <div className="relative aspect-[4/3] overflow-hidden bg-surface">
-        {/* Labelled placeholder of correct ratio — swap for real photography */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <Icon name="signage" size={28} className="text-line-strong" />
-          <span className="mt-3 text-xs uppercase tracking-[0.18em] text-muted">
-            {p.category}
-          </span>
-          <span className="mt-1 text-[0.65rem] text-muted/70">Image to be supplied</span>
-        </div>
+        {p.image ? (
+          <img
+            src={p.image}
+            alt={p.title}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <Icon name="signage" size={28} className="text-line-strong" />
+            <span className="mt-3 text-xs uppercase tracking-[0.18em] text-muted">
+              {p.category}
+            </span>
+            <span className="mt-1 text-[0.65rem] text-muted/70">Image to be supplied</span>
+          </div>
+        )}
         {/* Hover / focus reveal (enhancement; caption below is the touch fallback) */}
         <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-ink/85 via-ink/30 to-transparent p-5 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
           <h3 className="font-display text-lg font-semibold text-white">{p.title}</h3>

@@ -1,3 +1,7 @@
+import vehicleBrandingOne from '../assets/VehicleBrandingNecoBlasters.jpeg'
+import vehicleBrandingTwo from '../assets/VehicleBrandingNecoBlastersTwo.jpeg'
+import corporateEventImg from '../assets/corporateEvent.jpeg'
+
 /**
  * Portfolio / Work — brief §12, Section 5 (the most important section).
  *
@@ -54,7 +58,17 @@ export const projects = [
     category: 'Vehicle Graphics',
     client: 'Logistics operator',
     summary: 'Full vehicle wraps engineered for legibility at speed and durability on the road.',
-    image: null,
+    image: vehicleBrandingOne,
+    aspect: '16/10',
+    featured: true,
+  },
+  {
+    id: 'neco-blasters-wrap',
+    title: 'Neco Blasters Vehicle Branding',
+    category: 'Vehicle Graphics',
+    client: 'Neco Blasters',
+    summary: 'High-impact full-body vehicle branding with bold graphics for maximum road presence.',
+    image: vehicleBrandingTwo,
     aspect: '16/10',
     featured: true,
   },
@@ -74,7 +88,7 @@ export const projects = [
     category: 'Event Installations',
     client: 'Trade expo',
     summary: 'Modular exhibition branding produced, transported and assembled to deadline.',
-    image: null,
+    image: corporateEventImg,
     aspect: '4/5',
     featured: true,
   },

@@ -31,16 +31,23 @@ export default function Portfolio() {
               <Reveal key={p.id} delay={(i % 3) * 0.05}>
                 <article className="group overflow-hidden rounded-[var(--radius-lg)] border border-line">
                   <div
-                    className="relative flex items-center justify-center bg-surface"
+                    className="relative overflow-hidden bg-surface"
                     style={{ aspectRatio: p.aspect }}
                   >
-                    {/* Labelled placeholder — swap for real photography (see data/portfolio.js) */}
-                    <span className="px-6 text-center text-xs uppercase tracking-[0.18em] text-muted">
-                      {p.category}
-                      <span className="mt-1 block text-[0.65rem] normal-case tracking-normal text-muted/70">
-                        Image to be supplied
+                    {p.image ? (
+                      <img
+                        src={p.image}
+                        alt={p.title}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-xs uppercase tracking-[0.18em] text-muted">
+                        {p.category}
+                        <span className="mt-1 block text-[0.65rem] normal-case tracking-normal text-muted/70">
+                          Image to be supplied
+                        </span>
                       </span>
-                    </span>
+                    )}
                   </div>
                   <div className="p-5">
                     <p className="text-xs uppercase tracking-[0.16em] text-gold-deep">
