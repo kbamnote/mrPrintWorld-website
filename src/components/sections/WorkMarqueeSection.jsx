@@ -41,7 +41,7 @@ export default function WorkMarqueeSection() {
             <li key={i} className="shrink-0">
               <img
                 src={src}
-                alt={i < images.length ? 'MR Print World — previous work' : ''}
+                alt={i < images.length ? 'MR Print World Pvt. Ltd. — previous work' : ''}
                 aria-hidden={i >= images.length}
                 loading="lazy"
                 className="h-44 w-64 rounded-[var(--radius-lg)] object-cover sm:h-56 sm:w-80"

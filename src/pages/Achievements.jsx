@@ -7,9 +7,9 @@ import { useSeo, breadcrumbLd } from '../lib/seo'
 
 export default function Achievements() {
   useSeo({
-    title: 'Awards & Achievements | MR Print World, Nagpur',
+    title: 'Awards & Achievements | MR Print World Pvt. Ltd., Nagpur',
     description:
-      'Awards and industry recognition earned by MR Print World and founder Mr. Abid M. Khan — including the Vidarbha Udyog Ratna Puraskar 2024.',
+      'Awards and industry recognition earned by MR Print World Pvt. Ltd. and founder Mr. Abid M. Khan — including the Vidarbha Udyog Ratna Puraskar 2024.',
     path: '/achievements',
     jsonLd: breadcrumbLd([
       { name: 'Home', path: '/' },
@@ -64,7 +64,7 @@ export default function Achievements() {
                 <span className="block aspect-[3/4] overflow-hidden">
                   <img
                     src={a.src}
-                    alt={`MR Print World — ${a.title}`}
+                    alt={`MR Print World Pvt. Ltd. — ${a.title}`}
                     loading="lazy"
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                   />
@@ -96,7 +96,7 @@ export default function Achievements() {
         >
           <img
             src={achievements[active].src}
-            alt={`MR Print World — ${achievements[active].title}`}
+            alt={`MR Print World Pvt. Ltd. — ${achievements[active].title}`}
             className="max-h-[86vh] max-w-full rounded-[var(--radius-card)] object-contain shadow-card"
             onClick={(e) => e.stopPropagation()}
           />

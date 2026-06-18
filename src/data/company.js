@@ -11,8 +11,8 @@ import directorTwo from '../assets/directorTwo.jpg'
  */
 
 export const company = {
-  name: 'MR Print World',
-  legalName: 'MR Print World',
+  name: 'MR Print World Pvt. Ltd.',
+  legalName: 'MR Print World Pvt. Ltd.',
   tagline: 'One Stop Solution For All Your Printing & Branding Needs',
   positioning: 'A Complete Brand Execution Partner',
   founder: 'Mr. Abid M. Khan',
@@ -96,6 +96,6 @@ export const navLinks = [
 ]
 
 /** wa.me deep link with a prefilled enquiry message. */
-export function whatsappLink(message = "Hello MR Print World, I'd like a quote.") {
+export function whatsappLink(message = "Hello MR Print World Pvt. Ltd., I'd like a quote.") {
   return `https://wa.me/${company.whatsapp}?text=${encodeURIComponent(message)}`
 }

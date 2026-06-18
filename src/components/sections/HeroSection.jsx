@@ -75,7 +75,7 @@ export default function HeroSection() {
             className="mt-7 max-w-2xl text-lg leading-relaxed text-white/70"
           >
             From premium printing and signage to fabrication, corporate gifting,
-            and large-scale branding execution, MR Print World delivers complete
+            and large-scale branding execution, MR Print World Pvt. Ltd. delivers complete
             solutions that help businesses stand out, scale, and succeed.
           </motion.p>
 

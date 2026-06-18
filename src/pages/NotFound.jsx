@@ -4,7 +4,7 @@ import { useSeo } from '../lib/seo'
 
 export default function NotFound() {
   useSeo({
-    title: 'Page not found — MR Print World',
+    title: 'Page not found — MR Print World Pvt. Ltd.',
     description: 'The page you were looking for could not be found.',
     path: '/404',
   })

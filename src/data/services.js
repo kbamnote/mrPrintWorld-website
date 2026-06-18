@@ -91,5 +91,5 @@ export const services = [
 export const servicesIntro = {
   eyebrow: 'What we do',
   title: 'One ecosystem. Every branding surface.',
-  body: 'Most brands stitch together a printer, a signage vendor, a fabricator and an event agency. MR Print World replaces that supply chain with one accountable partner — design, manufacture, finish and install, all under one roof.',
+  body: 'Most brands stitch together a printer, a signage vendor, a fabricator and an event agency. MR Print World Pvt. Ltd. replaces that supply chain with one accountable partner — design, manufacture, finish and install, all under one roof.',
 }

@@ -8,7 +8,7 @@ import { useSeo, breadcrumbLd } from '../lib/seo'
 
 export default function Services() {
   useSeo({
-    title: 'Services — Printing, Signage, Fabrication & Branding | MR Print World',
+    title: 'Services — Printing, Signage, Fabrication & Branding | MR Print World Pvt. Ltd.',
     description:
       'Printing, signage, corporate solutions, fabrication and event branding — designed, manufactured, finished and installed end-to-end under one roof in Nagpur.',
     path: '/services',

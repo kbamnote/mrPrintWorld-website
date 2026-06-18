@@ -49,7 +49,7 @@ export default function AboutSection() {
           className="space-y-5 text-lg leading-relaxed text-ink-soft lg:col-span-7"
         >
           <p>
-            MR Print World was founded by {company.founder} on a simple belief —
+            MR Print World Pvt. Ltd. was founded by {company.founder} on a simple belief —
             that a brand should be <em>executed</em>, not merely designed. The
             first jobs were delivered by a single pair of hands, to a standard
             that left no room for compromise.

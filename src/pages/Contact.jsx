@@ -4,9 +4,9 @@ import ContactSection from '../components/sections/ContactSection'
 
 export default function Contact() {
   useSeo({
-    title: 'Contact & Request a Quote | MR Print World, Nagpur',
+    title: 'Contact & Request a Quote | MR Print World Pvt. Ltd., Nagpur',
     description:
-      'Request a quote, WhatsApp or call MR Print World in Nagpur for printing, signage, fabrication and large-scale branding execution.',
+      'Request a quote, WhatsApp or call MR Print World Pvt. Ltd. in Nagpur for printing, signage, fabrication and large-scale branding execution.',
     path: '/contact',
     jsonLd: breadcrumbLd([
       { name: 'Home', path: '/' },

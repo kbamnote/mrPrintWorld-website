@@ -9,9 +9,9 @@ import { useSeo, breadcrumbLd } from '../lib/seo'
 
 export default function About() {
   useSeo({
-    title: 'About — A Complete Brand Execution Partner | MR Print World',
+    title: 'About — A Complete Brand Execution Partner | MR Print World Pvt. Ltd.',
     description:
-      'Founded by Mr. Abid M. Khan, MR Print World grew from a single vision into a 50+ member organisation delivering end-to-end branding infrastructure under one roof in Nagpur.',
+      'Founded by Mr. Abid M. Khan, MR Print World Pvt. Ltd. grew from a single vision into a 50+ member organisation delivering end-to-end branding infrastructure under one roof in Nagpur.',
     path: '/about',
     jsonLd: breadcrumbLd([
       { name: 'Home', path: '/' },
@@ -24,7 +24,7 @@ export default function About() {
       <PageHeader
         eyebrow="Our story"
         title="Built on quality. Grown into infrastructure."
-        intro={`Founded by ${company.founder}, MR Print World began as a one-person vision and grew — through quality, not shortcuts — into a 50+ member organisation trusted by hundreds of businesses across Central India.`}
+        intro={`Founded by ${company.founder}, MR Print World Pvt. Ltd. began as a one-person vision and grew — through quality, not shortcuts — into a 50+ member organisation trusted by hundreds of businesses across Central India.`}
       />
 
       <section className="section-y bg-white">
@@ -89,7 +89,7 @@ export default function About() {
               <p className="mt-1 font-medium text-gold-deep">{leadership.role}</p>
               <div className="mt-6 space-y-4 text-lg leading-relaxed text-ink-soft">
                 <p>
-                  {leadership.name} founded MR Print World on a conviction that
+                  {leadership.name} founded MR Print World Pvt. Ltd. on a conviction that
                   has never changed: a brand deserves to be executed to an
                   enterprise standard, whatever its size.
                 </p>

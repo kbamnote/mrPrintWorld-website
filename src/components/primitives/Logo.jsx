@@ -10,12 +10,12 @@ export default function Logo({ light = false, className = '' }) {
   return (
     <Link
       to="/"
-      aria-label="MR Print World — home"
+      aria-label="MR Print World Pvt. Ltd. — home"
       className={`inline-flex items-center ${className}`}
     >
       <img
         src={logo}
-        alt="MR Print World"
+        alt="MR Print World Pvt. Ltd."
         width={615}
         height={110}
         className={`h-9 w-auto md:h-10 ${

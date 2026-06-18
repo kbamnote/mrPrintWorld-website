@@ -15,7 +15,7 @@ import BrandJourney from '../components/journey/BrandJourney'
 export default function Home() {
   useSeo({
     title:
-      'MR Print World — Printing, Signage & Branding Execution Partner | Nagpur',
+      'MR Print World Pvt. Ltd. — Printing, Signage & Branding Execution Partner | Nagpur',
     description:
       'A complete brand-execution partner in Nagpur — premium printing, signage, fabrication, corporate gifting and large-scale event branding, end-to-end under one roof.',
     path: '/',
