@@ -44,12 +44,8 @@ export const company = {
       ],
     },
   ],
-  mapEmbedUrl:
-    'https://maps.google.com/maps?q=' +
-    encodeURIComponent(
-      'Kalawati Kunj, Kalawati Nagar, Pipla, Nagpur, Maharashtra 440034',
-    ) +
-    '&output=embed',
+  // Exact MR Print World location (coords from the shared Bing maps link).
+  mapEmbedUrl: 'https://maps.google.com/maps?q=21.14291,79.14728546&z=16&output=embed',
   hours: 'Mon – Sat · 10:00 – 19:00',
 
   social: {

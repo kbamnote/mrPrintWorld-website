@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom'
 import logo from '../../assets/logo.png'
+import logoWhite from '../../assets/logoWhite.png'
 
 /**
- * Company logo. The artwork is built for light backgrounds, so over dark
- * contexts (transparent hero navbar, dark footer) we sit it on a white plate
- * via `light` so it always reads.
+ * Company logo. Over dark contexts (transparent hero navbar, dark footer) it uses
+ * the white version so it reads cleanly without a backing plate; on light
+ * surfaces it uses the full-colour logo.
  */
 export default function Logo({ light = false, className = '' }) {
   return (
@@ -14,13 +15,9 @@ export default function Logo({ light = false, className = '' }) {
       className={`inline-flex items-center ${className}`}
     >
       <img
-        src={logo}
+        src={light ? logoWhite : logo}
         alt="MR Print World Pvt. Ltd."
-        width={615}
-        height={110}
-        className={`h-9 w-auto md:h-10 ${
-          light ? 'rounded-md bg-white p-1.5 shadow-sm' : ''
-        }`}
+        className="h-9 w-auto md:h-10"
       />
     </Link>
   )
