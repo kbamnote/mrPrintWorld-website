@@ -255,7 +255,7 @@
 @layer components {
   .marquee-track {
     width: max-content;
-    animation: marquee-x 60s linear infinite;
+    animation: marquee-x 25s linear infinite;
   }
   .marquee:hover .marquee-track {
     animation-play-state: paused;

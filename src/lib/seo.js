@@ -81,3 +81,53 @@ export function breadcrumbLd(items) {
     })),
   }
 }
+
+/** Helper: Service JSON-LD */
+export function serviceLd(s) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    'name': s.title,
+    'description': s.summary || s.description,
+    'provider': {
+      '@type': 'LocalBusiness',
+      'name': company.name,
+      'url': SITE,
+    },
+    'areaServed': ['Nagpur', 'Vidarbha', 'Maharashtra', 'India'],
+  }
+}
+
+/** Helper: Product JSON-LD */
+export function productLd(p) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    'name': p.name,
+    'description': p.shortDescription || p.description,
+    'offers': {
+      '@type': 'AggregateOffer',
+      'priceCurrency': 'INR',
+      'seller': {
+        '@type': 'LocalBusiness',
+        'name': company.name,
+      }
+    }
+  }
+}
+
+/** Helper: FAQPage JSON-LD */
+export function faqLd(items) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    'mainEntity': items.map((it) => ({
+      '@type': 'Question',
+      'name': it.question,
+      'acceptedAnswer': {
+        '@type': 'Answer',
+        'text': it.answer,
+      },
+    })),
+  }
+}

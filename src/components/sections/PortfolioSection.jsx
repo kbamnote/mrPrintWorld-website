@@ -83,35 +83,41 @@ export default function PortfolioSection() {
         ))}
       </div>
 
-      {/* Grid */}
-      <motion.div layout className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <AnimatePresence mode="popLayout">
-          {filtered.map((p) => {
-            const cls =
-              'group block overflow-hidden rounded-[var(--radius-lg)] border border-line transition-shadow duration-300 hover:shadow-card'
-            return (
-              <motion.article
-                layout
-                key={p.id}
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ duration: 0.3, ease: EASE }}
-              >
-                {p.featured ? (
-                  <Link to="/portfolio" className={cls} aria-label={`${p.title} — view case study`}>
-                    <TileInner p={p} />
-                  </Link>
-                ) : (
-                  <div className={cls}>
-                    <TileInner p={p} />
-                  </div>
-                )}
-              </motion.article>
-            )
-          })}
-        </AnimatePresence>
-      </motion.div>
+      {/* Marquee Carousel */}
+      <div className="mt-10 marquee group relative overflow-hidden" role="region" aria-label="Portfolio projects">
+        {/* Edge fades */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-[var(--color-surface)] to-transparent sm:w-28" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[var(--color-surface)] to-transparent sm:w-28" />
+
+        <div className="marquee-track flex gap-6">
+          <AnimatePresence mode="popLayout">
+            {[...filtered, ...filtered].map((p, index) => {
+              const cls =
+                'group block overflow-hidden rounded-[var(--radius-lg)] border border-line bg-white transition-shadow duration-300 hover:shadow-card w-[280px] sm:w-[380px] shrink-0'
+              return (
+                <motion.article
+                  layout
+                  key={`${p.id}-${index}`}
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ duration: 0.3, ease: EASE }}
+                >
+                  {p.featured ? (
+                    <Link to="/portfolio" className={cls} aria-label={`${p.title} — view case study`}>
+                      <TileInner p={p} />
+                    </Link>
+                  ) : (
+                    <div className={cls}>
+                      <TileInner p={p} />
+                    </div>
+                  )}
+                </motion.article>
+              )
+            })}
+          </AnimatePresence>
+        </div>
+      </div>
     </Section>
   )
 }

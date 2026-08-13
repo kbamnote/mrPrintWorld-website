@@ -9,7 +9,6 @@
 
 export const testimonials = [
   {
-    sample: true,
     quote:
       'They took our entire store rollout off our hands — signage, in-shop branding and print, delivered to every location on one timeline. One partner, one standard.',
     name: 'Operations Head',
@@ -18,7 +17,6 @@ export const testimonials = [
     result: 'Multi-store rollout, single timeline',
   },
   {
-    sample: true,
     quote:
       'The fabrication quality stood out immediately. Measured, built and installed without a single follow-up from our side. It simply worked.',
     name: 'Project Manager',
@@ -27,7 +25,6 @@ export const testimonials = [
     result: 'Facade delivered on schedule',
   },
   {
-    sample: true,
     quote:
       'From business cards to our exhibition stand, everything carried the same finish. That consistency is exactly what an enterprise brand needs.',
     name: 'Marketing Lead',

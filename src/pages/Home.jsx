@@ -3,13 +3,18 @@ import HeroSection from '../components/sections/HeroSection'
 import AboutSection from '../components/sections/AboutSection'
 import ServicesSection from '../components/sections/ServicesSection'
 import WorkMarqueeSection from '../components/sections/WorkMarqueeSection'
+import WhyChooseSection from '../components/sections/WhyChooseSection'
 import CapabilitiesSection from '../components/sections/CapabilitiesSection'
+import ProductsPreviewSection from '../components/sections/ProductsPreviewSection'
 import PortfolioSection from '../components/sections/PortfolioSection'
+import ProcessSection from '../components/sections/ProcessSection'
 import MissionVisionSection from '../components/sections/MissionVisionSection'
 import IndustriesSection from '../components/sections/IndustriesSection'
 import TestimonialsSection from '../components/sections/TestimonialsSection'
 import CustomersSection from '../components/sections/CustomersSection'
+import FaqSection from '../components/sections/FaqSection'
 import ContactSection from '../components/sections/ContactSection'
+import CustomSolutionsSection from '../components/sections/CustomSolutionsSection'
 import BrandJourney from '../components/journey/BrandJourney'
 
 export default function Home() {
@@ -29,13 +34,18 @@ export default function Home() {
       <AboutSection />
       <ServicesSection />
       <WorkMarqueeSection />
+      <WhyChooseSection />
       <CapabilitiesSection />
+      <ProductsPreviewSection />
       <PortfolioSection />
+      <ProcessSection />
       <MissionVisionSection />
       <IndustriesSection />
       <TestimonialsSection />
       <CustomersSection />
+      <FaqSection />
       <ContactSection />
+      <CustomSolutionsSection />
     </>
   )
 }

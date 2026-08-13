@@ -23,6 +23,8 @@ export default function ContactSection({ embedded = false }) {
   const [form, setForm] = useState({
     name: '',
     phone: '',
+    email: '',
+    companyName: '',
     service: '',
     message: '',
     answer: '',
@@ -38,6 +40,11 @@ export default function ContactSection({ embedded = false }) {
     if (form.name.trim().length < 2) e.name = 'Please enter your name.'
     if (!/^[+()\d][\d\s()-]{7,}$/.test(form.phone.trim()))
       e.phone = 'Enter a valid phone number.'
+    if (!form.email.trim()) {
+      e.email = 'Please enter your email address.'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      e.email = 'Please enter a valid email address.'
+    }
     if (!form.service) e.service = 'Please choose a service.'
     if (Number(form.answer) !== challenge.a + challenge.b)
       e.answer = 'Please answer the quick check.'
@@ -62,6 +69,8 @@ export default function ContactSection({ embedded = false }) {
       await submitLead({
         name: form.name,
         phone: form.phone,
+        email: form.email,
+        companyName: form.companyName,
         service: form.service,
         message: form.message,
       })
@@ -179,6 +188,8 @@ export default function ContactSection({ embedded = false }) {
                   setForm({
                     name: '',
                     phone: '',
+                    email: '',
+                    companyName: '',
                     service: '',
                     message: '',
                     answer: '',
@@ -206,36 +217,68 @@ export default function ContactSection({ embedded = false }) {
                 />
               </div>
 
-              <div>
-                <label htmlFor={`${ids}-name`} className="mb-1.5 block text-sm font-medium text-ink">
-                  Name
-                </label>
-                <input
-                  id={`${ids}-name`}
-                  type="text"
-                  value={form.name}
-                  onChange={set('name')}
-                  aria-invalid={!!errors.name}
-                  placeholder="Your full name"
-                  className={`${field} ${errors.name ? 'border-red-400' : 'border-line'}`}
-                />
-                {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
-              </div>
+              <div className="grid gap-5 md:grid-cols-2">
+                <div className="md:col-span-2">
+                  <label htmlFor={`${ids}-name`} className="mb-1.5 block text-sm font-medium text-ink">
+                    Name
+                  </label>
+                  <input
+                    id={`${ids}-name`}
+                    type="text"
+                    value={form.name}
+                    onChange={set('name')}
+                    aria-invalid={!!errors.name}
+                    placeholder="Your full name"
+                    className={`${field} ${errors.name ? 'border-red-400' : 'border-line'}`}
+                  />
+                  {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+                </div>
 
-              <div>
-                <label htmlFor={`${ids}-phone`} className="mb-1.5 block text-sm font-medium text-ink">
-                  Phone
-                </label>
-                <input
-                  id={`${ids}-phone`}
-                  type="tel"
-                  value={form.phone}
-                  onChange={set('phone')}
-                  aria-invalid={!!errors.phone}
-                  placeholder="+91 …"
-                  className={`${field} ${errors.phone ? 'border-red-400' : 'border-line'}`}
-                />
-                {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+                <div>
+                  <label htmlFor={`${ids}-phone`} className="mb-1.5 block text-sm font-medium text-ink">
+                    Phone
+                  </label>
+                  <input
+                    id={`${ids}-phone`}
+                    type="tel"
+                    value={form.phone}
+                    onChange={set('phone')}
+                    aria-invalid={!!errors.phone}
+                    placeholder="+91 …"
+                    className={`${field} ${errors.phone ? 'border-red-400' : 'border-line'}`}
+                  />
+                  {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor={`${ids}-email`} className="mb-1.5 block text-sm font-medium text-ink">
+                    Email
+                  </label>
+                  <input
+                    id={`${ids}-email`}
+                    type="email"
+                    value={form.email}
+                    onChange={set('email')}
+                    aria-invalid={!!errors.email}
+                    placeholder="you@company.com"
+                    className={`${field} ${errors.email ? 'border-red-400' : 'border-line'}`}
+                  />
+                  {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+                </div>
+
+                <div className="md:col-span-2">
+                  <label htmlFor={`${ids}-company`} className="mb-1.5 block text-sm font-medium text-ink">
+                    Company / Organisation <span className="text-muted text-xs font-normal">(optional)</span>
+                  </label>
+                  <input
+                    id={`${ids}-company`}
+                    type="text"
+                    value={form.companyName}
+                    onChange={set('companyName')}
+                    placeholder="Your business or company name"
+                    className={`${field} border-line`}
+                  />
+                </div>
               </div>
 
               <div>

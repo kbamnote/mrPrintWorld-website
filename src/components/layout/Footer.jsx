@@ -60,6 +60,17 @@ export default function Footer() {
             gifting and large-scale branding, end-to-end under one roof in{' '}
             {company.city}.
           </p>
+          <div className="mt-5 flex gap-4">
+            <a href={company.social?.instagram || 'https://instagram.com/mrprintworld'} target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-accent transition-colors" aria-label="Instagram">
+              <Icon name="instagram" size={18} />
+            </a>
+            <a href={company.social?.facebook || 'https://facebook.com/mrprintworld'} target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-accent transition-colors" aria-label="Facebook">
+              <Icon name="facebook" size={18} />
+            </a>
+            <a href={company.social?.linkedin || 'https://linkedin.com/company/mrprintworld'} target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-accent transition-colors" aria-label="LinkedIn">
+              <Icon name="linkedin" size={18} />
+            </a>
+          </div>
         </div>
 
         <nav className="md:col-span-3" aria-label="Services">
@@ -132,10 +143,16 @@ export default function Footer() {
 
       {/* Legal bar */}
       <div className="border-t border-dark-line">
-        <div className="container-page flex flex-col gap-2 py-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">
+        <div className="container-page flex flex-col gap-4 py-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {year} {company.name}. All rights reserved.
           </p>
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <Link to="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link to="/terms" className="hover:text-white transition-colors">Terms & Conditions</Link>
+            <Link to="/refund-policy" className="hover:text-white transition-colors">Refund Policy</Link>
+            <Link to="/shipping-policy" className="hover:text-white transition-colors">Shipping Policy</Link>
+          </div>
         </div>
       </div>
     </footer>

@@ -27,9 +27,12 @@ function Detail({ s }) {
           </li>
         ))}
       </ul>
-      <div className="mt-8">
-        <Button to="/contact" variant="primary" iconName="arrow-right">
-          Request a {s.title} quote
+      <div className="mt-8 flex flex-wrap gap-3">
+        <Button to={`/services/${s.slug}`} variant="primary" iconName="arrow-right">
+          Explore Details
+        </Button>
+        <Button to={`/request-quote?service=${s.id}`} variant="outline">
+          Request Quote
         </Button>
       </div>
     </div>

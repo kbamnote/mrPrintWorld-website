@@ -48,12 +48,32 @@ export const company = {
   mapEmbedUrl: 'https://maps.google.com/maps?q=21.14291,79.14728546&z=16&output=embed',
   hours: 'Mon – Sat · 10:00 – 19:00',
 
+  businessHours: {
+    days: 'Monday – Saturday',
+    hours: '10:00 AM – 7:00 PM',
+    closed: 'Sunday',
+  },
+
   social: {
     instagram: '',
     facebook: '',
     linkedin: '',
   },
+
+  credentials: {
+    legalEntity: 'Private Limited Company',
+    cin: '',  // Corporate Identification Number
+    gstin: '',  // GST number
+    pan: '',
+    udyam: '',  // Udyam/MSME registration
+    registeredAddress: null,  // set after object creation
+    incorporationDate: '',
+    // These fields should be filled with verified information
+  },
 }
+
+// Back-reference the first address into credentials
+company.credentials.registeredAddress = company.addresses[0]
 
 /**
  * Which contact fields are still placeholders. Flip to false as real data
@@ -73,6 +93,17 @@ export const pending = {
   email: false,
   address: false,
   map: false,
+  projectCount: false,
+  experienceYears: false,
+  teamSize: false,
+}
+
+export const pendingCredentials = {
+  cin: true,
+  gstin: true,
+  pan: true,
+  udyam: true,
+  incorporationDate: true,
 }
 
 export const headlineStats = [
@@ -85,13 +116,23 @@ export const headlineStats = [
 export const navLinks = [
   { label: 'Home', to: '/' },
   { label: 'Services', to: '/services' },
+  { label: 'Products', to: '/products' },
   { label: 'Work', to: '/portfolio' },
   { label: 'About', to: '/about' },
   { label: 'Achievements', to: '/achievements' },
   { label: 'Contact', to: '/contact' },
 ]
 
-/** wa.me deep link with a prefilled enquiry message. */
-export function whatsappLink(message = "Hello MR Print World Pvt. Ltd., I'd like a quote.") {
+/** wa.me deep link with a contextual prefilled enquiry message. */
+export function whatsappLink(context = {}) {
+  const { product, service, page } = context
+  let message = "Hello MR Print World Pvt. Ltd., I'd like a quote."
+  if (product) {
+    message = `Hello MR Print World, I am interested in ${product}. I would like to request a quotation.`
+  } else if (service) {
+    message = `Hello MR Print World, I am interested in your ${service} services. I would like to discuss my requirements.`
+  } else if (page === 'portfolio') {
+    message = `Hello MR Print World, I saw your portfolio and would like to discuss a similar project.`
+  }
   return `https://wa.me/${company.whatsapp}?text=${encodeURIComponent(message)}`
 }

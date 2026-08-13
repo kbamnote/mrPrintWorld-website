@@ -28,6 +28,7 @@ export async function submitLead(lead) {
     name: lead.name?.trim(),
     phone: lead.phone?.trim(),
     email: lead.email?.trim() || '',
+    company: lead.companyName?.trim() || '',
     service: lead.service || '',
     message: lead.message?.trim() || '',
     source: SOURCE,

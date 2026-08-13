@@ -158,6 +158,249 @@ const ICONS = {
     <path d="M12 2.5l1.8 6.4 6.4 1.8-6.4 1.8L12 18.9l-1.8-6.4L3.8 10.7l6.4-1.8z" />
   ),
 
+  // — Extended Services —
+  laser: (
+    <>
+      <path d="M12 3v6" />
+      <path d="M5.6 7.5 10 11" />
+      <path d="M18.4 7.5 14 11" />
+      <circle cx="12" cy="13" r="2.5" />
+      <path d="M7 17.5h10" />
+      <path d="M9 20.5h6" />
+    </>
+  ),
+  cnc: (
+    <>
+      <path d="M4.5 4.5h15v15h-15z" />
+      <path d="M4.5 9h15" />
+      <path d="M9 9v10.5" />
+      <path d="M12 12.5l3 3-3 3" />
+    </>
+  ),
+  'uv-print': (
+    <>
+      <path d="M5 14a7 7 0 0 1 14 0" />
+      <path d="M12 3v4" />
+      <path d="M19.1 7 16.4 9" />
+      <path d="M4.9 7l2.7 2" />
+      <path d="M3 17h18" />
+      <path d="M5 20h14" />
+    </>
+  ),
+  'metal-mark': (
+    <>
+      <path d="M14.5 3.5 4.5 13.5l6 6 10-10z" />
+      <path d="M3 20.5h7" />
+      <path d="M11 9.5l4 4" />
+    </>
+  ),
+  craft: (
+    <>
+      <path d="M9 3.5v17" />
+      <path d="M15 3.5v17" />
+      <path d="M3.5 9h17" />
+      <path d="M3.5 15h17" />
+    </>
+  ),
+  acrylic: (
+    <>
+      <path d="M4 6l8-2.5L20 6v10l-8 4.5L4 16z" />
+      <path d="M4 6l8 4.5L20 6" />
+      <path d="M12 10.5V20.5" />
+    </>
+  ),
+  interior: (
+    <>
+      <path d="M3.5 20.5V10L12 4l8.5 6v10.5" />
+      <path d="M8 20.5v-5h8v5" />
+      <path d="M3.5 20.5h17" />
+    </>
+  ),
+  offset: (
+    <>
+      <path d="M6 5h12v5H6z" />
+      <path d="M4 10h16v4H4z" />
+      <path d="M7 14h10v5H7z" />
+      <circle cx="17" cy="12" r="1" />
+    </>
+  ),
+  'flex-print': (
+    <>
+      <path d="M5 4h14v16H5z" />
+      <path d="M5 8.5h14" />
+      <path d="M5 13h14" />
+      <path d="M5 17.5h14" />
+    </>
+  ),
+
+  // — Process / workflow —
+  'pen-tool': (
+    <>
+      <path d="M12 19.5 4.5 12 12 4.5 19.5 12z" />
+      <circle cx="12" cy="12" r="2.5" />
+      <path d="M12 2v2.5" />
+      <path d="M12 19.5V22" />
+    </>
+  ),
+  'shield-check': (
+    <>
+      <path d="M12 3.5 19 6v5.5c0 4.6-3.1 7.6-7 8.9-3.9-1.3-7-4.3-7-8.9V6z" />
+      <path d="m9 12 2 2 4-4" />
+    </>
+  ),
+  package: (
+    <>
+      <path d="M3.5 8l8.5 4.5L20.5 8 12 3.5z" />
+      <path d="M3.5 8v8l8.5 4.5V12.5" />
+      <path d="M20.5 8v8l-8.5 4.5V12.5" />
+    </>
+  ),
+
+  // — Social —
+  instagram: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4.5" />
+      <circle cx="17.5" cy="6.5" r="1" />
+    </>
+  ),
+  facebook: (
+    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+  ),
+  linkedin: (
+    <>
+      <path d="M4.5 8.5v11M4.5 4.5v.01" />
+      <path d="M9.5 19.5v-5.5c0-2 .7-3.5 3-3.5s2.5 1.5 2.5 3.5v5.5" />
+      <path d="M9.5 8.5v11" />
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+    </>
+  ),
+
+  // — Extended UI —
+  star: (
+    <path d="M12 3l2.5 5.2 5.7.8-4.1 4 1 5.7L12 16l-5.1 2.7 1-5.7-4.1-4 5.7-.8z" />
+  ),
+  faq: (
+    <>
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M9.5 9.5a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5" />
+      <path d="M12 16h.01" />
+    </>
+  ),
+  document: (
+    <>
+      <path d="M6 3.5h8l4 4v13h-12z" />
+      <path d="M14 3.5v4h4" />
+      <path d="M9 11h6M9 14h6M9 17h3" />
+    </>
+  ),
+  download: (
+    <>
+      <path d="M12 3v12" />
+      <path d="M8 11l4 4 4-4" />
+      <path d="M4 17v2h16v-2" />
+    </>
+  ),
+  calendar: (
+    <>
+      <path d="M4 7.5h16v12H4z" />
+      <path d="M8 4.5v3M16 4.5v3" />
+      <path d="M4 11.5h16" />
+    </>
+  ),
+  'file-upload': (
+    <>
+      <path d="M6 3.5h8l4 4v13h-12z" />
+      <path d="M14 3.5v4h4" />
+      <path d="M12 17v-6" />
+      <path d="M9 14l3-3 3 3" />
+    </>
+  ),
+  grid: (
+    <>
+      <path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" />
+    </>
+  ),
+  search: (
+    <>
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="M15.5 15.5 21 21" />
+    </>
+  ),
+  filter: (
+    <>
+      <path d="M3 5h18M6 10h12M9 15h6M11 20h2" />
+    </>
+  ),
+  briefcase: (
+    <>
+      <path d="M3 8.5h18v11H3z" />
+      <path d="M8 8.5V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2.5" />
+      <path d="M3 13h18" />
+    </>
+  ),
+  target: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5.5" />
+      <circle cx="12" cy="12" r="2" />
+    </>
+  ),
+  lightbulb: (
+    <>
+      <path d="M9 18h6" />
+      <path d="M10 21h4" />
+      <path d="M12 3a6 6 0 0 0-4 10.5V16h8v-2.5A6 6 0 0 0 12 3z" />
+    </>
+  ),
+  handshake: (
+    <>
+      <path d="M3 11l4-4 4 2 5-5 5 4" />
+      <path d="M7 11l5 5 5-5" />
+      <path d="M9 18l3 3 3-3" />
+    </>
+  ),
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 3" />
+    </>
+  ),
+  ruler: (
+    <>
+      <path d="M4 20 20 4" />
+      <path d="M7.5 20l-.5-3M11 20l-.5-5M14.5 20l-.5-3" />
+      <path d="M4 16.5l3-.5M4 13l5-.5M4 9.5l3-.5" />
+    </>
+  ),
+  layers: (
+    <>
+      <path d="M12 3.5 3 8l9 4.5L21 8z" />
+      <path d="M3 12l9 4.5L21 12" />
+      <path d="M3 16l9 4.5L21 16" />
+    </>
+  ),
+  palette: (
+    <>
+      <path d="M12 3a9 9 0 0 0 0 18 3 3 0 0 0 3-3v-1a2 2 0 0 1 2-2h1a3 3 0 0 0 3-3 9 9 0 0 0-9-9z" />
+      <circle cx="7.5" cy="11.5" r="1" />
+      <circle cx="10" cy="7.5" r="1" />
+      <circle cx="15" cy="7.5" r="1" />
+    </>
+  ),
+  award: (
+    <>
+      <circle cx="12" cy="9" r="5.5" />
+      <path d="M8.5 13.5 7 21l5-2.5L17 21l-1.5-7.5" />
+    </>
+  ),
+  'trending-up': (
+    <>
+      <path d="M3 17l5-5 4 4 9-9" />
+      <path d="M16 7h5v5" />
+    </>
+  ),
+
   // — Industries —
   retail: (
     <>

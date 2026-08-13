@@ -54,7 +54,7 @@ export default function Navbar() {
         >
           <Logo light={transparent} />
 
-          <ul className="hidden items-center gap-9 lg:flex">
+          <ul className="hidden items-center lg:flex lg:gap-5 xl:gap-8">
             {navLinks.map((l) => (
               <li key={l.to}>
                 <NavLink

@@ -1,12 +1,16 @@
+import { useLocation } from 'react-router-dom'
 import { company, whatsappLink } from '../../data/company'
 import Icon from '../primitives/Icon'
 
 /** Persistent, single-tap WhatsApp + click-to-call (brief §13). */
 export default function FloatingActions() {
+  const { pathname } = useLocation()
+  const page = pathname.split('/').filter(Boolean)[0] || 'home'
+
   return (
     <div className="fixed bottom-5 right-4 z-40 flex flex-col gap-3 sm:bottom-6 sm:right-6">
       <a
-        href={whatsappLink()}
+        href={whatsappLink({ page })}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Chat with MR Print World Pvt. Ltd. on WhatsApp"
