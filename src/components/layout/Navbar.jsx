@@ -74,7 +74,7 @@ export default function Navbar() {
 
           <div className="hidden lg:block">
             <Button
-              to="/contact"
+              to="/request-quote"
               variant={transparent ? 'gold' : 'primary'}
               iconName="arrow-right"
             >
@@ -126,7 +126,7 @@ export default function Navbar() {
                 </NavLink>
               ))}
               <Button
-                to="/contact"
+                to="/request-quote"
                 variant="primary"
                 size="lg"
                 iconName="arrow-right"

@@ -51,8 +51,10 @@ export default function ProductsPreviewSection() {
                 </p>
                 <div className="pt-4 border-t border-line mt-auto">
                   <Button 
-                    href={`${whatsappLink}?text=${encodeURIComponent(`Hi, I want to enquire about the product: ${product.name}`)}`} 
-                    variant="outline" 
+                    href={whatsappLink({ product: product.name })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    variant="outline"
                     size="md" 
                     className="w-full justify-center"
                   >

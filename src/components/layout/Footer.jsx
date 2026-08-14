@@ -35,7 +35,7 @@ export default function Footer() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button to="/contact" variant="gold" size="lg" iconName="arrow-right">
+            <Button to="/request-quote" variant="gold" size="lg" iconName="arrow-right">
               Request a Quote
             </Button>
             <Button

@@ -59,7 +59,7 @@ export default function WhyChooseSection() {
         ))}
       </div>
       <div className="mt-12 text-center">
-        <Button to="/quote" variant="primary" size="lg">Request a Quote</Button>
+        <Button to="/request-quote" variant="primary" size="lg">Request a Quote</Button>
       </div>
     </Section>
   );

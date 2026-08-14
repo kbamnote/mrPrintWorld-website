@@ -83,7 +83,7 @@ export default function HeroSection() {
             <Button to="/services" variant="gold" size="lg" iconName="arrow-right">
               Explore Our Services
             </Button>
-            <Button to="/contact" variant="outline-light" size="lg">
+            <Button to="/request-quote" variant="outline-light" size="lg">
               Request a Quote
             </Button>
           </motion.div>

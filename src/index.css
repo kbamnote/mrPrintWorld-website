@@ -6,36 +6,15 @@
    Colour is used with restraint: green carries the brand, gold is a rare accent.
    ========================================================================== */
 
-/* --- Self-hosted display typeface: Clash Display (headings) ---------------- */
-/* Body type (Inter Variable) is imported in main.jsx via @fontsource-variable. */
-@font-face {
-  font-family: "Clash Display";
-  src: url("/fonts/clash-display-500.woff2") format("woff2");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Clash Display";
-  src: url("/fonts/clash-display-600.woff2") format("woff2");
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Clash Display";
-  src: url("/fonts/clash-display-700.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
+/* --- Typeface: Kumbh Sans (body + headings) -------------------------------- */
+/* Kumbh Sans Variable is imported in main.jsx via @fontsource-variable. */
 
 /* --- Design tokens -------------------------------------------------------- */
 @theme {
   /* Type families */
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system,
-    "Segoe UI", sans-serif;
-  --font-display: "Clash Display", "Inter Variable", ui-sans-serif, system-ui,
+  --font-sans: "Kumbh Sans Variable", "Kumbh Sans", ui-sans-serif, system-ui,
+    -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Kumbh Sans Variable", "Kumbh Sans", ui-sans-serif, system-ui,
     sans-serif;
 
   /* Brand palette (per brief §7) */

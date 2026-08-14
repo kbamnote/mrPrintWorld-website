@@ -255,33 +255,33 @@ export default function RequestQuote() {
                   <h3 className="text-lg font-bold text-ink mb-6">Direct Contact</h3>
                   
                   <div className="space-y-6">
-                    <a href={`https://wa.me/${company.contact.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-start group">
+                    <a href={`https://wa.me/${company.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-start group">
                       <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center mr-4 group-hover:bg-green-600 group-hover:text-white transition-colors">
                         <Icon name="MessageCircle" size={20} />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-ink mb-1">WhatsApp</p>
-                        <p className="text-sm text-ink-soft group-hover:text-green-600 transition-colors">{company.contact.whatsapp}</p>
+                        <p className="text-sm text-ink-soft group-hover:text-green-600 transition-colors">{company.phoneDisplay}</p>
                       </div>
                     </a>
 
-                    <a href={`mailto:${company.contact.email}`} className="flex items-start group">
+                    <a href={`mailto:${company.email}`} className="flex items-start group">
                       <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mr-4 group-hover:bg-primary group-hover:text-white transition-colors">
                         <Icon name="Mail" size={20} />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-ink mb-1">Email</p>
-                        <p className="text-sm text-ink-soft group-hover:text-primary transition-colors">{company.contact.email}</p>
+                        <p className="text-sm text-ink-soft group-hover:text-primary transition-colors">{company.email}</p>
                       </div>
                     </a>
 
-                    <a href={`tel:${company.contact.phone.primary.replace(/\D/g, '')}`} className="flex items-start group">
+                    <a href={company.phoneHref} className="flex items-start group">
                       <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mr-4 group-hover:bg-primary group-hover:text-white transition-colors">
                         <Icon name="Phone" size={20} />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-ink mb-1">Call Us</p>
-                        <p className="text-sm text-ink-soft group-hover:text-primary transition-colors">{company.contact.phone.primary}</p>
+                        <p className="text-sm text-ink-soft group-hover:text-primary transition-colors">{company.phoneDisplay}</p>
                       </div>
                     </a>
                   </div>
@@ -294,11 +294,11 @@ export default function RequestQuote() {
                   <div className="space-y-2 text-sm text-ink-soft">
                     <div className="flex justify-between">
                       <span>Mon - Sat</span>
-                      <span className="font-medium text-ink">{company.businessHours.weekdays}</span>
+                      <span className="font-medium text-ink">{company.businessHours.hours}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Sunday</span>
-                      <span className="font-medium text-ink">{company.businessHours.weekend}</span>
+                      <span>{company.businessHours.closed}</span>
+                      <span className="font-medium text-ink">Closed</span>
                     </div>
                   </div>
                 </div>
