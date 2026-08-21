@@ -1,5 +1,6 @@
 import Section from '../primitives/Section'
 import SectionHeading from '../primitives/SectionHeading'
+import { workCaptions } from '../../data/workCaptions'
 
 // Load every image in src/assets/carausel/ as a URL (no manual imports).
 const modules = import.meta.glob('../../assets/carausel/*.{jpeg,jpg,png,webp}', {
@@ -7,9 +8,16 @@ const modules = import.meta.glob('../../assets/carausel/*.{jpeg,jpg,png,webp}', 
   query: '?url',
   import: 'default',
 })
+
+// Pair each image with its caption from workCaptions.js, keyed by filename.
 const images = Object.keys(modules)
   .sort()
-  .map((k) => modules[k])
+  .map((k) => ({
+    src: modules[k],
+    alt:
+      workCaptions[k.split('/').pop()] ||
+      'Printing, signage and fabrication work by MR Print World Pvt. Ltd.',
+  }))
 
 export default function WorkMarqueeSection() {
   // Duplicate the set so the CSS translateX(-50%) loop is seamless.
@@ -37,11 +45,14 @@ export default function WorkMarqueeSection() {
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-white to-transparent sm:w-28" />
 
         <ul className="marquee-track flex gap-5">
-          {loop.map((src, i) => (
+          {loop.map((img, i) => (
             <li key={i} className="shrink-0">
               <img
-                src={src}
-                alt={i < images.length ? 'MR Print World Pvt. Ltd. — previous work' : ''}
+                src={img.src}
+                /* The second half of the loop is the visual duplicate that makes
+                   translateX(-50%) seamless — hidden from assistive tech and
+                   search so the same 33 photos aren't announced twice. */
+                alt={i < images.length ? img.alt : ''}
                 aria-hidden={i >= images.length}
                 loading="lazy"
                 className="h-44 w-64 rounded-[var(--radius-lg)] object-cover sm:h-56 sm:w-80"

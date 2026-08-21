@@ -7,6 +7,11 @@ export default function NotFound() {
     title: 'Page not found — MR Print World Pvt. Ltd.',
     description: 'The page you were looking for could not be found.',
     path: '/404',
+    // A static SPA on Vercel can't return a real 404 status — the catch-all
+    // rewrite answers 200 for every path. noindex is Google's documented
+    // remedy for exactly this case: it stops unknown URLs being indexed as
+    // real pages. Every other route re-asserts "index, follow".
+    robots: 'noindex, follow',
   })
   return (
     <Container className="flex min-h-[60vh] flex-col items-center justify-center py-24 text-center">

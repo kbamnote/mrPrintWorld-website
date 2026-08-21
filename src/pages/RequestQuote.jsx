@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useSeo, breadcrumbLd } from '../lib/seo';
 import { submitLead } from '../lib/crm';
+import { trackQuoteRequest } from '../lib/analytics';
 import { services } from '../data/services';
 import { products } from '../data/products';
 import { company } from '../data/company';
@@ -83,9 +84,11 @@ export default function RequestQuote() {
       delete dataToSubmit.bot_field;
       
       const success = await submitLead(dataToSubmit);
-      
+
       if (success) {
         setStatus('success');
+        // Fires only after the email actually sent — a failed send throws above.
+        trackQuoteRequest(formState.serviceInterest || formState.productInterest || 'unspecified');
       } else {
         throw new Error('Failed to submit form');
       }

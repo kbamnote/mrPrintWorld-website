@@ -3,6 +3,7 @@ import Section from '../primitives/Section'
 import SectionHeading from '../primitives/SectionHeading'
 import Icon from '../primitives/Icon'
 import { submitLead } from '../../lib/crm'
+import { trackContactSubmit } from '../../lib/analytics'
 import { company, pending, whatsappLink } from '../../data/company'
 import { services } from '../../data/services'
 
@@ -75,6 +76,8 @@ export default function ContactSection({ embedded = false }) {
         message: form.message,
       })
       setStatus('success')
+      // Fires only after the email actually sent — a failed send throws above.
+      trackContactSubmit(form.service || 'unspecified')
     } catch {
       setStatus('error')
     }

@@ -38,11 +38,25 @@ export function useSeo({
   image = `${SITE}/og-cover.jpg`,
   type = 'website',
   jsonLd = null,
+  // Pages were written against both names. `schema` is accepted as an alias so
+  // the nine pages that pass it don't silently lose their structured data.
+  schema = null,
+  // Defaults to indexable on every route. This MUST be re-asserted per route:
+  // the meta tag is shared across the SPA, so a noindex page would otherwise
+  // leave the whole site noindexed after the visitor navigates away from it.
+  robots = 'index, follow',
 }) {
+  // Both props accept a single object or an array of blocks. Serialising here
+  // gives the effect a stable primitive dependency — passing the array itself
+  // would rebuild it on every render and thrash the <script> tags.
+  const blocks = [jsonLd, schema].flat().filter(Boolean)
+  const serialised = blocks.length ? JSON.stringify(blocks) : ''
+
   useEffect(() => {
     const url = `${SITE}${path}`
     if (title) document.title = title
     if (description) upsertMeta('name', 'description', description)
+    upsertMeta('name', 'robots', robots)
     upsertCanonical(url)
 
     upsertMeta('property', 'og:title', title)
@@ -54,21 +68,23 @@ export function useSeo({
     upsertMeta('name', 'twitter:description', description)
     upsertMeta('name', 'twitter:image', image)
 
-    let script
-    if (jsonLd) {
-      script = document.createElement('script')
+    const scripts = (serialised ? JSON.parse(serialised) : []).map((block) => {
+      const script = document.createElement('script')
       script.type = 'application/ld+json'
       script.setAttribute('data-seo-jsonld', 'route')
-      script.textContent = JSON.stringify(jsonLd)
+      script.textContent = JSON.stringify(block)
       document.head.appendChild(script)
-    }
-    return () => {
-      if (script) script.remove()
-    }
-  }, [title, description, path, image, type, jsonLd])
+      return script
+    })
+    return () => scripts.forEach((s) => s.remove())
+  }, [title, description, path, image, type, robots, serialised])
 }
 
-/** Helper: BreadcrumbList JSON-LD for sub-pages. */
+/**
+ * Helper: BreadcrumbList JSON-LD for sub-pages.
+ * Call sites use both `path` and `url` for the same thing — accept either, or
+ * the emitted crumb resolves to "https://www.mrprintworld.com/undefined".
+ */
 export function breadcrumbLd(items) {
   return {
     '@context': 'https://schema.org',
@@ -77,7 +93,7 @@ export function breadcrumbLd(items) {
       '@type': 'ListItem',
       position: i + 1,
       name: it.name,
-      item: `${SITE}${it.path}`,
+      item: `${SITE}${it.path ?? it.url ?? ''}`,
     })),
   }
 }

@@ -70,7 +70,7 @@ export default function Products() {
                 <div className="bg-white rounded-[var(--radius-lg)] border border-line shadow-sm overflow-hidden hover:shadow-card transition-shadow flex flex-col h-full">
                   <div className="aspect-[4/3] bg-gray-100 relative group overflow-hidden">
                     {product.image ? (
-                      <img 
+                      <img referrerPolicy="no-referrer" 
                         src={product.image} 
                         alt={product.name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"

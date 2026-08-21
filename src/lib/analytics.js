@@ -72,3 +72,49 @@ export function trackProductEnquiry(productName) {
     event_label: productName,
   })
 }
+
+/**
+ * One delegated listener covers every WhatsApp / phone / email CTA on the site
+ * — the floating buttons, navbar, footer, contact panel, product and service
+ * pages. Wiring each call site individually would mean ~14 onClick handlers
+ * that silently rot as soon as someone adds a new button; matching on the href
+ * scheme instead means new CTAs are tracked automatically.
+ *
+ * Called once from main.jsx.
+ */
+export function initClickTracking() {
+  if (typeof document === 'undefined') return
+
+  document.addEventListener(
+    'click',
+    (e) => {
+      const a = e.target?.closest?.('a[href]')
+      if (!a) return
+
+      const href = a.getAttribute('href') || ''
+      // Which route the visitor converted from — more useful than the button's name.
+      const page = window.location.pathname
+
+      if (href.includes('wa.me') || href.includes('api.whatsapp.com')) {
+        trackWhatsAppClick(page)
+
+        // The wa.me links carry a prefilled message naming the product or
+        // service (see whatsappLink() in data/company.js). Pull it back out so
+        // enquiries are attributed to what the visitor was actually looking at.
+        try {
+          const text = new URL(href, window.location.origin).searchParams.get('text') || ''
+          const match = text.match(/interested in (?:your )?(.+?)(?:\.|,| services)/i)
+          if (match) trackProductEnquiry(match[1].trim())
+        } catch {
+          /* malformed href — the whatsapp_click above still recorded */
+        }
+        return
+      }
+
+      if (href.startsWith('tel:')) trackPhoneClick(page)
+      else if (href.startsWith('mailto:')) trackEmailClick(page)
+    },
+    // Capture phase: still fires if a handler downstream stops propagation.
+    true,
+  )
+}

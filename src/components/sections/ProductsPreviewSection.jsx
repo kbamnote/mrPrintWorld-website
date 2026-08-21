@@ -28,7 +28,7 @@ export default function ProductsPreviewSection() {
             <div key={`${product.id}-${index}`} className="bg-white rounded-[var(--radius-lg)] overflow-hidden shadow-sm border border-line flex flex-col w-[280px] sm:w-[380px] shrink-0 transition-shadow duration-300 hover:shadow-card">
               <div className="aspect-[4/3] bg-gray-100 relative">
                 {product.image ? (
-                  <img 
+                  <img referrerPolicy="no-referrer" 
                     src={product.image} 
                     alt={product.name} 
                     className="w-full h-full object-cover" 

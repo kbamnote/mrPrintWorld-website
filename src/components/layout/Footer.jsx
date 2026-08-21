@@ -61,13 +61,13 @@ export default function Footer() {
             {company.city}.
           </p>
           <div className="mt-5 flex gap-4">
-            <a href={company.social?.instagram || 'https://instagram.com/mrprintworld'} target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-accent transition-colors" aria-label="Instagram">
+            <a href={company.social?.instagram || 'https://instagram.com/mrprintworld'} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 w-10 items-center justify-center -m-1 text-white/40 transition-colors hover:text-accent" aria-label="Instagram">
               <Icon name="instagram" size={18} />
             </a>
-            <a href={company.social?.facebook || 'https://facebook.com/mrprintworld'} target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-accent transition-colors" aria-label="Facebook">
+            <a href={company.social?.facebook || 'https://facebook.com/mrprintworld'} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 w-10 items-center justify-center -m-1 text-white/40 transition-colors hover:text-accent" aria-label="Facebook">
               <Icon name="facebook" size={18} />
             </a>
-            <a href={company.social?.linkedin || 'https://linkedin.com/company/mrprintworld'} target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-accent transition-colors" aria-label="LinkedIn">
+            <a href={company.social?.linkedin || 'https://linkedin.com/company/mrprintworld'} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 w-10 items-center justify-center -m-1 text-white/40 transition-colors hover:text-accent" aria-label="LinkedIn">
               <Icon name="linkedin" size={18} />
             </a>
           </div>
@@ -82,7 +82,7 @@ export default function Footer() {
               <li key={s.id}>
                 <Link
                   to="/services"
-                  className="text-white/55 transition-colors hover:text-white"
+                  className="inline-block py-1 text-white/55 transition-colors hover:text-white"
                 >
                   {s.title}
                 </Link>
@@ -100,7 +100,7 @@ export default function Footer() {
               <li key={l.to}>
                 <Link
                   to={l.to}
-                  className="text-white/55 transition-colors hover:text-white"
+                  className="inline-block py-1 text-white/55 transition-colors hover:text-white"
                 >
                   {l.label}
                 </Link>
@@ -125,14 +125,14 @@ export default function Footer() {
             ))}
             <li className="flex gap-3">
               <Icon name="phone" size={18} className="mt-0.5 shrink-0 text-accent" />
-              <a href={company.phoneHref} className="hover:text-white">
+              <a href={company.phoneHref} className="inline-block py-1 hover:text-white">
                 {company.phoneDisplay}
                 {pending.phone && <Pending />}
               </a>
             </li>
             <li className="flex gap-3">
               <Icon name="mail" size={18} className="mt-0.5 shrink-0 text-accent" />
-              <a href={`mailto:${company.email}`} className="hover:text-white">
+              <a href={`mailto:${company.email}`} className="inline-block py-1 hover:text-white">
                 {company.email}
                 {pending.email && <Pending />}
               </a>
@@ -148,10 +148,10 @@ export default function Footer() {
             © {year} {company.name}. All rights reserved.
           </p>
           <div className="flex flex-wrap gap-x-6 gap-y-2">
-            <Link to="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link to="/terms" className="hover:text-white transition-colors">Terms & Conditions</Link>
-            <Link to="/refund-policy" className="hover:text-white transition-colors">Refund Policy</Link>
-            <Link to="/shipping-policy" className="hover:text-white transition-colors">Shipping Policy</Link>
+            <Link to="/privacy-policy" className="inline-block py-1 transition-colors hover:text-white">Privacy Policy</Link>
+            <Link to="/terms" className="inline-block py-1 transition-colors hover:text-white">Terms & Conditions</Link>
+            <Link to="/refund-policy" className="inline-block py-1 transition-colors hover:text-white">Refund Policy</Link>
+            <Link to="/shipping-policy" className="inline-block py-1 transition-colors hover:text-white">Shipping Policy</Link>
           </div>
         </div>
       </div>

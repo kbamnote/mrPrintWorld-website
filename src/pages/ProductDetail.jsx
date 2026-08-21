@@ -52,7 +52,7 @@ export default function ProductDetail() {
             <Reveal>
               <div className="aspect-square bg-white rounded-[var(--radius-lg)] border border-line overflow-hidden shadow-sm flex items-center justify-center">
                 {product.image ? (
-                  <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                  <img referrerPolicy="no-referrer" src={product.image} alt={product.name} className="w-full h-full object-cover" />
                 ) : (
                   <Icon name="Image" size={64} className="text-gray-300" />
                 )}
@@ -135,7 +135,7 @@ export default function ProductDetail() {
                   <Link to={`/products/${p.slug}`} className="group block bg-surface rounded-[var(--radius-lg)] border border-line shadow-sm overflow-hidden hover:shadow-card transition-shadow">
                     <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
                       {p.image ? (
-                        <img src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                        <img referrerPolicy="no-referrer" src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
                           <Icon name="Image" size={40} strokeWidth={1} />

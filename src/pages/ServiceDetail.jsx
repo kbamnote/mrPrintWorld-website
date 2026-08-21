@@ -91,7 +91,7 @@ export default function ServiceDetail() {
             {service.image && (
               <Reveal delay={0.05}>
                 <div className="relative aspect-[16/9] w-full rounded-[var(--radius-lg)] overflow-hidden border border-line mb-12 shadow-sm">
-                  <img src={service.image} alt={service.title} className="absolute inset-0 h-full w-full object-cover" />
+                  <img referrerPolicy="no-referrer" src={service.image} alt={service.title} className="absolute inset-0 h-full w-full object-cover" />
                 </div>
               </Reveal>
             )}
@@ -207,7 +207,7 @@ export default function ServiceDetail() {
                   <Link to={`/products/${p.slug}`} className="group block overflow-hidden rounded-[var(--radius-lg)] border border-line bg-white shadow-soft hover:shadow-card transition-all h-full">
                     <div className="relative aspect-[4/3] overflow-hidden bg-surface">
                       {p.image ? (
-                        <img src={p.image} alt={p.name} className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <img referrerPolicy="no-referrer" src={p.image} alt={p.name} className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       ) : (
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                           <Icon name="package" size={28} className="text-line-strong" />

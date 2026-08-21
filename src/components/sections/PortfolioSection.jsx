@@ -13,7 +13,7 @@ function TileInner({ p }) {
     <>
       <div className="relative aspect-[4/3] overflow-hidden bg-surface">
         {p.image ? (
-          <img
+          <img referrerPolicy="no-referrer"
             src={p.image}
             alt={p.title}
             className="absolute inset-0 h-full w-full object-cover"

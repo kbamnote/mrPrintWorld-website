@@ -35,7 +35,7 @@ export default function Portfolio() {
                     style={{ aspectRatio: p.aspect }}
                   >
                     {p.image ? (
-                      <img
+                      <img referrerPolicy="no-referrer"
                         src={p.image}
                         alt={p.title}
                         className="absolute inset-0 h-full w-full object-cover"
