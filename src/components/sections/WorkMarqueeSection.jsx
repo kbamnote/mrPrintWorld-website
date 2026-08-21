@@ -16,7 +16,7 @@ const images = Object.keys(modules)
     src: modules[k],
     alt:
       workCaptions[k.split('/').pop()] ||
-      'Printing, signage and fabrication work by MR Print World Pvt. Ltd.',
+      'Printing, signage and fabrication work by MRPrint World Pvt. Ltd.',
   }))
 
 export default function WorkMarqueeSection() {

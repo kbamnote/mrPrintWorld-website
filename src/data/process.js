@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Business Process / Workflow Steps – MR Print World Pvt. Ltd.
+// Business Process / Workflow Steps – MRPrint World Pvt. Ltd.
 // ---------------------------------------------------------------------------
 
 export const processSteps = [

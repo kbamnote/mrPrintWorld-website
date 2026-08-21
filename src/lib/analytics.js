@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Google Analytics / Conversion Tracking – MR Print World Pvt. Ltd.
+// Google Analytics / Conversion Tracking – MRPrint World Pvt. Ltd.
 // ---------------------------------------------------------------------------
 
 const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_ID || ''

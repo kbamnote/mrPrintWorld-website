@@ -45,7 +45,7 @@ export default function ServiceDetail() {
     .slice(0, 6);
 
   useSeo({
-    title: service.seo?.title || `${service.title} | MR Print World`,
+    title: service.seo?.title || `${service.title} | MRPrint World`,
     description: service.seo?.description || service.description,
     path: `/services/${service.slug}`,
     schema: [

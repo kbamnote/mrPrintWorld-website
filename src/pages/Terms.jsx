@@ -7,8 +7,8 @@ import Reveal from '../components/primitives/Reveal';
 
 export default function Terms() {
   useSeo({
-    title: `${termsAndConditions.title} | MR Print World`,
-    description: 'Terms and conditions for using MR Print World services and website.',
+    title: `${termsAndConditions.title} | MRPrint World`,
+    description: 'Terms and conditions for using MRPrint World services and website.',
     path: '/terms',
     schema: [
       breadcrumbLd([

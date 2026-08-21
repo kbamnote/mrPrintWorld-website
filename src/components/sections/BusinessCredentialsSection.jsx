@@ -93,7 +93,7 @@ export default function BusinessCredentialsSection() {
         <div className="flex gap-3">
           <Icon name="shield-check" size={24} className="text-primary shrink-0" />
           <div className="text-xs text-ink-soft">
-            <span className="font-semibold text-primary text-sm block mb-1">MSME & Grant Readiness Note:</span> MR Print World Pvt. Ltd. maintains statutory compliance for all standard Indian enterprise mandates. Detailed certificates (GST Registration Certificate, PAN Card, MSME Udyam Certificate, MOA/AOA, and Audited Balance Sheets) are structured and available upon formal request under corporate non-disclosure agreements (NDAs).
+            <span className="font-semibold text-primary text-sm block mb-1">MSME & Grant Readiness Note:</span> MRPrint World Pvt. Ltd. maintains statutory compliance for all standard Indian enterprise mandates. Detailed certificates (GST Registration Certificate, PAN Card, MSME Udyam Certificate, MOA/AOA, and Audited Balance Sheets) are structured and available upon formal request under corporate non-disclosure agreements (NDAs).
           </div>
         </div>
       </Reveal>

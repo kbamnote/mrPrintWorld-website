@@ -53,7 +53,7 @@ export const services = [
       'Real Estate',
     ],
     seo: {
-      title: 'Professional Printing Services & Solutions | MR Print World',
+      title: 'Professional Printing Services & Solutions | MRPrint World',
       description:
         'High-quality digital, offset, and large format printing services in Nagpur. From business cards to transit media, we deliver precision and scale.',
     },
@@ -97,7 +97,7 @@ export const services = [
       'Real Estate',
     ],
     seo: {
-      title: 'Custom Signage & Glow Sign Boards | MR Print World',
+      title: 'Custom Signage & Glow Sign Boards | MRPrint World',
       description:
         'Expert fabrication and installation of architectural signage, ACP boards, and illuminated glow signs to elevate your brand presence.',
     },
@@ -140,7 +140,7 @@ export const services = [
       'Events & PR',
     ],
     seo: {
-      title: 'Corporate Gifting & Business Solutions | MR Print World',
+      title: 'Corporate Gifting & Business Solutions | MRPrint World',
       description:
         'Bespoke corporate gifting, custom mementos, and premium branded stationery to help you build lasting business relationships.',
     },
@@ -184,7 +184,7 @@ export const services = [
       'Advertising',
     ],
     seo: {
-      title: 'Custom Fabrication & Metalwork | MR Print World',
+      title: 'Custom Fabrication & Metalwork | MRPrint World',
       description:
         'Comprehensive fabrication services including MS fabrication, CNC cutting, and structural builds for robust branding and architectural projects.',
     },
@@ -228,7 +228,7 @@ export const services = [
       'Tourism',
     ],
     seo: {
-      title: 'Event Branding & Exhibition Solutions | MR Print World',
+      title: 'Event Branding & Exhibition Solutions | MRPrint World',
       description:
         'Impactful large-format event branding, exhibition stalls, vehicle graphics, and outdoor activations designed to maximize your visibility.',
     },
@@ -273,7 +273,7 @@ export const services = [
       'Architecture',
     ],
     seo: {
-      title: 'Precision Laser Cutting Services | MR Print World',
+      title: 'Precision Laser Cutting Services | MRPrint World',
       description:
         'Expert laser cutting for acrylic, MDF, wood, and paper. Delivering precise, clean cuts for custom signage, crafts, and architectural projects.',
     },
@@ -318,7 +318,7 @@ export const services = [
       'Industrial Tooling',
     ],
     seo: {
-      title: 'CNC Cutting & 3D Carving Services | MR Print World',
+      title: 'CNC Cutting & 3D Carving Services | MRPrint World',
       description:
         'Professional CNC routing, 2D cutting, and 3D carving on wood, MDF, acrylic, and PVC for intricate signage and interior decor.',
     },
@@ -363,7 +363,7 @@ export const services = [
       'Electronics',
     ],
     seo: {
-      title: 'Laser Metal Marking & Engraving | MR Print World',
+      title: 'Laser Metal Marking & Engraving | MRPrint World',
       description:
         'Permanent laser marking and engraving on metals. High-contrast solutions for industrial tags, nameplates, tools, and awards.',
     },
@@ -408,7 +408,7 @@ export const services = [
       'Consumer Goods',
     ],
     seo: {
-      title: 'Direct Flatbed UV Printing Services | MR Print World',
+      title: 'Direct Flatbed UV Printing Services | MRPrint World',
       description:
         'Vibrant, durable UV printing directly onto acrylic, glass, wood, and metal. Ideal for custom signs, gifts, and architectural graphics.',
     },
@@ -453,7 +453,7 @@ export const services = [
       'Creative Workshops',
     ],
     seo: {
-      title: 'DIY Craft Supplies & MDF Blanks Manufacturer | MR Print World',
+      title: 'DIY Craft Supplies & MDF Blanks Manufacturer | MRPrint World',
       description:
         'Wholesale and custom manufacturing of MDF craft blanks, acrylic shapes, and DIY kits for craft businesses and hobbyists.',
     },
@@ -498,7 +498,7 @@ export const services = [
       'Jewelry & Cosmetics',
     ],
     seo: {
-      title: 'Custom Acrylic Displays, Signs & Trophies | MR Print World',
+      title: 'Custom Acrylic Displays, Signs & Trophies | MRPrint World',
       description:
         'Design and fabrication of premium acrylic creations. Custom LED signs, trophies, display stands, and name plates.',
     },
@@ -543,7 +543,7 @@ export const services = [
       'Education',
     ],
     seo: {
-      title: 'Custom Interior Branding & Decor Solutions | MR Print World',
+      title: 'Custom Interior Branding & Decor Solutions | MRPrint World',
       description:
         'Elevate your commercial space with custom interior solutions. Decorative wall panels, 3D art, and reception branding for modern offices.',
     },
@@ -553,5 +553,5 @@ export const services = [
 export const servicesIntro = {
   eyebrow: 'What we do',
   title: 'One ecosystem. Every branding surface.',
-  body: 'Most brands stitch together a printer, a signage vendor, a fabricator, and specialized craftsmen. MR Print World Pvt. Ltd. replaces that fragmented supply chain with a single, accountable partner. From expansive large-format prints and intricate CNC routing to bespoke acrylic creations and DIY craft manufacturing, we design, manufacture, finish, and install everything under one roof.',
+  body: 'Most brands stitch together a printer, a signage vendor, a fabricator, and specialized craftsmen. MRPrint World Pvt. Ltd. replaces that fragmented supply chain with a single, accountable partner. From expansive large-format prints and intricate CNC routing to bespoke acrylic creations and DIY craft manufacturing, we design, manufacture, finish, and install everything under one roof.',
 }

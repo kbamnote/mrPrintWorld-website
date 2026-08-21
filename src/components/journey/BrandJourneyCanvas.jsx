@@ -5,7 +5,7 @@ import { useBrandJourneyScroll } from '../../lib/useBrandJourneyScroll'
 
 /* ===========================================================================
    Brand Journey — a custom-built origami paper aeroplane (our own geometry,
-   no third-party model) with "MR Print World" printed on it, that weaves
+   no third-party model) with "MRPrint World" printed on it, that weaves
    left ↔ right across the page as you scroll, lit by a CC0 HDRI.
    Desktop-only, lazy/code-split, renders only while on-screen.
    ========================================================================= */

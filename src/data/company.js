@@ -11,8 +11,8 @@ import directorTwo from '../assets/directorTwo.jpg'
  */
 
 export const company = {
-  name: 'MR Print World Pvt. Ltd.',
-  legalName: 'MR Print World Pvt. Ltd.',
+  name: 'MRPrint World Pvt. Ltd.',
+  legalName: 'MRPrint World Pvt. Ltd.',
   tagline: 'One Stop Solution For All Your Printing & Branding Needs',
   positioning: 'A Complete Brand Execution Partner',
   founder: 'Mr. Abid M. Khan',
@@ -44,7 +44,7 @@ export const company = {
       ],
     },
   ],
-  // Exact MR Print World location (coords from the shared Bing maps link).
+  // Exact MRPrint World location (coords from the shared Bing maps link).
   mapEmbedUrl: 'https://maps.google.com/maps?q=21.14291,79.14728546&z=16&output=embed',
   hours: 'Mon – Sat · 10:00 – 19:00',
 
@@ -108,13 +108,13 @@ export const navLinks = [
 /** wa.me deep link with a contextual prefilled enquiry message. */
 export function whatsappLink(context = {}) {
   const { product, service, page } = context
-  let message = "Hello MR Print World Pvt. Ltd., I'd like a quote."
+  let message = "Hello MRPrint World Pvt. Ltd., I'd like a quote."
   if (product) {
-    message = `Hello MR Print World, I am interested in ${product}. I would like to request a quotation.`
+    message = `Hello MRPrint World, I am interested in ${product}. I would like to request a quotation.`
   } else if (service) {
-    message = `Hello MR Print World, I am interested in your ${service} services. I would like to discuss my requirements.`
+    message = `Hello MRPrint World, I am interested in your ${service} services. I would like to discuss my requirements.`
   } else if (page === 'portfolio') {
-    message = `Hello MR Print World, I saw your portfolio and would like to discuss a similar project.`
+    message = `Hello MRPrint World, I saw your portfolio and would like to discuss a similar project.`
   }
   return `https://wa.me/${company.whatsapp}?text=${encodeURIComponent(message)}`
 }

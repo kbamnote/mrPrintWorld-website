@@ -157,7 +157,7 @@ export default function ContactSection({ embedded = false }) {
             {company.mapEmbedUrl ? (
               <iframe
                 src={company.mapEmbedUrl}
-                title="MR Print World Pvt. Ltd. location map"
+                title="MRPrint World Pvt. Ltd. location map"
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 className="h-44 w-full"

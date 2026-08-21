@@ -30,7 +30,7 @@ export const products = [
     moq: '100 pieces',
     featured: true,
     seo: {
-      title: 'Premium Business Cards | MR Print World',
+      title: 'Premium Business Cards | MRPrint World',
       description: 'Order high-quality custom business cards with various finishes and premium paper stocks in Nagpur.'
     }
   },
@@ -50,7 +50,7 @@ export const products = [
     moq: '100 pieces',
     featured: false,
     seo: {
-      title: 'Corporate Letterheads | MR Print World',
+      title: 'Corporate Letterheads | MRPrint World',
       description: 'Professional custom letterhead printing services on premium bond paper for businesses.'
     }
   },
@@ -70,7 +70,7 @@ export const products = [
     moq: '100 pieces',
     featured: true,
     seo: {
-      title: 'Marketing Brochures & Flyers | MR Print World',
+      title: 'Marketing Brochures & Flyers | MRPrint World',
       description: 'Custom brochure printing with bi-fold, tri-fold, and multiple finish options.'
     }
   },
@@ -90,7 +90,7 @@ export const products = [
     moq: '500 pieces',
     featured: false,
     seo: {
-      title: 'Custom Printed Envelopes | MR Print World',
+      title: 'Custom Printed Envelopes | MRPrint World',
       description: 'Professional custom envelope printing for business stationery in multiple sizes.'
     }
   },
@@ -112,7 +112,7 @@ export const products = [
     moq: '10 pieces',
     featured: true,
     seo: {
-      title: 'Custom Acrylic Mementos & Trophies | MR Print World',
+      title: 'Custom Acrylic Mementos & Trophies | MRPrint World',
       description: 'Design and order personalized acrylic mementos and corporate awards in Nagpur.'
     }
   },
@@ -132,7 +132,7 @@ export const products = [
     moq: '25 sets',
     featured: false,
     seo: {
-      title: 'Premium Corporate Gift Sets | MR Print World',
+      title: 'Premium Corporate Gift Sets | MRPrint World',
       description: 'Customized corporate gifting solutions and personalized executive gift sets.'
     }
   },
@@ -154,7 +154,7 @@ export const products = [
     moq: '1 piece',
     featured: true,
     seo: {
-      title: 'Acrylic LED Name Plates | MR Print World',
+      title: 'Acrylic LED Name Plates | MRPrint World',
       description: 'Custom illuminated acrylic name plates for homes and offices with premium finish.'
     }
   },
@@ -174,7 +174,7 @@ export const products = [
     moq: '10 pieces',
     featured: false,
     seo: {
-      title: 'Acrylic Organizers & Table Tops | MR Print World',
+      title: 'Acrylic Organizers & Table Tops | MRPrint World',
       description: 'Custom clear acrylic table top displays, brochure holders, and desk organizers.'
     }
   },
@@ -196,7 +196,7 @@ export const products = [
     moq: '1 piece',
     featured: true,
     seo: {
-      title: 'Glow Sign Boards & Backlit Signage | MR Print World',
+      title: 'Glow Sign Boards & Backlit Signage | MRPrint World',
       description: 'High-quality glow sign boards and backlit storefront signage for businesses in Nagpur.'
     }
   },
@@ -216,7 +216,7 @@ export const products = [
     moq: '1 piece',
     featured: true,
     seo: {
-      title: 'ACP Sign Boards with 3D LED Letters | MR Print World',
+      title: 'ACP Sign Boards with 3D LED Letters | MRPrint World',
       description: 'Premium ACP sign boards and 3D acrylic LED signage manufacturing in Nagpur.'
     }
   },
@@ -236,7 +236,7 @@ export const products = [
     moq: '10 pieces',
     featured: false,
     seo: {
-      title: 'Dealer Boards & Franchise Signage | MR Print World',
+      title: 'Dealer Boards & Franchise Signage | MRPrint World',
       description: 'Bulk manufacturing of dealer boards, shop signs, and flanges for brand networks.'
     }
   },
@@ -256,7 +256,7 @@ export const products = [
     moq: '1 piece',
     featured: false,
     seo: {
-      title: 'LED Clip-On Frames & Slim Light Boxes | MR Print World',
+      title: 'LED Clip-On Frames & Slim Light Boxes | MRPrint World',
       description: 'Slim LED clip-on frames and edge-lit snap frames for easy poster displays.'
     }
   },
@@ -278,7 +278,7 @@ export const products = [
     moq: null,
     featured: false,
     seo: {
-      title: 'Flex Banner Printing & Hoardings | MR Print World',
+      title: 'Flex Banner Printing & Hoardings | MRPrint World',
       description: 'High-quality flex banner printing and large format outdoor hoardings.'
     }
   },
@@ -298,7 +298,7 @@ export const products = [
     moq: null,
     featured: true,
     seo: {
-      title: 'Custom Vinyl Stickers & Glass Branding | MR Print World',
+      title: 'Custom Vinyl Stickers & Glass Branding | MRPrint World',
       description: 'High-resolution vinyl printing, die-cut decals, and frosted film for office glass.'
     }
   },
@@ -320,7 +320,7 @@ export const products = [
     moq: '1 piece',
     featured: true,
     seo: {
-      title: 'Roll-up Standees & Portable Displays | MR Print World',
+      title: 'Roll-up Standees & Portable Displays | MRPrint World',
       description: 'High-quality roll-up standees and retractable banner stands for exhibitions.'
     }
   },
@@ -340,7 +340,7 @@ export const products = [
     moq: '1 piece',
     featured: false,
     seo: {
-      title: 'Promotional Canopies & Demo Tents | MR Print World',
+      title: 'Promotional Canopies & Demo Tents | MRPrint World',
       description: 'Custom printed promotional canopies, gazebo tents, and demo setups for outdoor marketing.'
     }
   },
@@ -360,7 +360,7 @@ export const products = [
     moq: '50 pieces',
     featured: false,
     seo: {
-      title: 'Custom Printed T-Shirts & Corporate Caps | MR Print World',
+      title: 'Custom Printed T-Shirts & Corporate Caps | MRPrint World',
       description: 'Promotional t-shirt printing and branded corporate apparel in Nagpur.'
     }
   },
@@ -382,7 +382,7 @@ export const products = [
     moq: '500 pieces',
     featured: true,
     seo: {
-      title: 'Custom Packaging Boxes & Printed Cartons | MR Print World',
+      title: 'Custom Packaging Boxes & Printed Cartons | MRPrint World',
       description: 'Custom product packaging, printed corrugated boxes, and premium rigid boxes.'
     }
   },
@@ -404,7 +404,7 @@ export const products = [
     moq: '1 piece',
     featured: true,
     seo: {
-      title: 'Laser Cut MDF Wall Art & Jali Designs | MR Print World',
+      title: 'Laser Cut MDF Wall Art & Jali Designs | MRPrint World',
       description: 'Custom laser cut MDF panels, jali designs, and decorative wall art manufacturing.'
     }
   },
@@ -424,7 +424,7 @@ export const products = [
     moq: '1 piece',
     featured: false,
     seo: {
-      title: 'Laser Engraved Wooden Nameplates | MR Print World',
+      title: 'Laser Engraved Wooden Nameplates | MRPrint World',
       description: 'Personalized wooden name plates with custom laser engraving for homes and offices.'
     }
   },
@@ -446,7 +446,7 @@ export const products = [
     moq: '1 set',
     featured: true,
     seo: {
-      title: 'CNC Cut Solid Letters & 3D Signage | MR Print World',
+      title: 'CNC Cut Solid Letters & 3D Signage | MRPrint World',
       description: 'Precision CNC router cut letters in MDF, acrylic, and WPC for corporate signage.'
     }
   },
@@ -466,7 +466,7 @@ export const products = [
     moq: '1 panel',
     featured: false,
     seo: {
-      title: '3D CNC Carved MDF Panels | MR Print World',
+      title: '3D CNC Carved MDF Panels | MRPrint World',
       description: 'Custom 3D textured wall panels and CNC carved architectural cladding.'
     }
   },
@@ -488,7 +488,7 @@ export const products = [
     moq: '1 piece',
     featured: true,
     seo: {
-      title: 'UV Printed Plaques & Awards | MR Print World',
+      title: 'UV Printed Plaques & Awards | MRPrint World',
       description: 'Direct full-color UV printing on wood, acrylic, and metal for awards and plaques.'
     }
   },
@@ -508,7 +508,7 @@ export const products = [
     moq: '20 pieces',
     featured: false,
     seo: {
-      title: 'UV Printed Corporate Merchandise | MR Print World',
+      title: 'UV Printed Corporate Merchandise | MRPrint World',
       description: 'Full color UV printing on diaries, power banks, pens, and promotional items.'
     }
   },
@@ -530,7 +530,7 @@ export const products = [
     moq: '100 sq ft',
     featured: true,
     seo: {
-      title: 'Custom Printed Wallpapers & Murals | MR Print World',
+      title: 'Custom Printed Wallpapers & Murals | MRPrint World',
       description: 'High-quality custom wall murals and textured printed wallpapers for homes and offices.'
     }
   },
@@ -550,7 +550,7 @@ export const products = [
     moq: 'Project based',
     featured: false,
     seo: {
-      title: 'Interior Wayfinding & Directional Signage | MR Print World',
+      title: 'Interior Wayfinding & Directional Signage | MRPrint World',
       description: 'Custom interior directional signs, directory boards, and room identification signage.'
     }
   },
@@ -570,7 +570,7 @@ export const products = [
     moq: '1 piece',
     featured: false,
     seo: {
-      title: 'Custom Canvas Photo Prints | MR Print World',
+      title: 'Custom Canvas Photo Prints | MRPrint World',
       description: 'High-quality canvas printing and gallery wrapped photo prints in Nagpur.'
     }
   }

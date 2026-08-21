@@ -62,7 +62,7 @@ export default function Faq() {
   };
 
   useSeo({
-    title: 'Frequently Asked Questions | MR Print World',
+    title: 'Frequently Asked Questions | MRPrint World',
     description: 'Find answers to common questions about our printing services, products, ordering process, and policies.',
     path: '/faq',
     schema: [

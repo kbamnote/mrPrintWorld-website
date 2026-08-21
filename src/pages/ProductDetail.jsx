@@ -24,7 +24,7 @@ export default function ProductDetail() {
   const whatsappUrl = whatsappLink({ product: product.name });
 
   useSeo({
-    title: `${product.name} | MR Print World`,
+    title: `${product.name} | MRPrint World`,
     description: product.shortDescription,
     path: `/products/${product.slug}`,
     schema: [

@@ -7,8 +7,8 @@ import Reveal from '../components/primitives/Reveal';
 
 export default function RefundPolicy() {
   useSeo({
-    title: `${refundPolicy.title} | MR Print World`,
-    description: 'Cancellation and refund policy for MR Print World orders.',
+    title: `${refundPolicy.title} | MRPrint World`,
+    description: 'Cancellation and refund policy for MRPrint World orders.',
     path: '/refund-policy',
     schema: [
       breadcrumbLd([

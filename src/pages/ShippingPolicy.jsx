@@ -7,8 +7,8 @@ import Reveal from '../components/primitives/Reveal';
 
 export default function ShippingPolicy() {
   useSeo({
-    title: `${shippingPolicy.title} | MR Print World`,
-    description: 'Shipping and delivery policy for MR Print World orders.',
+    title: `${shippingPolicy.title} | MRPrint World`,
+    description: 'Shipping and delivery policy for MRPrint World orders.',
     path: '/shipping-policy',
     schema: [
       breadcrumbLd([

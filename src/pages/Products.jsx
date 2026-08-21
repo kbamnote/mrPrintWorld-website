@@ -16,7 +16,7 @@ export default function Products() {
     : products.filter(p => p.category === activeCategory);
 
   useSeo({
-    title: 'Products | MR Print World',
+    title: 'Products | MRPrint World',
     description: 'Explore our high-quality printing products. Built to your specification.',
     path: '/products',
     schema: [

@@ -11,12 +11,12 @@ export default function Logo({ light = false, className = '' }) {
   return (
     <Link
       to="/"
-      aria-label="MR Print World Pvt. Ltd. — home"
+      aria-label="MRPrint World Pvt. Ltd. — home"
       className={`inline-flex items-center ${className}`}
     >
       <img
         src={light ? logoWhite : logo}
-        alt="MR Print World Pvt. Ltd."
+        alt="MRPrint World Pvt. Ltd."
         className="h-9 w-auto md:h-10"
       />
     </Link>

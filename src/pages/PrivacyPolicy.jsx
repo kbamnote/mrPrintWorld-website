@@ -7,8 +7,8 @@ import Reveal from '../components/primitives/Reveal';
 
 export default function PrivacyPolicy() {
   useSeo({
-    title: `${privacyPolicy.title} | MR Print World`,
-    description: 'Learn about how MR Print World collects, uses, and protects your personal information.',
+    title: `${privacyPolicy.title} | MRPrint World`,
+    description: 'Learn about how MRPrint World collects, uses, and protects your personal information.',
     path: '/privacy-policy',
     schema: [
       breadcrumbLd([

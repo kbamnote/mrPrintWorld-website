@@ -45,7 +45,7 @@ export default function RequestQuote() {
   }, []);
 
   useSeo({
-    title: 'Request a Quote | MR Print World',
+    title: 'Request a Quote | MRPrint World',
     description: 'Get a custom quote for your printing project. Tell us about your requirements and we will get back to you with a competitive price.',
     path: '/request-quote',
     schema: [

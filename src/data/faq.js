@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// FAQ Data – MR Print World Pvt. Ltd.
+// FAQ Data – MRPrint World Pvt. Ltd.
 // ---------------------------------------------------------------------------
 
 export const faqCategories = [
@@ -17,7 +17,7 @@ export const faqs = [
   {
     id: 'what-services',
     category: 'General',
-    question: 'What services does MR Print World offer?',
+    question: 'What services does MRPrint World offer?',
     answer:
       'We provide a wide range of printing and branding solutions including offset and digital printing, signage, packaging, corporate stationery, promotional materials, and large-format graphics. Whether you need business cards or full-scale event branding, our team is equipped to deliver.',
   },

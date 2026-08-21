@@ -2,7 +2,7 @@
  * Legal page content — Privacy Policy, Terms & Conditions,
  * Refund & Cancellation Policy, and Shipping & Delivery Policy.
  *
- * All text is written for MR Print World Pvt. Ltd., a printing and branding
+ * All text is written for MRPrint World Pvt. Ltd., a printing and branding
  * business in Nagpur, Maharashtra, India. Contact details reference
  * the centralised `company` object from company.js.
  */

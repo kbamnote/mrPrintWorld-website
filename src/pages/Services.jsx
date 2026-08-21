@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom'
 
 export default function Services() {
   useSeo({
-    title: 'Services — Printing, Signage, Fabrication & Branding | MR Print World Pvt. Ltd.',
+    title: 'Services — Printing, Signage, Fabrication & Branding | MRPrint World Pvt. Ltd.',
     description:
       'Printing, signage, corporate solutions, fabrication and event branding — designed, manufactured, finished and installed end-to-end under one roof in Nagpur.',
     path: '/services',

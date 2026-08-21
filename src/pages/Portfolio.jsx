@@ -7,9 +7,9 @@ import { useSeo, breadcrumbLd } from '../lib/seo'
 
 export default function Portfolio() {
   useSeo({
-    title: 'Work & Portfolio — Signage, Branding & Fabrication | MR Print World Pvt. Ltd.',
+    title: 'Work & Portfolio — Signage, Branding & Fabrication | MRPrint World Pvt. Ltd.',
     description:
-      'Selected work across signage, branding, corporate printing, vehicle graphics, fabrication and event installations delivered by MR Print World Pvt. Ltd..',
+      'Selected work across signage, branding, corporate printing, vehicle graphics, fabrication and event installations delivered by MRPrint World Pvt. Ltd..',
     path: '/portfolio',
     jsonLd: breadcrumbLd([
       { name: 'Home', path: '/' },
