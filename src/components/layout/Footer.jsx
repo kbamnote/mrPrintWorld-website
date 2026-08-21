@@ -81,7 +81,7 @@ export default function Footer() {
             {services.map((s) => (
               <li key={s.id}>
                 <Link
-                  to="/services"
+                  to={`/services/${s.slug}`}
                   className="inline-block py-1 text-white/55 transition-colors hover:text-white"
                 >
                   {s.title}

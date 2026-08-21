@@ -2,15 +2,20 @@ import Section from '../primitives/Section'
 import SectionHeading from '../primitives/SectionHeading'
 import Reveal from '../primitives/Reveal'
 import Icon from '../primitives/Icon'
-import { company, pendingCredentials } from '../../data/company'
+import { company } from '../../data/company'
 
 export default function BusinessCredentialsSection() {
   /**
-   * A credential is only rendered once it holds a real, confirmed value.
-   * Anything still flagged in `pendingCredentials` — or simply left blank in
-   * company.credentials — is omitted from the page entirely rather than shown
-   * as "Pending verification". Fill the value in src/data/company.js and flip
-   * its `pendingCredentials` flag to false and the card appears on its own.
+   * Only credentials with a real, confirmed value are listed here.
+   *
+   * The statutory identifiers (CIN, GSTIN, PAN, Udyam, incorporation date)
+   * were deliberately removed rather than shown as pending — the section is
+   * read by investors and vendors, and an unverified field reads worse than
+   * an absent one. To publish any of them later, add an entry to this array
+   * and the matching value to company.credentials in src/data/company.js.
+   *
+   * The MSME & Grant Readiness note below covers the documents themselves,
+   * which are shared privately on request rather than published here.
    */
   const creds = [
     {
@@ -23,37 +28,7 @@ export default function BusinessCredentialsSection() {
       value: company.credentials?.legalEntity || 'Private Limited Company',
       icon: 'layers',
     },
-    {
-      label: 'Corporate Identification Number (CIN)',
-      value: company.credentials?.cin,
-      pending: pendingCredentials.cin,
-      icon: 'document',
-    },
-    {
-      label: 'GSTIN Registration',
-      value: company.credentials?.gstin,
-      pending: pendingCredentials.gstin,
-      icon: 'shield-check',
-    },
-    {
-      label: 'Permanent Account Number (PAN)',
-      value: company.credentials?.pan,
-      pending: pendingCredentials.pan,
-      icon: 'document',
-    },
-    {
-      label: 'Udyam MSME Registration',
-      value: company.credentials?.udyam,
-      pending: pendingCredentials.udyam,
-      icon: 'award',
-    },
-    {
-      label: 'Date of Incorporation',
-      value: company.credentials?.incorporationDate,
-      pending: pendingCredentials.incorporationDate,
-      icon: 'calendar',
-    },
-  ].filter((c) => !c.pending && c.value)
+  ].filter((c) => c.value)
 
   return (
     <Section id="credentials" tone="surface">

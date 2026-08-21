@@ -60,25 +60,15 @@ export const company = {
     linkedin: '',
   },
 
+  // Statutory identifiers (CIN, GSTIN, PAN, Udyam, incorporation date) are
+  // deliberately not published on the site — they are shared privately on
+  // request, as the MSME & Grant Readiness note on /about states. To publish
+  // one, add it here and give it an entry in BusinessCredentialsSection.jsx.
   credentials: {
     legalEntity: 'Private Limited Company',
-    cin: '',  // Corporate Identification Number
-    gstin: '',  // GST number
-    pan: '',
-    udyam: '',  // Udyam/MSME registration
-    registeredAddress: null,  // set after object creation
-    incorporationDate: '',
-    // These fields should be filled with verified information
   },
 }
 
-// Back-reference the first address into credentials
-company.credentials.registeredAddress = company.addresses[0]
-
-/**
- * Which contact fields are still placeholders. Flip to false as real data
- * arrives so the "to be confirmed" markers disappear.
- */
 /** Leadership — director photos imported from src/assets. */
 export const leadership = {
   name: 'Mr. Abid M. Khan',
@@ -96,14 +86,6 @@ export const pending = {
   projectCount: false,
   experienceYears: false,
   teamSize: false,
-}
-
-export const pendingCredentials = {
-  cin: true,
-  gstin: true,
-  pan: true,
-  udyam: true,
-  incorporationDate: true,
 }
 
 export const headlineStats = [
