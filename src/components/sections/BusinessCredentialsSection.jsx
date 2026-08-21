@@ -5,50 +5,55 @@ import Icon from '../primitives/Icon'
 import { company, pendingCredentials } from '../../data/company'
 
 export default function BusinessCredentialsSection() {
+  /**
+   * A credential is only rendered once it holds a real, confirmed value.
+   * Anything still flagged in `pendingCredentials` — or simply left blank in
+   * company.credentials — is omitted from the page entirely rather than shown
+   * as "Pending verification". Fill the value in src/data/company.js and flip
+   * its `pendingCredentials` flag to false and the card appears on its own.
+   */
   const creds = [
     {
       label: 'Legal Entity Name',
       value: company.legalName || company.name,
-      isPending: false,
       icon: 'briefcase',
     },
     {
       label: 'Constitution / Legal Form',
       value: company.credentials?.legalEntity || 'Private Limited Company',
-      isPending: false,
       icon: 'layers',
     },
     {
       label: 'Corporate Identification Number (CIN)',
-      value: company.credentials?.cin || 'Pending verification',
-      isPending: pendingCredentials.cin,
+      value: company.credentials?.cin,
+      pending: pendingCredentials.cin,
       icon: 'document',
     },
     {
       label: 'GSTIN Registration',
-      value: company.credentials?.gstin || 'Pending verification',
-      isPending: pendingCredentials.gstin,
+      value: company.credentials?.gstin,
+      pending: pendingCredentials.gstin,
       icon: 'shield-check',
     },
     {
       label: 'Permanent Account Number (PAN)',
-      value: company.credentials?.pan || 'Pending verification',
-      isPending: pendingCredentials.pan,
+      value: company.credentials?.pan,
+      pending: pendingCredentials.pan,
       icon: 'document',
     },
     {
       label: 'Udyam MSME Registration',
-      value: company.credentials?.udyam || 'Pending verification',
-      isPending: pendingCredentials.udyam,
+      value: company.credentials?.udyam,
+      pending: pendingCredentials.udyam,
       icon: 'award',
     },
     {
       label: 'Date of Incorporation',
-      value: company.credentials?.incorporationDate || 'Pending verification',
-      isPending: pendingCredentials.incorporationDate,
+      value: company.credentials?.incorporationDate,
+      pending: pendingCredentials.incorporationDate,
       icon: 'calendar',
     },
-  ]
+  ].filter((c) => !c.pending && c.value)
 
   return (
     <Section id="credentials" tone="surface">
@@ -69,30 +74,21 @@ export default function BusinessCredentialsSection() {
           >
             <div>
               <div className="flex items-center gap-3">
-                <span className={`inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-card)] ${c.isPending ? 'bg-amber-50/50 text-amber-600' : 'bg-primary/10 text-primary'}`}>
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-card)] bg-primary/10 text-primary">
                   <Icon name={c.icon} size={20} />
                 </span>
                 <span className="text-[0.65rem] uppercase tracking-wider font-semibold text-muted">
                   {c.label}
                 </span>
               </div>
-              <p className={`mt-4 font-display text-base font-medium ${c.isPending ? 'text-muted italic' : 'text-ink'}`}>
+              <p className="mt-4 font-display text-base font-medium text-ink">
                 {c.value}
               </p>
             </div>
-            
+
             <div className="mt-6 flex items-center gap-1.5 border-t border-line pt-4 text-[0.7rem] font-medium">
-              {c.isPending ? (
-                <>
-                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                  <span className="text-amber-700">Awaiting Official Verification Details</span>
-                </>
-              ) : (
-                <>
-                  <span className="h-2 w-2 rounded-full bg-success" />
-                  <span className="text-success">Verified Active Status</span>
-                </>
-              )}
+              <span className="h-2 w-2 rounded-full bg-success" />
+              <span className="text-success">Verified Active Status</span>
             </div>
           </Reveal>
         ))}

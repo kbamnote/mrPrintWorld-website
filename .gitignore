@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local env files (keys live in Vercel Environment Variables)
+.env
+.env.local
+.env.*.local

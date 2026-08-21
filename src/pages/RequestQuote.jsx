@@ -215,9 +215,10 @@ export default function RequestQuote() {
                         </div>
                         
                         <div className="space-y-2 mb-6">
-                          <label className="text-sm font-medium text-ink">Upload Reference File (Optional)</label>
-                          <input type="file" className="w-full px-4 py-3 rounded-[var(--radius-card)] border border-line focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-shadow bg-surface file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
-                          <p className="text-xs text-ink-soft mt-1">Max size 10MB. PDF, JPG, PNG only.</p>
+                          <label className="text-sm font-medium text-ink">Have artwork ready?</label>
+                          <p className="text-xs text-ink-soft mt-1">
+                            Send your files over WhatsApp after submitting and we&rsquo;ll match them to your enquiry.
+                          </p>
                         </div>
 
                         <div className="space-y-2 mb-6 bg-gray-50 p-4 rounded-[var(--radius-card)]">
