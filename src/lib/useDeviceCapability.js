@@ -6,7 +6,11 @@ import { useEffect, useState } from 'react'
  * paint is always the clean static hero and low-power phones never pay for 3D.
  */
 export function useDeviceCapability() {
-  const [caps, setCaps] = useState({ enable3d: false, reducedMotion: false })
+  const [caps, setCaps] = useState({
+    enable3d: false,
+    enableVideo: false,
+    reducedMotion: false,
+  })
 
   useEffect(() => {
     const reducedMotion = window.matchMedia(
@@ -36,7 +40,12 @@ export function useDeviceCapability() {
     const enable3d =
       webgl && !reducedMotion && !saveData && (capableDesktop || capableMobile)
 
-    setCaps({ enable3d, reducedMotion })
+    // The hero video is a decorative background. Skip it for anyone who has
+    // asked for reduced motion or turned on data saver — they get the static
+    // gradient hero, which is a complete design on its own.
+    const enableVideo = !reducedMotion && !saveData
+
+    setCaps({ enable3d, enableVideo, reducedMotion })
   }, [])
 
   return caps

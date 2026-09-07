@@ -1,27 +1,27 @@
 import { Suspense, lazy } from 'react'
-import { motion } from 'framer-motion'
-import Button from '../primitives/Button'
-import Eyebrow from '../primitives/Eyebrow'
 import { useDeviceCapability } from '../../lib/useDeviceCapability'
-import { staggerContainer, fadeUp } from '../../lib/motion'
-import { company } from '../../data/company'
 
 // Code-split: three.js lives in its own chunk, loaded only on capable devices.
 const HeroParticles = lazy(() => import('./HeroParticles'))
 
-const trust = [
-  ['12+', 'years'],
-  ['50+', 'professionals'],
-  ['End-to-end', 'under one roof'],
-  ['Nagpur', 'India'],
-]
-
 export default function HeroSection() {
-  const { enable3d } = useDeviceCapability()
+  const { enable3d, enableVideo } = useDeviceCapability()
 
   return (
     <section className="relative isolate flex min-h-[100svh] items-center overflow-hidden bg-dark text-white">
-      {/* Static premium backdrop — paints immediately, no JS required */}
+      {/*
+        The page still needs exactly one <h1> — it is the strongest on-page
+        signal Google has for what this site is, and the hero is where it
+        belongs. Visually hidden (sr-only) rather than deleted: screen readers
+        and crawlers get it, nobody sees it over the video.
+      */}
+      <h1 className="sr-only">
+        MRPrint World Pvt. Ltd. — printing, signage, fabrication and branding
+        execution in Nagpur
+      </h1>
+
+      {/* Static backdrop — paints immediately, no JS required, and stays
+          visible underneath while the video buffers. */}
       <div aria-hidden="true" className="absolute inset-0">
         <div
           className="absolute inset-0"
@@ -41,8 +41,26 @@ export default function HeroSection() {
         />
       </div>
 
-      {/* Lazy WebGL atmosphere (enhancement layer) */}
-      {enable3d && (
+      {/* Background video (decorative). Fades in once it can actually play, so
+          a slow connection never shows a black or half-loaded frame. */}
+      {enableVideo && (
+        <video
+          aria-hidden="true"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          onCanPlay={(e) => e.currentTarget.classList.remove('opacity-0')}
+          className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-1000"
+        >
+          <source src="/hero.mp4" type="video/mp4" />
+        </video>
+      )}
+
+      {/* Lazy WebGL atmosphere — skipped when the video is carrying the
+          background, so the two don't compete visually or for GPU time. */}
+      {enable3d && !enableVideo && (
         <Suspense fallback={null}>
           <HeroParticles />
         </Suspense>
@@ -53,63 +71,6 @@ export default function HeroSection() {
         aria-hidden="true"
         className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-dark"
       />
-
-      <div className="container-wide relative z-10 py-32">
-        <motion.div
-          variants={staggerContainer(0.12, 0.08)}
-          initial="hidden"
-          animate="show"
-          className="max-w-3xl"
-        >
-          <motion.div variants={fadeUp}>
-            <Eyebrow light>{company.positioning}</Eyebrow>
-          </motion.div>
-
-          <motion.h1 variants={fadeUp} className="text-hero mt-6 text-white">
-            Transforming Ideas Into <span className="text-accent">Powerful</span>{' '}
-            Brand Experiences
-          </motion.h1>
-
-          <motion.p
-            variants={fadeUp}
-            className="mt-7 max-w-2xl text-lg leading-relaxed text-white/70"
-          >
-            From premium printing and signage to fabrication, corporate gifting,
-            and large-scale branding execution, MRPrint World Pvt. Ltd. delivers complete
-            solutions that help businesses stand out, scale, and succeed.
-          </motion.p>
-
-          <motion.div variants={fadeUp} className="mt-9 flex flex-wrap gap-4">
-            <Button to="/services" variant="gold" size="lg" iconName="arrow-right">
-              Explore Our Services
-            </Button>
-            <Button to="/request-quote" variant="outline-light" size="lg">
-              Request a Quote
-            </Button>
-          </motion.div>
-
-          <motion.dl
-            variants={fadeUp}
-            className="mt-14 flex flex-wrap gap-x-10 gap-y-5 border-t border-white/10 pt-8"
-          >
-            {trust.map(([value, label]) => (
-              <div key={label} className="flex items-baseline gap-2">
-                <dt className="font-display text-xl font-semibold text-white">{value}</dt>
-                <dd className="text-sm text-white/55">{label}</dd>
-              </div>
-            ))}
-          </motion.dl>
-        </motion.div>
-      </div>
-
-      {/* Scroll hint */}
-      <div
-        aria-hidden="true"
-        className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 text-white/40 md:flex"
-      >
-        <span className="text-[0.7rem] uppercase tracking-[0.2em]">Scroll</span>
-        <span className="h-9 w-px bg-gradient-to-b from-white/40 to-transparent" />
-      </div>
     </section>
   )
 }
