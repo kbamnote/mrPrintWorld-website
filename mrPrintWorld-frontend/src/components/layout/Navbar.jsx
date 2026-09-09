@@ -6,11 +6,13 @@ import Button from '../primitives/Button'
 import Icon from '../primitives/Icon'
 import { navLinks, company, whatsappLink } from '../../data/company'
 import { useCustomerAuth } from '../../lib/customerAuthContext'
+import { useCart } from '../../lib/cartContext'
 import { isApiEnabled } from '../../lib/api'
 
 export default function Navbar() {
   const { pathname } = useLocation()
   const { isSignedIn, tierCode, tierName } = useCustomerAuth()
+  const { itemCount } = useCart()
   const [atTop, setAtTop] = useState(true)
   const [open, setOpen] = useState(false)
   const isHome = pathname === '/'
@@ -76,6 +78,19 @@ export default function Navbar() {
           </ul>
 
           <div className="hidden items-center gap-4 lg:flex">
+            {isApiEnabled && itemCount > 0 && (
+              <Link
+                to="/cart"
+                className={`relative text-sm font-medium transition-colors ${
+                  transparent ? 'text-white/80 hover:text-white' : 'text-ink-soft hover:text-primary'
+                }`}
+              >
+                Cart
+                <span className="ml-1 rounded-full bg-primary px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
+                  {itemCount}
+                </span>
+              </Link>
+            )}
             {isApiEnabled && (
               isSignedIn ? (
                 <Link

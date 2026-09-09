@@ -6,6 +6,7 @@ import Container from '../components/primitives/Container';
 import Reveal from '../components/primitives/Reveal';
 import Button from '../components/primitives/Button';
 import Icon from '../components/primitives/Icon';
+import BuyPanel from '../components/product/BuyPanel';
 
 export default function ProductDetail() {
   const { slug } = useParams();
@@ -136,6 +137,11 @@ export default function ProductDetail() {
                       </p>
                     </div>
                   )}
+                </div>
+
+                {/* Configure, price and buy — every figure comes from the server. */}
+                <div className="mb-6">
+                  <BuyPanel product={product} />
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4 mt-auto pt-6 border-t border-line">

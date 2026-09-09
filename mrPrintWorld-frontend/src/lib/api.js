@@ -110,9 +110,12 @@ export function calculatePrice({ slug, quantity = 1, width, height, selections =
   }).then((r) => r.data)
 }
 
-/** Generic POST for the auth endpoints, which return their own shapes. */
+/** Generic helpers for endpoints that return their own shapes. */
 export function apiPost(path, body) {
   return request(path, { method: 'POST', body })
+}
+export function apiGet(path) {
+  return request(path)
 }
 
 export { ApiError }

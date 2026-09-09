@@ -5,6 +5,7 @@ import Layout from './components/layout/Layout'
 import Home from './pages/Home'
 import RouteFallback from './components/layout/RouteFallback'
 import { CustomerAuthProvider } from './lib/customerAuth'
+import { CartProvider } from './lib/cart'
 
 /**
  * Route-level code splitting.
@@ -35,6 +36,10 @@ const NotFound = lazy(() => import('./pages/NotFound'))
 const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
 const Account = lazy(() => import('./pages/Account'))
+const Cart = lazy(() => import('./pages/Cart'))
+const Checkout = lazy(() => import('./pages/Checkout'))
+const OrderList = lazy(() => import('./pages/Orders').then((m) => ({ default: m.OrderList })))
+const OrderDetail = lazy(() => import('./pages/Orders').then((m) => ({ default: m.OrderDetail })))
 
 // The whole admin panel behind a single lazy boundary — one chunk, fetched
 // only when an admin actually navigates to /admin.
@@ -45,6 +50,7 @@ export default function App() {
     // reducedMotion="user" → every Framer Motion animation respects the OS setting
     <MotionConfig reducedMotion="user">
       <CustomerAuthProvider>
+      <CartProvider>
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           {/* Admin is outside the public Layout — no marketing nav or footer. */}
@@ -79,10 +85,15 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/account" element={<Account />} />
+            <Route path="/account/orders" element={<OrderList />} />
+            <Route path="/account/orders/:id" element={<OrderDetail />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
       </Suspense>
+      </CartProvider>
       </CustomerAuthProvider>
     </MotionConfig>
   )
