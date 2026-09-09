@@ -102,7 +102,18 @@ export default function ProductForm() {
       ...(form.primaryCategory ? { primaryCategory: form.primaryCategory } : {}),
       shortDescription: form.shortDescription || undefined,
       description: form.description || undefined,
-      images: form.images?.length ? form.images : undefined,
+      // Send only the fields the API accepts. Loading a product returns
+      // Mongoose-generated keys (_id) that a strict write schema rejects, so
+      // echoing the object straight back would fail the save.
+      images: form.images?.length
+        ? form.images.map(({ url, publicId, alt, isPrimary, order }) => ({
+            url,
+            ...(publicId ? { publicId } : {}),
+            ...(alt ? { alt } : {}),
+            ...(isPrimary !== undefined ? { isPrimary: Boolean(isPrimary) } : {}),
+            ...(order !== undefined ? { order } : {}),
+          }))
+        : undefined,
       specifications: form.specifications,
       applications: form.applications,
       materials: form.materials,
