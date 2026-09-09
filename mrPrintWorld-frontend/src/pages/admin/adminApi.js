@@ -166,6 +166,32 @@ export const rejectCustomer = (id, reason) =>
 export const revokeCustomerTier = (id, reason) =>
   request(`/api/admin/customers/${id}/revoke`, { method: 'PATCH', body: reason ? { reason } : {} }).then((r) => r.data)
 
+/* ── Organizations (Phase 4) ───────────────────────────────────────────── */
+export function listOrganizations(params = {}) {
+  const qs = new URLSearchParams()
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== '' && v !== null) qs.set(k, String(v))
+  })
+  return request(`/api/admin/organizations?${qs}`).then((r) => ({ items: r.data, meta: r.meta }))
+}
+export const getOrganization = (id) => request(`/api/admin/organizations/${id}`).then((r) => r.data)
+export const createOrganization = (body) =>
+  request('/api/admin/organizations', { method: 'POST', body }).then((r) => r.data)
+export const updateOrganization = (id, body) =>
+  request(`/api/admin/organizations/${id}`, { method: 'PATCH', body }).then((r) => r.data)
+export const deleteOrganization = (id) => request(`/api/admin/organizations/${id}`, { method: 'DELETE' })
+export const addOrgMember = (id, body) =>
+  request(`/api/admin/organizations/${id}/members`, { method: 'POST', body }).then((r) => r.data)
+export const removeOrgMember = (id, userId) =>
+  request(`/api/admin/organizations/${id}/members/${userId}`, { method: 'DELETE' })
+
+/* ── Negotiated rates ──────────────────────────────────────────────────── */
+export const createPriceOverride = (body) =>
+  request('/api/admin/price-overrides', { method: 'POST', body }).then((r) => r.data)
+export const deletePriceOverride = (id) => request(`/api/admin/price-overrides/${id}`, { method: 'DELETE' })
+export const previewOverride = (body) =>
+  request('/api/admin/price-overrides/preview', { method: 'POST', body }).then((r) => r.data)
+
 /* ── Uploads ───────────────────────────────────────────────────────────── */
 export function uploadImage(file) {
   const fd = new FormData()
