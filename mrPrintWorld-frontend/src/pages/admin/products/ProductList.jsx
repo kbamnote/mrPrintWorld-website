@@ -7,10 +7,18 @@ export default function ProductList() {
   const [params, setParams] = useSearchParams()
   const [state, setState] = useState({ loading: true, items: [], meta: null, error: null })
   const [search, setSearch] = useState(params.get('search') ?? '')
+  const [categories, setCategories] = useState([])
+
+  // The category tree, so products can be worked one category at a time and a
+  // new product can be created straight into the category being viewed.
+  useEffect(() => {
+    api.listCategories().then(setCategories).catch(() => setCategories([]))
+  }, [])
 
   const query = {
     search: params.get('search') ?? '',
     isActive: params.get('isActive') ?? '',
+    category: params.get('category') ?? '',
     needsImage: params.get('needsImage') ?? '',
     needsPrice: params.get('needsPrice') ?? '',
     page: Number(params.get('page') ?? 1),
@@ -72,7 +80,7 @@ export default function ProductList() {
             <p className="mt-1 text-sm text-ink-soft">{state.meta.total} in the catalogue</p>
           )}
         </div>
-        <Link to="/admin/products/new">
+        <Link to={`/admin/products/new${query.category ? `?category=${query.category}` : ''}`}>
           <Btn>New product</Btn>
         </Link>
       </div>
@@ -86,6 +94,30 @@ export default function ProductList() {
           placeholder="Search products…"
           className="w-full sm:w-64"
         />
+        <Select
+          value={query.category}
+          onChange={(e) => setParam('category', e.target.value)}
+          className="w-auto"
+        >
+          <option value="">All categories</option>
+          {categories
+            .filter((c) => !c.parent)
+            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+            .map((root) => (
+              <optgroup key={root._id} label={root.name}>
+                {/* The root itself matches everything beneath it. */}
+                <option value={root._id}>All {root.name}</option>
+                {categories
+                  .filter((c) => String(c.parent) === String(root._id))
+                  .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                  .map((sub) => (
+                    <option key={sub._id} value={sub._id}>
+                      {sub.name} ({sub.productCount ?? 0})
+                    </option>
+                  ))}
+              </optgroup>
+            ))}
+        </Select>
         <Select value={query.isActive} onChange={(e) => setParam('isActive', e.target.value)} className="w-auto">
           <option value="">All statuses</option>
           <option value="true">Live</option>

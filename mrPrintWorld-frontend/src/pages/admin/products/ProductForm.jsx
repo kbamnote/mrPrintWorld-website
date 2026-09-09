@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams, Link } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import * as api from '../adminApi'
 import { Field, Input, Textarea, Select, Btn, Badge, Spinner, ErrorBanner } from '../ui'
 import PricingTab from './PricingTab'
@@ -32,6 +32,7 @@ const EMPTY = {
 
 export default function ProductForm() {
   const { id } = useParams()
+  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const isNew = !id
 
@@ -47,6 +48,14 @@ export default function ProductForm() {
   useEffect(() => {
     api.listCategories().then(setCategories).catch(setError)
   }, [])
+
+  // Creating from a filtered list preselects that category, so adding several
+  // products to one category does not mean re-picking it every time.
+  useEffect(() => {
+    if (!isNew) return
+    const preset = searchParams.get('category')
+    if (preset) setForm((f) => ({ ...f, categories: [preset], primaryCategory: preset }))
+  }, [isNew, searchParams])
 
   useEffect(() => {
     if (isNew) return

@@ -67,8 +67,22 @@ export function useProducts({ category, featured, search } = {}) {
 
     setState((s) => ({ ...s, loading: true }))
 
-    fetchProducts({ category, featured, search, limit: 60 }, { signal: controller.signal })
-      .then(({ items }) => {
+    // Fetch EVERY page. The API caps a single page at 60; asking for one page
+    // silently hid 28 of 88 products, with nothing to indicate anything was
+    // missing. Bounded at 10 pages so a runaway catalogue cannot loop forever.
+    ;(async () => {
+      const all = []
+      for (let page = 1; page <= 10; page += 1) {
+        const { items, meta } = await fetchProducts(
+          { category, featured, search, page, limit: 60 },
+          { signal: controller.signal },
+        )
+        all.push(...items)
+        if (!meta || page >= meta.pages) break
+      }
+      return all
+    })()
+      .then((items) => {
         if (cancelled) return
         setState({ items, loading: false, error: null, usingFallback: false })
       })
