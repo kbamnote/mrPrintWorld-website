@@ -40,6 +40,7 @@ export default function ProductForm() {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(!isNew)
   const [saving, setSaving] = useState(false)
+  const [savedAt, setSavedAt] = useState(null)
   const [error, setError] = useState(null)
   const [legacyImageUrl, setLegacyImageUrl] = useState(null)
 
@@ -78,6 +79,7 @@ export default function ProductForm() {
   const nameOf = (cid) => categories.find((c) => String(c._id) === String(cid))?.name ?? cid
 
   function set(patch) {
+    setSavedAt(null)
     setForm((f) => ({ ...f, ...patch }))
   }
 
@@ -93,6 +95,7 @@ export default function ProductForm() {
   async function save() {
     setSaving(true)
     setError(null)
+    setSavedAt(null)
 
     // Send only what the API accepts — its schemas are strict and reject
     // unknown keys, so echoing back _id/createdAt would fail the request.
@@ -138,8 +141,14 @@ export default function ProductForm() {
 
     try {
       const saved = isNew ? await api.createProduct(payload) : await api.updateProduct(id, payload)
-      if (isNew) navigate(`/admin/products/${saved._id}`, { replace: true })
-      else setLegacyImageUrl(saved.legacyImageUrl ?? null)
+      if (isNew) {
+        navigate(`/admin/products/${saved._id}`, { replace: true })
+      } else {
+        setLegacyImageUrl(saved.legacyImageUrl ?? null)
+        // Without this the form looked identical after a successful save, so
+        // there was no way to tell it had worked.
+        setSavedAt(new Date())
+      }
     } catch (err) {
       setError(err)
       // Jump to the tab most likely to hold the problem.
@@ -195,6 +204,24 @@ export default function ProductForm() {
             <a href={`/products/${form.slug}`} target="_blank" rel="noreferrer">
               <Btn variant="outline">View on site</Btn>
             </a>
+          )}
+          {savedAt && (
+            <span
+              className="flex items-center gap-1.5 text-sm font-medium text-green-700"
+              role="status"
+              aria-live="polite"
+            >
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path
+                  d="M2.5 8.5l3.5 3.5 7.5-8"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Saved {savedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+            </span>
           )}
           <Btn onClick={save} disabled={saving || !form.name || form.categories.length === 0}>
             {saving ? 'Saving…' : 'Save'}
@@ -365,7 +392,9 @@ export default function ProductForm() {
           <PricingTab
             productId={id}
             value={form}
-            onChange={(next) => setForm((f) => ({ ...f, ...next }))}
+            // Routed through set() so editing a price clears the "Saved"
+            // confirmation, same as every other field.
+            onChange={(next) => set(next)}
           />
         )}
 
