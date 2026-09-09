@@ -4,6 +4,7 @@ import { MotionConfig } from 'framer-motion'
 import Layout from './components/layout/Layout'
 import Home from './pages/Home'
 import RouteFallback from './components/layout/RouteFallback'
+import { CustomerAuthProvider } from './lib/customerAuth'
 
 /**
  * Route-level code splitting.
@@ -31,6 +32,9 @@ const Terms = lazy(() => import('./pages/Terms'))
 const RefundPolicy = lazy(() => import('./pages/RefundPolicy'))
 const ShippingPolicy = lazy(() => import('./pages/ShippingPolicy'))
 const NotFound = lazy(() => import('./pages/NotFound'))
+const Login = lazy(() => import('./pages/Login'))
+const Register = lazy(() => import('./pages/Register'))
+const Account = lazy(() => import('./pages/Account'))
 
 // The whole admin panel behind a single lazy boundary — one chunk, fetched
 // only when an admin actually navigates to /admin.
@@ -40,6 +44,7 @@ export default function App() {
   return (
     // reducedMotion="user" → every Framer Motion animation respects the OS setting
     <MotionConfig reducedMotion="user">
+      <CustomerAuthProvider>
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           {/* Admin is outside the public Layout — no marketing nav or footer. */}
@@ -69,10 +74,16 @@ export default function App() {
             <Route path="/terms" element={<Terms />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />
             <Route path="/shipping-policy" element={<ShippingPolicy />} />
+
+            {/* Customer accounts — all noindex; they have nothing for search. */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/account" element={<Account />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
       </Suspense>
+      </CustomerAuthProvider>
     </MotionConfig>
   )
 }

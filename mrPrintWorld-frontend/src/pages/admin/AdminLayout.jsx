@@ -8,6 +8,7 @@ const NAV = [
   { to: '/admin/products', label: 'Products' },
   { to: '/admin/categories', label: 'Categories' },
   { to: '/admin/options', label: 'Product Options' },
+  { to: '/admin/customers', label: 'Customers' },
 ]
 
 export default function AdminLayout() {
@@ -69,7 +70,7 @@ export default function AdminLayout() {
           </nav>
 
           <p className="mt-6 rounded-[var(--radius-card)] border border-line bg-white p-3 text-xs leading-relaxed text-ink-soft">
-            Customers, organizations, quotes and orders arrive in later phases.
+            Organizations, quotes and orders arrive in later phases.
           </p>
         </aside>
 

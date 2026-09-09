@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, Link, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import Logo from '../primitives/Logo'
 import Button from '../primitives/Button'
 import Icon from '../primitives/Icon'
 import { navLinks, company, whatsappLink } from '../../data/company'
+import { useCustomerAuth } from '../../lib/customerAuthContext'
+import { isApiEnabled } from '../../lib/api'
 
 export default function Navbar() {
   const { pathname } = useLocation()
+  const { isSignedIn, tierCode, tierName } = useCustomerAuth()
   const [atTop, setAtTop] = useState(true)
   const [open, setOpen] = useState(false)
   const isHome = pathname === '/'
@@ -72,7 +75,35 @@ export default function Navbar() {
             ))}
           </ul>
 
-          <div className="hidden lg:block">
+          <div className="hidden items-center gap-4 lg:flex">
+            {isApiEnabled && (
+              isSignedIn ? (
+                <Link
+                  to="/account"
+                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                    transparent ? 'text-white/80 hover:text-white' : 'text-ink-soft hover:text-primary'
+                  }`}
+                >
+                  Account
+                  {/* Only shown for approved trade/corporate — a visible
+                      reminder that the prices on screen are their rates. */}
+                  {tierCode !== 'B2C' && (
+                    <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-primary">
+                      {tierName}
+                    </span>
+                  )}
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  className={`text-sm font-medium transition-colors ${
+                    transparent ? 'text-white/80 hover:text-white' : 'text-ink-soft hover:text-primary'
+                  }`}
+                >
+                  Sign in
+                </Link>
+              )
+            )}
             <Button
               to="/request-quote"
               variant={transparent ? 'gold' : 'primary'}

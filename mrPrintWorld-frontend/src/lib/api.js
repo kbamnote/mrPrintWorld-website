@@ -18,6 +18,21 @@ export const isApiEnabled = Boolean(BASE)
 
 const TIMEOUT_MS = 8000
 
+/**
+ * Customer access token, held in memory only — never localStorage, where any
+ * XSS could read it. Set by the auth provider after login/refresh.
+ *
+ * Sending it makes catalogue and pricing responses tier-aware: an approved
+ * trade customer gets their rates, everyone else gets retail. The token only
+ * IDENTIFIES the caller — it never states a tier, because the server derives
+ * that itself and would reject the claim anyway.
+ */
+let authToken = null
+
+export function setAuthToken(token) {
+  authToken = token
+}
+
 class ApiError extends Error {
   constructor(message, status) {
     super(message)
@@ -38,7 +53,11 @@ async function request(path, { method = 'GET', body, signal } = {}) {
   try {
     const res = await fetch(`${BASE}${path}`, {
       method,
-      headers: { 'content-type': 'application/json' },
+      credentials: 'include', // carries the httpOnly refresh cookie
+      headers: {
+        'content-type': 'application/json',
+        ...(authToken ? { authorization: `Bearer ${authToken}` } : {}),
+      },
       ...(body ? { body: JSON.stringify(body) } : {}),
       signal: controller.signal,
     })
@@ -89,6 +108,11 @@ export function calculatePrice({ slug, quantity = 1, width, height, selections =
     body: { slug, quantity, ...(width ? { width } : {}), ...(height ? { height } : {}), selections },
     ...opts,
   }).then((r) => r.data)
+}
+
+/** Generic POST for the auth endpoints, which return their own shapes. */
+export function apiPost(path, body) {
+  return request(path, { method: 'POST', body })
 }
 
 export { ApiError }

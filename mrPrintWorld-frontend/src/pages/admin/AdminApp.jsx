@@ -9,6 +9,7 @@ import ProductList from './products/ProductList'
 import ProductForm from './products/ProductForm'
 import CategoryTree from './categories/CategoryTree'
 import OptionGroupList from './options/OptionGroupList'
+import CustomerList from './customers/CustomerList'
 
 /**
  * The admin panel. Loaded as a single lazy chunk from App.jsx, so none of this
@@ -60,6 +61,7 @@ export default function AdminApp() {
           <Route path="products/:id" element={<ProductForm />} />
           <Route path="categories" element={<CategoryTree />} />
           <Route path="options" element={<OptionGroupList />} />
+          <Route path="customers" element={<CustomerList />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
       </Routes>

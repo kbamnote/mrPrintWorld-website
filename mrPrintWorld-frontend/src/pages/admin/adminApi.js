@@ -151,6 +151,21 @@ export const updateOptionGroup = (id, body) =>
   request(`/api/admin/option-groups/${id}`, { method: 'PATCH', body }).then((r) => r.data)
 export const deleteOptionGroup = (id) => request(`/api/admin/option-groups/${id}`, { method: 'DELETE' })
 
+/* ── Customers (Phase 3) ───────────────────────────────────────────────── */
+export function listCustomers(params = {}) {
+  const qs = new URLSearchParams()
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== '' && v !== null) qs.set(k, String(v))
+  })
+  return request(`/api/admin/customers?${qs}`).then((r) => ({ items: r.data, meta: r.meta }))
+}
+export const approveCustomer = (id, body = {}) =>
+  request(`/api/admin/customers/${id}/approve`, { method: 'PATCH', body }).then((r) => r.data)
+export const rejectCustomer = (id, reason) =>
+  request(`/api/admin/customers/${id}/reject`, { method: 'PATCH', body: { reason } }).then((r) => r.data)
+export const revokeCustomerTier = (id, reason) =>
+  request(`/api/admin/customers/${id}/revoke`, { method: 'PATCH', body: reason ? { reason } : {} }).then((r) => r.data)
+
 /* ── Uploads ───────────────────────────────────────────────────────────── */
 export function uploadImage(file) {
   const fd = new FormData()
