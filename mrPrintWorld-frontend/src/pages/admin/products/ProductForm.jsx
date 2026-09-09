@@ -1,0 +1,467 @@
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams, Link } from 'react-router-dom'
+import * as api from '../adminApi'
+import { Field, Input, Textarea, Select, Btn, Badge, Spinner, ErrorBanner } from '../ui'
+import PricingTab from './PricingTab'
+
+const TABS = ['General', 'Images', 'Pricing', 'Visibility', 'SEO']
+
+const EMPTY = {
+  name: '',
+  slug: '',
+  categories: [],
+  primaryCategory: '',
+  shortDescription: '',
+  description: '',
+  images: [],
+  specifications: [],
+  applications: [],
+  materials: [],
+  sizes: [],
+  customization: [],
+  pricingModel: 'QUOTE_ONLY',
+  purchaseMode: 'QUOTE_ONLY',
+  pricing: null,
+  visibility: { b2c: true, b2b: true, corporate: true },
+  featured: false,
+  isActive: false,
+  seo: { title: '', description: '' },
+  hsnCode: '',
+  taxPercent: null,
+}
+
+export default function ProductForm() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const isNew = !id
+
+  const [tab, setTab] = useState('General')
+  const [form, setForm] = useState(EMPTY)
+  const [categories, setCategories] = useState([])
+  const [loading, setLoading] = useState(!isNew)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+  const [legacyImageUrl, setLegacyImageUrl] = useState(null)
+
+  useEffect(() => {
+    api.listCategories().then(setCategories).catch(setError)
+  }, [])
+
+  useEffect(() => {
+    if (isNew) return
+    api
+      .getProduct(id)
+      .then((p) => {
+        setLegacyImageUrl(p.legacyImageUrl ?? null)
+        setForm({
+          ...EMPTY,
+          ...p,
+          categories: (p.categories ?? []).map((c) => (typeof c === 'object' ? c._id : c)),
+          primaryCategory: p.primaryCategory ? String(p.primaryCategory._id ?? p.primaryCategory) : '',
+          seo: { title: p.seo?.title ?? '', description: p.seo?.description ?? '' },
+          // Mongo returns Maps as plain objects through .lean() — normalise so
+          // the pricing inputs are always editing the same shape.
+          pricing: p.pricing ?? null,
+        })
+      })
+      .catch(setError)
+      .finally(() => setLoading(false))
+  }, [id, isNew])
+
+  // Only leaf categories are selectable: assigning a product to "Signage"
+  // rather than "Outdoor Signage" makes browse pages meaningless.
+  const leafCategories = useMemo(() => {
+    const parentIds = new Set(categories.map((c) => String(c.parent)).filter(Boolean))
+    return categories.filter((c) => !parentIds.has(String(c._id)))
+  }, [categories])
+
+  const nameOf = (cid) => categories.find((c) => String(c._id) === String(cid))?.name ?? cid
+
+  function set(patch) {
+    setForm((f) => ({ ...f, ...patch }))
+  }
+
+  function toggleCategory(cid) {
+    const has = form.categories.includes(cid)
+    const next = has ? form.categories.filter((c) => c !== cid) : [...form.categories, cid]
+    set({
+      categories: next,
+      primaryCategory: next.includes(form.primaryCategory) ? form.primaryCategory : (next[0] ?? ''),
+    })
+  }
+
+  async function save() {
+    setSaving(true)
+    setError(null)
+
+    // Send only what the API accepts — its schemas are strict and reject
+    // unknown keys, so echoing back _id/createdAt would fail the request.
+    const payload = {
+      name: form.name,
+      categories: form.categories,
+      ...(form.primaryCategory ? { primaryCategory: form.primaryCategory } : {}),
+      shortDescription: form.shortDescription || undefined,
+      description: form.description || undefined,
+      images: form.images?.length ? form.images : undefined,
+      specifications: form.specifications,
+      applications: form.applications,
+      materials: form.materials,
+      sizes: form.sizes,
+      customization: form.customization,
+      pricingModel: form.pricingModel,
+      purchaseMode: form.purchaseMode,
+      pricing: form.pricingModel === 'QUOTE_ONLY' ? null : (form.pricing ?? undefined),
+      visibility: form.visibility,
+      featured: form.featured,
+      isActive: form.isActive,
+      seo: {
+        ...(form.seo?.title ? { title: form.seo.title } : {}),
+        ...(form.seo?.description ? { description: form.seo.description } : {}),
+      },
+      ...(form.hsnCode ? { hsnCode: form.hsnCode } : {}),
+      ...(form.taxPercent != null && form.taxPercent !== '' ? { taxPercent: Number(form.taxPercent) } : {}),
+      // A slug is only sent when creating. Editing never changes it silently —
+      // these URLs are indexed.
+      ...(isNew && form.slug ? { slug: form.slug } : {}),
+    }
+
+    try {
+      const saved = isNew ? await api.createProduct(payload) : await api.updateProduct(id, payload)
+      if (isNew) navigate(`/admin/products/${saved._id}`, { replace: true })
+      else setLegacyImageUrl(saved.legacyImageUrl ?? null)
+    } catch (err) {
+      setError(err)
+      // Jump to the tab most likely to hold the problem.
+      if (err.details?.some((d) => d.field?.startsWith('pricing'))) setTab('Pricing')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleUpload(file) {
+    setError(null)
+    try {
+      const img = await api.uploadImage(file)
+      set({
+        images: [
+          ...form.images,
+          { url: img.url, publicId: img.publicId, alt: form.name, isPrimary: form.images.length === 0 },
+        ],
+      })
+    } catch (err) {
+      setError(err)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <Spinner />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <Link to="/admin/products" className="text-sm text-ink-soft hover:text-primary">
+            ← Products
+          </Link>
+          <h1 className="mt-1 truncate font-display text-2xl font-bold text-ink">
+            {isNew ? 'New product' : form.name || 'Untitled'}
+          </h1>
+          {!isNew && (
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <code className="text-xs text-ink-soft">/products/{form.slug}</code>
+              <Badge tone={form.isActive ? 'green' : 'neutral'}>{form.isActive ? 'live' : 'draft'}</Badge>
+              {legacyImageUrl && <Badge tone="amber">borrowed photo</Badge>}
+            </div>
+          )}
+        </div>
+        <div className="flex gap-2">
+          {!isNew && (
+            <a href={`/products/${form.slug}`} target="_blank" rel="noreferrer">
+              <Btn variant="outline">View on site</Btn>
+            </a>
+          )}
+          <Btn onClick={save} disabled={saving || !form.name || form.categories.length === 0}>
+            {saving ? 'Saving…' : 'Save'}
+          </Btn>
+        </div>
+      </div>
+
+      <ErrorBanner error={error} onDismiss={() => setError(null)} />
+
+      <div className="flex flex-wrap gap-1 border-b border-line">
+        {TABS.map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
+              tab === t
+                ? 'border-primary text-primary'
+                : 'border-transparent text-ink-soft hover:text-ink'
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      <div className="rounded-[var(--radius-lg)] border border-line bg-white p-5">
+        {tab === 'General' && (
+          <div className="space-y-4">
+            <Field label="Product name" required>
+              <Input value={form.name} onChange={(e) => set({ name: e.target.value })} />
+            </Field>
+
+            {isNew && (
+              <Field label="Slug" hint="Leave blank to generate from the name. This becomes the URL and cannot be changed later without breaking links.">
+                <Input value={form.slug} onChange={(e) => set({ slug: e.target.value })} placeholder="auto" />
+              </Field>
+            )}
+
+            <Field
+              label="Categories"
+              required
+              hint="A product may sit in several — e.g. Corporate Signage belongs under both Indoor and Custom."
+            >
+              <div className="flex flex-wrap gap-2 rounded-[var(--radius-card)] border border-line p-3">
+                {leafCategories.map((c) => {
+                  const on = form.categories.includes(String(c._id))
+                  return (
+                    <button
+                      key={c._id}
+                      type="button"
+                      onClick={() => toggleCategory(String(c._id))}
+                      className={`rounded-[var(--radius-card)] border px-3 py-1.5 text-xs font-medium transition-colors ${
+                        on ? 'border-primary bg-primary text-white' : 'border-line bg-white text-ink-soft hover:bg-gray-50'
+                      }`}
+                    >
+                      {c.name}
+                    </button>
+                  )
+                })}
+              </div>
+            </Field>
+
+            {form.categories.length > 1 && (
+              <Field label="Primary category" hint="Used for the breadcrumb and the canonical URL.">
+                <Select value={form.primaryCategory} onChange={(e) => set({ primaryCategory: e.target.value })}>
+                  {form.categories.map((cid) => (
+                    <option key={cid} value={cid}>
+                      {nameOf(cid)}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            )}
+
+            <Field label="Short description" hint="One line, shown on product cards.">
+              <Input
+                value={form.shortDescription ?? ''}
+                onChange={(e) => set({ shortDescription: e.target.value })}
+                maxLength={400}
+              />
+            </Field>
+
+            <Field label="Full description">
+              <Textarea rows={6} value={form.description ?? ''} onChange={(e) => set({ description: e.target.value })} />
+            </Field>
+
+            <ListField label="Specifications" value={form.specifications} onChange={(v) => set({ specifications: v })} />
+            <ListField label="Applications" value={form.applications} onChange={(v) => set({ applications: v })} />
+            <ListField label="Materials" value={form.materials} onChange={(v) => set({ materials: v })} />
+            <ListField label="Sizes" value={form.sizes} onChange={(v) => set({ sizes: v })} />
+          </div>
+        )}
+
+        {tab === 'Images' && (
+          <div className="space-y-4">
+            {legacyImageUrl && form.images.length === 0 && (
+              <div className="rounded-[var(--radius-card)] border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm text-amber-900">
+                  This product is still showing an image hotlinked from a third-party website. It will be replaced
+                  automatically the moment you upload a real photograph.
+                </p>
+                <img
+                  referrerPolicy="no-referrer"
+                  src={legacyImageUrl}
+                  alt=""
+                  className="mt-3 h-32 w-32 rounded object-cover"
+                />
+              </div>
+            )}
+
+            <Field label="Upload" hint="JPEG, PNG, WebP or AVIF. Up to 8 MB.">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/avif"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleUpload(file)
+                  e.target.value = ''
+                }}
+                className="block w-full text-sm text-ink-soft file:mr-4 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20"
+              />
+            </Field>
+
+            {form.images.length > 0 && (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {form.images.map((img, i) => (
+                  <div key={img.url} className="overflow-hidden rounded-[var(--radius-card)] border border-line">
+                    <img src={img.url} alt={img.alt ?? ''} className="aspect-square w-full object-cover" />
+                    <div className="space-y-1 p-2">
+                      <Input
+                        value={img.alt ?? ''}
+                        onChange={(e) =>
+                          set({ images: form.images.map((x, xi) => (xi === i ? { ...x, alt: e.target.value } : x)) })
+                        }
+                        placeholder="Alt text"
+                        className="text-xs"
+                      />
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-1 text-[0.7rem] text-ink-soft">
+                          <input
+                            type="radio"
+                            name="primaryImage"
+                            checked={Boolean(img.isPrimary)}
+                            onChange={() =>
+                              set({ images: form.images.map((x, xi) => ({ ...x, isPrimary: xi === i })) })
+                            }
+                          />
+                          Primary
+                        </label>
+                        <Btn
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => set({ images: form.images.filter((_, xi) => xi !== i) })}
+                        >
+                          Remove
+                        </Btn>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === 'Pricing' && (
+          <PricingTab
+            productId={id}
+            value={form}
+            onChange={(next) => setForm((f) => ({ ...f, ...next }))}
+          />
+        )}
+
+        {tab === 'Visibility' && (
+          <div className="space-y-5">
+            <fieldset>
+              <legend className="mb-2 text-sm font-medium text-ink">Show this product to</legend>
+              <div className="space-y-2">
+                {[
+                  ['b2c', 'B2C — retail customers and anonymous visitors'],
+                  ['b2b', 'B2B — approved trade accounts'],
+                  ['corporate', 'Corporate — approved corporate accounts'],
+                ].map(([key, label]) => (
+                  <label key={key} className="flex items-center gap-2 text-sm text-ink">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(form.visibility?.[key])}
+                      onChange={(e) => set({ visibility: { ...form.visibility, [key]: e.target.checked } })}
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-ink-soft">
+                Unchecking B2C hides this product from the public site and from Google.
+              </p>
+            </fieldset>
+
+            <label className="flex items-center gap-2 text-sm text-ink">
+              <input type="checkbox" checked={form.featured} onChange={(e) => set({ featured: e.target.checked })} />
+              Featured — appears in the homepage carousel
+            </label>
+
+            <label className="flex items-center gap-2 text-sm text-ink">
+              <input type="checkbox" checked={form.isActive} onChange={(e) => set({ isActive: e.target.checked })} />
+              Live — publish to the website and include in the sitemap
+            </label>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="HSN code" hint="Used on GST invoices from Phase 6.">
+                <Input value={form.hsnCode ?? ''} onChange={(e) => set({ hsnCode: e.target.value })} />
+              </Field>
+              <Field label="GST %">
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={form.taxPercent ?? ''}
+                  onChange={(e) => set({ taxPercent: e.target.value === '' ? null : Number(e.target.value) })}
+                  placeholder="18"
+                />
+              </Field>
+            </div>
+          </div>
+        )}
+
+        {tab === 'SEO' && (
+          <div className="space-y-4">
+            <Field label="Page title" hint="Falls back to the product name. Around 60 characters reads best in Google.">
+              <Input
+                value={form.seo?.title ?? ''}
+                onChange={(e) => set({ seo: { ...form.seo, title: e.target.value } })}
+                maxLength={200}
+              />
+            </Field>
+            <Field label="Meta description" hint="Falls back to the short description. Aim for 150–160 characters.">
+              <Textarea
+                rows={3}
+                value={form.seo?.description ?? ''}
+                onChange={(e) => set({ seo: { ...form.seo, description: e.target.value } })}
+                maxLength={400}
+              />
+            </Field>
+            <div className="rounded-[var(--radius-card)] border border-line bg-surface p-4">
+              <p className="text-xs uppercase tracking-wider text-ink-soft">Google preview</p>
+              <p className="mt-2 text-base text-blue-800">{form.seo?.title || form.name || 'Product name'}</p>
+              <p className="text-xs text-green-700">
+                www.mrprintworld.com/products/{form.slug || 'product-slug'}
+              </p>
+              <p className="mt-1 text-sm text-ink-soft">
+                {form.seo?.description || form.shortDescription || 'No description set.'}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/** Repeating one-line list (specs, materials, sizes…). */
+function ListField({ label, value = [], onChange }) {
+  return (
+    <Field label={label}>
+      <div className="space-y-2">
+        {value.map((item, i) => (
+          <div key={i} className="flex gap-2">
+            <Input value={item} onChange={(e) => onChange(value.map((v, vi) => (vi === i ? e.target.value : v)))} />
+            <Btn variant="ghost" size="sm" onClick={() => onChange(value.filter((_, vi) => vi !== i))}>
+              Remove
+            </Btn>
+          </div>
+        ))}
+        <Btn variant="outline" size="sm" onClick={() => onChange([...value, ''])}>
+          Add {label.toLowerCase().replace(/s$/, '')}
+        </Btn>
+      </div>
+    </Field>
+  )
+}

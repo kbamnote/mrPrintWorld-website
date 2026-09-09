@@ -1,13 +1,13 @@
-import React from 'react'
 import Section from '../primitives/Section'
 import SectionHeading from '../primitives/SectionHeading'
-import Reveal from '../primitives/Reveal'
 import Button from '../primitives/Button'
-import { getFeaturedProducts } from '../../data/products'
+import { useProducts } from '../../lib/useCatalogue'
 import { whatsappLink } from '../../data/company'
 
 export default function ProductsPreviewSection() {
-  const featuredProducts = getFeaturedProducts().slice(0, 6);
+  // API-backed, falling back to bundled data when the API is unavailable.
+  const { items } = useProducts({ featured: true })
+  const featuredProducts = items.slice(0, 6);
 
   return (
     <Section id="products" tone="default" container={false}>
@@ -25,12 +25,12 @@ export default function ProductsPreviewSection() {
 
         <div className="marquee-track flex gap-6">
           {[...featuredProducts, ...featuredProducts].map((product, index) => (
-            <div key={`${product.id}-${index}`} className="bg-white rounded-[var(--radius-lg)] overflow-hidden shadow-sm border border-line flex flex-col w-[280px] sm:w-[380px] shrink-0 transition-shadow duration-300 hover:shadow-card">
+            <div key={`${product.slug}-${index}`} className="bg-white rounded-[var(--radius-lg)] overflow-hidden shadow-sm border border-line flex flex-col w-[280px] sm:w-[380px] shrink-0 transition-shadow duration-300 hover:shadow-card">
               <div className="aspect-[4/3] bg-gray-100 relative">
-                {product.image ? (
-                  <img referrerPolicy="no-referrer" 
-                    src={product.image} 
-                    alt={product.name} 
+                {product.image?.url ? (
+                  <img referrerPolicy="no-referrer"
+                    src={product.image.url}
+                    alt={product.image.alt ?? product.name}
                     className="w-full h-full object-cover" 
                   />
                 ) : (
@@ -38,9 +38,11 @@ export default function ProductsPreviewSection() {
                     Image placeholder
                   </div>
                 )}
-                {product.category && (
+                {product.categories?.[0] && (
                   <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 text-xs font-medium text-ink-soft rounded-[var(--radius-card)] uppercase tracking-wider shadow-sm">
-                    {product.category}
+                    {typeof product.categories[0] === 'string'
+                      ? product.categories[0]
+                      : product.categories[0].name}
                   </div>
                 )}
               </div>

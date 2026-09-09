@@ -1,7 +1,6 @@
-import React from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
-import { products, productCategories } from '../data/products';
-import { company, whatsappLink } from '../data/company';
+import { useProduct, useProducts } from '../lib/useCatalogue';
+import { whatsappLink } from '../data/company';
 import { useSeo, breadcrumbLd } from '../lib/seo';
 import Container from '../components/primitives/Container';
 import Reveal from '../components/primitives/Reveal';
@@ -10,31 +9,60 @@ import Icon from '../components/primitives/Icon';
 
 export default function ProductDetail() {
   const { slug } = useParams();
-  const product = products.find(p => p.slug === slug);
-  
-  if (!product) {
-    return <Navigate to="/products" replace />;
-  }
+  const { product, loading, notFound } = useProduct(slug);
 
-  const categoryName = productCategories.find(c => c.id === product.category)?.name || product.category;
-  const relatedProducts = products
-    .filter(p => p.category === product.category && p.id !== product.id)
-    .slice(0, 3);
+  // Related = same primary category, excluding this product. Sourced through
+  // the same hook, so it follows the API/fallback path automatically.
+  const categorySlug =
+    typeof product?.primaryCategory === 'object' ? product.primaryCategory.slug : undefined;
+  const { items: siblings } = useProducts(categorySlug ? { category: categorySlug } : {});
+  const relatedProducts = (siblings ?? []).filter((p) => p.slug !== slug).slice(0, 3);
 
-  const whatsappUrl = whatsappLink({ product: product.name });
+  const categoryName =
+    (typeof product?.primaryCategory === 'object'
+      ? product.primaryCategory.name
+      : product?.categories?.[0]?.name) ?? '';
 
+  const whatsappUrl = whatsappLink({ product: product?.name ?? 'your requirement' });
+
+  // Hooks must run on EVERY render, including while loading and when the
+  // product is missing. The previous version called useSeo() after an early
+  // return, which changes the hook count between renders — harmless with
+  // synchronous data, a crash once loading became asynchronous.
   useSeo({
-    title: `${product.name} | MRPrint World`,
-    description: product.shortDescription,
-    path: `/products/${product.slug}`,
-    schema: [
-      breadcrumbLd([
-        { name: 'Home', url: '/' },
-        { name: 'Products', url: '/products' },
-        { name: product.name, url: `/products/${product.slug}` }
-      ])
-    ]
+    title: product ? `${product.name} | MRPrint World` : 'Product | MRPrint World',
+    description: product?.shortDescription ?? undefined,
+    path: `/products/${slug}`,
+    schema: product
+      ? [
+          breadcrumbLd([
+            { name: 'Home', url: '/' },
+            { name: 'Products', url: '/products' },
+            { name: product.name, url: `/products/${product.slug}` },
+          ]),
+        ]
+      : undefined,
   });
+
+  if (notFound) return <Navigate to="/products" replace />;
+
+  if (loading || !product) {
+    return (
+      <section className="pt-24 pb-12 md:pt-32 md:pb-20 bg-surface border-b border-line">
+        <Container>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+            <div className="aspect-square animate-pulse rounded-[var(--radius-lg)] bg-gray-100" />
+            <div className="space-y-4">
+              <div className="h-3 w-28 animate-pulse rounded bg-gray-100" />
+              <div className="h-8 w-3/4 animate-pulse rounded bg-gray-100" />
+              <div className="h-4 w-full animate-pulse rounded bg-gray-100" />
+              <div className="h-4 w-5/6 animate-pulse rounded bg-gray-100" />
+            </div>
+          </div>
+        </Container>
+      </section>
+    );
+  }
 
   return (
     <>
@@ -51,8 +79,8 @@ export default function ProductDetail() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
             <Reveal>
               <div className="aspect-square bg-white rounded-[var(--radius-lg)] border border-line overflow-hidden shadow-sm flex items-center justify-center">
-                {product.image ? (
-                  <img referrerPolicy="no-referrer" src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                {product.images?.[0]?.url ? (
+                  <img referrerPolicy="no-referrer" src={product.images[0].url} alt={product.images[0].alt ?? product.name} className="w-full h-full object-cover" />
                 ) : (
                   <Icon name="Image" size={64} className="text-gray-300" />
                 )}
@@ -103,13 +131,15 @@ export default function ProductDetail() {
                   {product.moq && (
                     <div>
                       <h3 className="text-lg font-bold text-ink mb-1">Minimum Order Quantity</h3>
-                      <p className="text-sm text-ink-soft">{product.moq}</p>
+                      <p className="text-sm text-ink-soft">
+                        {product.moq.qty ? `${product.moq.qty} ${product.moq.unit ?? ''}`.trim() : product.moq.unit}
+                      </p>
                     </div>
                   )}
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4 mt-auto pt-6 border-t border-line">
-                  <Button to={`/request-quote?product=${product.id}`} variant="primary" size="lg" className="flex-1 justify-center">
+                  <Button to={`/request-quote?product=${product.slug}`} variant="primary" size="lg" className="flex-1 justify-center">
                     Request Quote for {product.name}
                   </Button>
                   <Button href={whatsappUrl} target="_blank" rel="noopener noreferrer" variant="outline" size="lg" className="flex-1 justify-center border-green-500 text-green-600 hover:bg-green-50">
@@ -131,11 +161,11 @@ export default function ProductDetail() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {relatedProducts.map((p, idx) => (
-                <Reveal key={p.id} delay={idx * 0.1}>
+                <Reveal key={p.slug} delay={idx * 0.1}>
                   <Link to={`/products/${p.slug}`} className="group block bg-surface rounded-[var(--radius-lg)] border border-line shadow-sm overflow-hidden hover:shadow-card transition-shadow">
                     <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
-                      {p.image ? (
-                        <img referrerPolicy="no-referrer" src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                      {p.image?.url ? (
+                        <img referrerPolicy="no-referrer" src={p.image.url} alt={p.image.alt ?? p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
                           <Icon name="Image" size={40} strokeWidth={1} />
