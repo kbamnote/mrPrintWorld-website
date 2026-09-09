@@ -120,11 +120,11 @@ export default function Navbar() {
               )
             )}
             <Button
-              to="/request-quote"
+              to="/contact"
               variant={transparent ? 'gold' : 'primary'}
               iconName="arrow-right"
             >
-              Request a Quote
+              Contact Us
             </Button>
           </div>
 
@@ -172,13 +172,13 @@ export default function Navbar() {
                 </NavLink>
               ))}
               <Button
-                to="/request-quote"
+                to="/contact"
                 variant="primary"
                 size="lg"
                 iconName="arrow-right"
                 className="mt-7"
               >
-                Request a Quote
+                Contact Us
               </Button>
               <div className="mt-4 flex gap-3">
                 <Button

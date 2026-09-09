@@ -178,8 +178,8 @@ export default function ServiceDetail() {
                 <p className="text-ink-soft text-sm mb-8">Get in touch with our factory experts to discuss specifications, quantities, and obtain a custom commercial quotation.</p>
                 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button to={`/request-quote?service=${service.id}`} variant="primary" size="lg">
-                    Request a Quote
+                  <Button to="/contact" variant="primary" size="lg">
+                    Contact Us
                   </Button>
                   <Button href={whatsappUrl} target="_blank" rel="noopener noreferrer" variant="outline" size="lg" className="border-green-500 text-green-600 hover:bg-green-50">
                     <Icon name="MessageCircle" size={20} className="mr-2" />

@@ -64,8 +64,8 @@ export default function Services() {
             ))}
           </div>
           <div className="mt-12">
-            <Button to="/request-quote" variant="primary" size="lg" iconName="arrow-right">
-              Request a Quote
+            <Button to="/contact" variant="primary" size="lg" iconName="arrow-right">
+              Contact Us
             </Button>
           </div>
         </Container>

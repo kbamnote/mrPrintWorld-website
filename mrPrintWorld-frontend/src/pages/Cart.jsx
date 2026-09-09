@@ -31,14 +31,14 @@ export default function Cart() {
             <Icon name="Image" size={44} strokeWidth={1} className="mx-auto mb-4 text-gray-300" />
             <h1 className="font-display text-2xl font-bold text-ink">Your cart is empty</h1>
             <p className="mt-2 text-ink-soft">
-              Browse the catalogue and add what you need — or tell us about a custom job and we&rsquo;ll quote it.
+              Browse the catalogue and add what you need. Sign in to see your pricing.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Button to="/products" variant="primary">
                 Browse products
               </Button>
-              <Button to="/request-quote" variant="outline">
-                Request a quote
+              <Button to="/contact" variant="outline">
+                Contact Us
               </Button>
             </div>
           </div>

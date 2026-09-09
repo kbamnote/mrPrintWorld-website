@@ -115,8 +115,8 @@ export default function Products() {
                       <Button to={`/products/${product.slug}`} variant="outline" size="sm" className="w-full justify-center">
                         View Details
                       </Button>
-                      <Button to={`/request-quote?product=${product.slug}`} variant="primary" size="sm" className="w-full justify-center">
-                        Request Quote
+                      <Button to={`/products/${product.slug}`} variant="primary" size="sm" className="w-full justify-center">
+                        View Price
                       </Button>
                     </div>
                   </div>

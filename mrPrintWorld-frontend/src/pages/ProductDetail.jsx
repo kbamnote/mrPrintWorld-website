@@ -145,9 +145,6 @@ export default function ProductDetail() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4 mt-auto pt-6 border-t border-line">
-                  <Button to={`/request-quote?product=${product.slug}`} variant="primary" size="lg" className="flex-1 justify-center">
-                    Request Quote for {product.name}
-                  </Button>
                   <Button href={whatsappUrl} target="_blank" rel="noopener noreferrer" variant="outline" size="lg" className="flex-1 justify-center border-green-500 text-green-600 hover:bg-green-50">
                     <Icon name="MessageCircle" size={20} className="mr-2" />
                     WhatsApp Us

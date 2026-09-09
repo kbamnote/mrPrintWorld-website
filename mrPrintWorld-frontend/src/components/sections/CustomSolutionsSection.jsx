@@ -19,8 +19,8 @@ export default function CustomSolutionsSection() {
           </p>
         </Reveal>
         <Reveal delay={0.3} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button to="/request-quote" variant="gold" size="lg">
-            Request a Quote
+          <Button to="/contact" variant="gold" size="lg">
+            Contact Us
           </Button>
           <Button href={whatsappLink({ service: 'custom requirement' })} target="_blank" rel="noopener noreferrer" variant="outline-light" size="lg" iconName="whatsapp">
             WhatsApp Us

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { MotionConfig } from 'framer-motion'
 import Layout from './components/layout/Layout'
 import Home from './pages/Home'
@@ -26,7 +26,6 @@ const Portfolio = lazy(() => import('./pages/Portfolio'))
 const About = lazy(() => import('./pages/About'))
 const Achievements = lazy(() => import('./pages/Achievements'))
 const Contact = lazy(() => import('./pages/Contact'))
-const RequestQuote = lazy(() => import('./pages/RequestQuote'))
 const Faq = lazy(() => import('./pages/Faq'))
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'))
 const Terms = lazy(() => import('./pages/Terms'))
@@ -74,7 +73,9 @@ export default function App() {
             <Route path="/about" element={<About />} />
             <Route path="/achievements" element={<Achievements />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/request-quote" element={<RequestQuote />} />
+            {/* Retired. This URL is indexed by Google, so it redirects rather
+                than 404s — a dead indexed page is worse than a moved one. */}
+            <Route path="/request-quote" element={<Navigate to="/contact" replace />} />
             <Route path="/faq" element={<Faq />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<Terms />} />

@@ -131,9 +131,9 @@ export default function Account() {
 
           <div className="mt-8 rounded-[var(--radius-lg)] border border-dashed border-line bg-white p-6 text-center">
             <p className="text-sm text-ink-soft">
-              Quotes and order history will appear here in a future release. For now,{' '}
-              <Link to="/request-quote" className="font-medium text-primary hover:underline">
-                request a quote
+              Need something not in the catalogue?{' '}
+              <Link to="/contact" className="font-medium text-primary hover:underline">
+                Contact us
               </Link>{' '}
               and our team will follow up directly.
             </p>

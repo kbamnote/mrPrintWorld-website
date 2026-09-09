@@ -138,8 +138,8 @@ export default function CategoryBrowse() {
               <p className="mx-auto mb-6 max-w-md text-sm text-ink-soft">
                 We are still adding products to this category. Tell us what you need and we will quote it directly.
               </p>
-              <Button to="/request-quote" variant="primary">
-                Request a Quote
+              <Button to="/contact" variant="primary">
+                Contact Us
               </Button>
             </div>
           ) : (
@@ -172,12 +172,12 @@ export default function CategoryBrowse() {
                           View Details
                         </Button>
                         <Button
-                          to={`/request-quote?product=${product.slug}`}
+                          to={`/products/${product.slug}`}
                           variant="primary"
                           size="sm"
                           className="w-full justify-center"
                         >
-                          Request Quote
+                          View Price
                         </Button>
                       </div>
                     </div>

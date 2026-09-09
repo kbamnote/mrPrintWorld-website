@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useCart } from '../../lib/cartContext'
 import { useCustomerAuth } from '../../lib/customerAuthContext'
 import { calculatePrice } from '../../lib/api'
@@ -17,7 +17,8 @@ const money = (n) => `₹${Number(n).toLocaleString('en-IN', { maximumFractionDi
  */
 export default function BuyPanel({ product }) {
   const { add } = useCart()
-  const { tierCode, tierName } = useCustomerAuth()
+  const { tierCode, tierName, isSignedIn, booting } = useCustomerAuth()
+  const location = useLocation()
   const navigate = useNavigate()
 
   const needsSize = ['AREA', 'OPTION'].includes(product.pricingModel)
@@ -32,7 +33,7 @@ export default function BuyPanel({ product }) {
 
   // Ask the server for a price whenever the configuration changes.
   useEffect(() => {
-    if (!buyable) return
+    if (!buyable || !isSignedIn) return
     const controller = new AbortController()
     const t = setTimeout(() => {
       setLoading(true)
@@ -54,17 +55,59 @@ export default function BuyPanel({ product }) {
       clearTimeout(t)
       controller.abort()
     }
-  }, [product.slug, qty, dims, selections, needsSize, buyable])
+  }, [product.slug, qty, dims, selections, needsSize, buyable, isSignedIn])
+
+  if (booting) {
+    return (
+      <div className="rounded-[var(--radius-lg)] border border-line bg-white p-6">
+        <div className="h-10 animate-pulse rounded bg-gray-100" />
+      </div>
+    )
+  }
+
+  /**
+   * Signed-out gate.
+   *
+   * Pricing is for account holders, so an anonymous visitor gets a "View
+   * price" prompt rather than a figure. `state.from` carries them straight
+   * back to this product after signing in, so the sign-in is not a dead end.
+   */
+  if (!isSignedIn) {
+    return (
+      <div className="rounded-[var(--radius-lg)] border border-line bg-white p-6">
+        <h3 className="font-display text-lg font-semibold text-ink">Pricing for account holders</h3>
+        <p className="mt-1 text-sm text-ink-soft">
+          Sign in to see pricing for this product and order online.
+        </p>
+        <Button
+          variant="primary"
+          size="lg"
+          className="mt-4 w-full justify-center"
+          onClick={() => navigate('/login', { state: { from: location.pathname } })}
+        >
+          View Price
+        </Button>
+        <p className="mt-3 text-center text-xs text-ink-soft">
+          No account?{' '}
+          <Link to="/register" className="font-medium text-primary hover:underline">
+            Create one
+          </Link>{' '}
+          — it takes a minute.
+        </p>
+      </div>
+    )
+  }
 
   if (!buyable) {
     return (
       <div className="rounded-[var(--radius-lg)] border border-line bg-white p-6">
-        <h3 className="font-display text-lg font-semibold text-ink">Quoted individually</h3>
+        <h3 className="font-display text-lg font-semibold text-ink">Priced on specification</h3>
         <p className="mt-1 text-sm text-ink-soft">
-          This one depends on site, materials and finish. Tell us what you need and we&rsquo;ll price it properly.
+          This one depends on site, materials and finish, so our team prices it directly. Send us the
+          details and we&rsquo;ll come back with a figure.
         </p>
-        <Button to={`/request-quote?product=${product.slug}`} variant="primary" size="lg" className="mt-4 w-full justify-center">
-          Request a quote
+        <Button to="/contact" variant="primary" size="lg" className="mt-4 w-full justify-center">
+          Contact Us
         </Button>
       </div>
     )
@@ -190,11 +233,11 @@ export default function BuyPanel({ product }) {
           </Button>
         )}
 
-        {/* Even a priced product can still be quoted — some jobs need a
-            conversation regardless of what the calculator says. */}
+        {/* Even a priced product can need a conversation — bespoke sizes,
+            site surveys, unusual finishes. */}
         {quote?.requiresQuote && (
-          <Button to={`/request-quote?product=${product.slug}`} variant="outline" className="w-full justify-center">
-            Request a custom quote instead
+          <Button to="/contact" variant="outline" className="w-full justify-center">
+            Talk to us about a custom job
           </Button>
         )}
       </div>

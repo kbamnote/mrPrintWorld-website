@@ -31,8 +31,8 @@ function Detail({ s }) {
         <Button to={`/services/${s.slug}`} variant="primary" iconName="arrow-right">
           Explore Details
         </Button>
-        <Button to={`/request-quote?service=${s.id}`} variant="outline">
-          Request Quote
+        <Button to={`/services/${s.slug}`} variant="outline">
+          Learn More
         </Button>
       </div>
     </div>

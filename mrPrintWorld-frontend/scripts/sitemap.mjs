@@ -114,7 +114,6 @@ const staticRoutes = [
   ['/products', 'weekly', '0.9'],
   ['/portfolio', 'weekly', '0.8'],
   ['/contact', 'monthly', '0.8'],
-  ['/request-quote', 'monthly', '0.8'],
   ['/about', 'monthly', '0.7'],
   ['/achievements', 'monthly', '0.6'],
   ['/faq', 'monthly', '0.6'],
