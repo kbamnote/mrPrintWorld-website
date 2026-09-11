@@ -1,4 +1,4 @@
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useCustomerAuth } from '../../lib/customerAuthContext'
 import { useCart } from '../../lib/cartContext'
 
@@ -15,6 +15,7 @@ const link = 'text-sm font-medium text-ink-soft transition-colors hover:text-pri
 export function StoreHeader({ store }) {
   const { isSignedIn } = useCustomerAuth()
   const { itemCount } = useCart()
+  const { pathname } = useLocation()
   const home = `/store/${store.code}`
 
   return (
@@ -39,9 +40,16 @@ export function StoreHeader({ store }) {
               </span>
             )}
           </Link>
-          <Link to={isSignedIn ? '/account' : '/login'} className={link}>
-            {isSignedIn ? 'Account' : 'Sign in'}
-          </Link>
+          {isSignedIn ? (
+            <Link to="/account" className={link}>
+              Account
+            </Link>
+          ) : (
+            // Back to the same store page after signing in.
+            <Link to="/login" state={{ from: pathname === '/login' ? home : pathname }} className={link}>
+              Sign in
+            </Link>
+          )}
         </div>
       </nav>
     </header>

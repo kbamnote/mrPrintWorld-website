@@ -43,7 +43,15 @@ export function CustomerAuthProvider({ children }) {
   }, [])
 
   const signIn = useCallback(async (email, password) => {
-    const { data } = await apiPost('/api/auth/login', { email, password })
+    // Signing in from a reseller's store can make an unclaimed account that
+    // reseller's customer. The server decides whether it may.
+    const ref = readReferral()
+    const { data } = await apiPost('/api/auth/login', {
+      email,
+      password,
+      ...(ref ? { referralCode: ref.code } : {}),
+    })
+    clearReferral()
     setAuthToken(data.accessToken)
     setUser(data.user)
     return data.user
