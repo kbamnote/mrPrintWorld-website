@@ -30,16 +30,50 @@ const EMPTY = {
   taxPercent: null,
 }
 
+/** The full-page editor at /admin/products/new and /admin/products/:id. */
 export default function ProductForm() {
   const { id } = useParams()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  return (
+    <ProductEditor
+      key={id ?? 'new'}
+      productId={id}
+      presetCategory={searchParams.get('category')}
+      onCreated={(saved) => navigate(`/admin/products/${saved._id}`, { replace: true })}
+    />
+  )
+}
+
+/**
+ * The product editor.
+ *
+ * Used two ways: as the full page above, and inside the side panel on the
+ * Categories screen (pass `onClose`), so a product can be added, photographed
+ * and priced without leaving the category it belongs to.
+ *
+ * @param productId       edit this product; omit to create one
+ * @param presetCategory  category id to file a new product under
+ * @param onCreated       after the first save — the page version navigates to
+ *                        the new URL; without it the editor stays open on the
+ *                        newly created product
+ * @param onSaved         after every successful save
+ * @param onClose         renders a close button (side-panel mode)
+ * @param onDirtyChange   true once something is edited, false after a save
+ */
+export function ProductEditor({ productId, presetCategory, onCreated, onSaved, onClose, onDirtyChange }) {
+  const embedded = Boolean(onClose)
+  const [id, setId] = useState(productId ?? null)
   const isNew = !id
 
   const [tab, setTab] = useState('General')
-  const [form, setForm] = useState(EMPTY)
+  // A preset category means adding several products to one category does not
+  // mean re-picking it every time.
+  const [form, setForm] = useState(() =>
+    presetCategory ? { ...EMPTY, categories: [presetCategory], primaryCategory: presetCategory } : EMPTY,
+  )
   const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(!isNew)
+  const [loading, setLoading] = useState(Boolean(productId))
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState(null)
   const [error, setError] = useState(null)
@@ -49,16 +83,8 @@ export default function ProductForm() {
     api.listCategories().then(setCategories).catch(setError)
   }, [])
 
-  // Creating from a filtered list preselects that category, so adding several
-  // products to one category does not mean re-picking it every time.
   useEffect(() => {
-    if (!isNew) return
-    const preset = searchParams.get('category')
-    if (preset) setForm((f) => ({ ...f, categories: [preset], primaryCategory: preset }))
-  }, [isNew, searchParams])
-
-  useEffect(() => {
-    if (isNew) return
+    if (!id) return
     api
       .getProduct(id)
       .then((p) => {
@@ -76,7 +102,7 @@ export default function ProductForm() {
       })
       .catch(setError)
       .finally(() => setLoading(false))
-  }, [id, isNew])
+  }, [id])
 
   // Only leaf categories are selectable: assigning a product to "Signage"
   // rather than "Outdoor Signage" makes browse pages meaningless.
@@ -89,6 +115,7 @@ export default function ProductForm() {
 
   function set(patch) {
     setSavedAt(null)
+    onDirtyChange?.(true)
     setForm((f) => ({ ...f, ...patch }))
   }
 
@@ -150,14 +177,19 @@ export default function ProductForm() {
 
     try {
       const saved = isNew ? await api.createProduct(payload) : await api.updateProduct(id, payload)
-      if (isNew) {
-        navigate(`/admin/products/${saved._id}`, { replace: true })
+      onDirtyChange?.(false)
+      if (isNew && onCreated) {
+        onCreated(saved)
       } else {
+        // In the side panel a new product stays open, now in edit mode, so
+        // photos and prices can be added straight after naming it.
+        if (isNew) setId(String(saved._id))
         setLegacyImageUrl(saved.legacyImageUrl ?? null)
         // Without this the form looked identical after a successful save, so
         // there was no way to tell it had worked.
         setSavedAt(new Date())
       }
+      onSaved?.(saved)
     } catch (err) {
       setError(err)
       // Jump to the tab most likely to hold the problem.
@@ -192,14 +224,23 @@ export default function ProductForm() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div
+        className={`flex flex-wrap items-start justify-between gap-3 ${
+          embedded ? 'sticky top-0 z-10 -mx-5 -mt-5 border-b border-line bg-surface/95 px-5 py-4 backdrop-blur' : ''
+        }`}
+      >
         <div className="min-w-0">
-          <Link to="/admin/products" className="text-sm text-ink-soft hover:text-primary">
-            ← Products
-          </Link>
+          {!embedded && (
+            <Link to="/admin/products" className="text-sm text-ink-soft hover:text-primary">
+              ← Products
+            </Link>
+          )}
           <h1 className="mt-1 truncate font-display text-2xl font-bold text-ink">
             {isNew ? 'New product' : form.name || 'Untitled'}
           </h1>
+          {isNew && form.categories.length > 0 && (
+            <p className="mt-1 text-sm text-ink-soft">in {form.categories.map(nameOf).join(', ')}</p>
+          )}
           {!isNew && (
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <code className="text-xs text-ink-soft">/products/{form.slug}</code>
@@ -208,8 +249,14 @@ export default function ProductForm() {
             </div>
           )}
         </div>
-        <div className="flex gap-2">
-          {!isNew && (
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Also on the Visibility tab — surfaced here because "is it on the
+              website?" is the question asked most. Takes effect on Save. */}
+          <label className="flex items-center gap-2 text-sm font-medium text-ink">
+            <input type="checkbox" checked={form.isActive} onChange={(e) => set({ isActive: e.target.checked })} />
+            Live on website
+          </label>
+          {!isNew && form.isActive && (
             <a href={`/products/${form.slug}`} target="_blank" rel="noreferrer">
               <Btn variant="outline">View on site</Btn>
             </a>
@@ -235,6 +282,11 @@ export default function ProductForm() {
           <Btn onClick={save} disabled={saving || !form.name || form.categories.length === 0}>
             {saving ? 'Saving…' : 'Save'}
           </Btn>
+          {embedded && (
+            <Btn variant="ghost" onClick={onClose} aria-label="Close">
+              ✕
+            </Btn>
+          )}
         </div>
       </div>
 

@@ -1,26 +1,30 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import * as api from '../adminApi'
-import { Input, Select, Btn, Badge, Spinner, ErrorBanner, EmptyState } from '../ui'
+import { Input, Select, Btn, Badge, Spinner, ErrorBanner, EmptyState, Drawer } from '../ui'
+import { ProductEditor } from '../products/ProductForm'
 
 /**
- * Categories → subcategories → products, managed from one screen.
+ * Categories → subcategories → products, all managed from this one screen.
  *
- * Deliberately minimal: a category is a NAME. Slug, sort order and the rest
- * are derived server-side (slug from the name, order = end of its siblings),
- * so creating one is type-and-Enter.
+ * - A category is just a NAME. Slug and sort order are derived server-side.
+ * - Each subcategory (and each category without subcategories) opens to list
+ *   its products; adding or editing one happens in a side panel over this
+ *   page, so the admin never loses their place in the tree.
  *
  * What the website shows follows directly from this tree: a category appears
- * on the storefront once it holds at least one live product, and its
- * subcategories appear beneath it the same way.
+ * on the storefront once it holds at least one live product.
  */
 export default function CategoryTree() {
-  const navigate = useNavigate()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [adding, setAdding] = useState(null) // 'root' | parent id
   const [editingId, setEditingId] = useState(null)
+
+  const [open, setOpen] = useState(() => new Set()) // category ids showing their products
+  const [products, setProducts] = useState({}) // category id → { loading, items }
+  const [drawer, setDrawer] = useState(null) // { productId } | { category }
+  const dirtyRef = useRef(false)
 
   const load = useCallback(
     () =>
@@ -36,9 +40,38 @@ export default function CategoryTree() {
     load()
   }, [load])
 
+  const loadProducts = useCallback(async (catId) => {
+    setProducts((m) => ({ ...m, [catId]: { items: m[catId]?.items ?? null, loading: true } }))
+    try {
+      const { items: list } = await api.listProducts({ category: catId, limit: 100 })
+      setProducts((m) => ({ ...m, [catId]: { items: list, loading: false } }))
+    } catch (err) {
+      setProducts((m) => ({ ...m, [catId]: { items: m[catId]?.items ?? [], loading: false } }))
+      setError(err)
+    }
+  }, [])
+
   const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name)
   const roots = items.filter((c) => !c.parent).sort(byOrder)
   const childrenOf = (id) => items.filter((c) => String(c.parent) === String(id)).sort(byOrder)
+
+  function toggleProducts(catId) {
+    const next = new Set(open)
+    if (next.has(catId)) next.delete(catId)
+    else {
+      next.add(catId)
+      loadProducts(catId)
+    }
+    setOpen(next)
+  }
+
+  /** After any product change: fresh counts, and every open list reloaded. */
+  async function refreshProducts(alsoOpen) {
+    const ids = new Set(open)
+    if (alsoOpen) ids.add(alsoOpen)
+    if (alsoOpen && !open.has(alsoOpen)) setOpen(ids)
+    await Promise.all([load(), ...[...ids].map(loadProducts)])
+  }
 
   async function create(name, parent) {
     const created = await api.createCategory({ name, parent })
@@ -46,7 +79,7 @@ export default function CategoryTree() {
     return created
   }
 
-  async function remove(cat) {
+  async function removeCategory(cat) {
     // The API refuses when a category still holds products or subcategories,
     // and says which — surface that rather than a generic error.
     if (!window.confirm(`Delete "${cat.name}"?`)) return
@@ -58,7 +91,30 @@ export default function CategoryTree() {
     }
   }
 
-  const addProduct = (cat) => navigate(`/admin/products/new?category=${cat._id}`)
+  async function toggleLive(product) {
+    try {
+      await api.updateProduct(product._id, { isActive: !product.isActive })
+      await refreshProducts()
+    } catch (err) {
+      setError(err)
+    }
+  }
+
+  async function removeProduct(product) {
+    if (!window.confirm(`Delete "${product.name}"? This cannot be undone.`)) return
+    try {
+      await api.deleteProduct(product._id)
+      await refreshProducts()
+    } catch (err) {
+      setError(err)
+    }
+  }
+
+  const closeDrawer = useCallback(() => {
+    if (dirtyRef.current && !window.confirm('Close without saving your changes?')) return
+    dirtyRef.current = false
+    setDrawer(null)
+  }, [])
 
   if (loading) {
     return (
@@ -68,14 +124,57 @@ export default function CategoryTree() {
     )
   }
 
+  /** A category that holds products directly: a subcategory, or a category with none. */
+  function renderLeaf(cat, depth) {
+    const isOpen = open.has(String(cat._id))
+    return (
+      <div key={cat._id}>
+        {editingId === String(cat._id) ? (
+          <EditRow
+            cat={cat}
+            depth={depth}
+            roots={roots}
+            onCancel={() => setEditingId(null)}
+            onError={setError}
+            onSaved={async () => {
+              setEditingId(null)
+              await load()
+            }}
+          />
+        ) : (
+          <Row
+            cat={cat}
+            depth={depth}
+            productsOpen={isOpen}
+            onToggleProducts={() => toggleProducts(String(cat._id))}
+            onAddSub={depth === 0 ? () => setAdding(String(cat._id)) : undefined}
+            onAddProduct={() => setDrawer({ category: String(cat._id) })}
+            onEdit={() => setEditingId(String(cat._id))}
+            onDelete={() => removeCategory(cat)}
+          />
+        )}
+        {isOpen && (
+          <ProductPanel
+            state={products[String(cat._id)]}
+            depth={depth}
+            onAdd={() => setDrawer({ category: String(cat._id) })}
+            onEdit={(p) => setDrawer({ productId: String(p._id) })}
+            onToggleLive={toggleLive}
+            onDelete={removeProduct}
+          />
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold text-ink">Categories</h1>
+          <h1 className="font-display text-2xl font-bold text-ink">Categories &amp; products</h1>
           <p className="mt-1 text-sm text-ink-soft">
-            {roots.length} categories · {items.length - roots.length} subcategories. A category shows on
-            the website once it has at least one live product.
+            {roots.length} categories · {items.length - roots.length} subcategories. Open one to see and add
+            its products. A category shows on the website once it has a live product.
           </p>
         </div>
         <Btn onClick={() => setAdding('root')}>New category</Btn>
@@ -108,9 +207,13 @@ export default function CategoryTree() {
         <div className="rounded-[var(--radius-lg)] border border-line bg-white">
           {roots.map((root) => {
             const children = childrenOf(root._id)
+            const addingHere = adding === String(root._id)
+
             return (
               <div key={root._id} className="border-b border-line last:border-0">
-                {editingId === String(root._id) ? (
+                {children.length === 0 ? (
+                  renderLeaf(root, 0)
+                ) : editingId === String(root._id) ? (
                   <EditRow
                     cat={root}
                     onCancel={() => setEditingId(null)}
@@ -124,39 +227,14 @@ export default function CategoryTree() {
                   <Row
                     cat={root}
                     onAddSub={() => setAdding(String(root._id))}
-                    onAddProduct={() => addProduct(root)}
                     onEdit={() => setEditingId(String(root._id))}
-                    onDelete={() => remove(root)}
+                    onDelete={() => removeCategory(root)}
                   />
                 )}
 
-                {children.map((child) =>
-                  editingId === String(child._id) ? (
-                    <EditRow
-                      key={child._id}
-                      cat={child}
-                      depth={1}
-                      roots={roots}
-                      onCancel={() => setEditingId(null)}
-                      onError={setError}
-                      onSaved={async () => {
-                        setEditingId(null)
-                        await load()
-                      }}
-                    />
-                  ) : (
-                    <Row
-                      key={child._id}
-                      cat={child}
-                      depth={1}
-                      onAddProduct={() => addProduct(child)}
-                      onEdit={() => setEditingId(String(child._id))}
-                      onDelete={() => remove(child)}
-                    />
-                  ),
-                )}
+                {children.map((child) => renderLeaf(child, 1))}
 
-                {adding === String(root._id) && (
+                {addingHere && (
                   <div className="bg-surface/60 px-4 py-3" style={{ paddingLeft: '2.75rem' }}>
                     <NameForm
                       placeholder={`New subcategory in ${root.name}`}
@@ -174,12 +252,28 @@ export default function CategoryTree() {
           })}
         </div>
       )}
+
+      <Drawer open={Boolean(drawer)} onClose={closeDrawer}>
+        {drawer && (
+          <div className="p-5">
+            <ProductEditor
+              key={drawer.productId ?? 'new'}
+              productId={drawer.productId}
+              presetCategory={drawer.category}
+              onClose={closeDrawer}
+              onDirtyChange={(dirty) => {
+                dirtyRef.current = dirty
+              }}
+              onSaved={() => refreshProducts(drawer.category)}
+            />
+          </div>
+        )}
+      </Drawer>
     </div>
   )
 }
 
-function Row({ cat, depth = 0, onAddSub, onAddProduct, onEdit, onDelete }) {
-  const navigate = useNavigate()
+function Row({ cat, depth = 0, productsOpen, onToggleProducts, onAddSub, onAddProduct, onEdit, onDelete }) {
   return (
     <div
       className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 hover:bg-surface/60"
@@ -187,17 +281,35 @@ function Row({ cat, depth = 0, onAddSub, onAddProduct, onEdit, onDelete }) {
     >
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         {depth > 0 && <span className="text-ink-soft/50">└</span>}
-        <span className={`truncate ${depth === 0 ? 'font-semibold text-ink' : 'text-ink'}`}>{cat.name}</span>
-        {cat.productCount > 0 && (
+        {onToggleProducts ? (
           <button
             type="button"
-            onClick={() => navigate(`/admin/products?category=${cat._id}`)}
-            title="See these products"
+            onClick={onToggleProducts}
+            aria-expanded={productsOpen}
+            className="flex min-w-0 items-center gap-2 text-left"
           >
-            <Badge tone="blue">
+            <span
+              className={`inline-block text-xs text-ink-soft transition-transform ${productsOpen ? 'rotate-90' : ''}`}
+              aria-hidden="true"
+            >
+              ▶
+            </span>
+            <span className={`truncate hover:text-primary ${depth === 0 ? 'font-semibold text-ink' : 'text-ink'}`}>
+              {cat.name}
+            </span>
+            <Badge tone={cat.productCount > 0 ? 'blue' : 'neutral'}>
               {cat.productCount} product{cat.productCount === 1 ? '' : 's'}
             </Badge>
           </button>
+        ) : (
+          <>
+            <span className="truncate font-semibold text-ink">{cat.name}</span>
+            {cat.productCount > 0 && (
+              <Badge tone="blue">
+                {cat.productCount} product{cat.productCount === 1 ? '' : 's'}
+              </Badge>
+            )}
+          </>
         )}
         {!cat.isActive ? (
           <Badge tone="neutral">Hidden</Badge>
@@ -215,9 +327,11 @@ function Row({ cat, depth = 0, onAddSub, onAddProduct, onEdit, onDelete }) {
             + Subcategory
           </Btn>
         )}
-        <Btn variant="outline" size="sm" onClick={onAddProduct}>
-          + Product
-        </Btn>
+        {onAddProduct && (
+          <Btn variant="outline" size="sm" onClick={onAddProduct}>
+            + Product
+          </Btn>
+        )}
         <Btn variant="ghost" size="sm" onClick={onEdit}>
           Edit
         </Btn>
@@ -226,6 +340,93 @@ function Row({ cat, depth = 0, onAddSub, onAddProduct, onEdit, onDelete }) {
         </Btn>
       </div>
     </div>
+  )
+}
+
+const money = (n) => `₹${Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`
+
+/** The retail price as the team thinks of it, or null when there is none. */
+function priceLabel(p) {
+  if (p.pricingModel === 'QUOTE_ONLY' || !p.pricing) return null
+  if (p.pricingModel === 'AREA') {
+    const rate = p.pricing.rates?.B2C
+    return rate ? `${money(rate)} per sq.ft` : null
+  }
+  if (p.pricingModel === 'FIXED') {
+    const amount = p.pricing.amounts?.B2C
+    return amount ? `${money(amount)} each` : null
+  }
+  return 'Quantity slab pricing'
+}
+
+function ProductPanel({ state, depth, onAdd, onEdit, onToggleLive, onDelete }) {
+  const indent = { paddingLeft: `${2.75 + depth * 1.75}rem`, paddingRight: '1rem' }
+
+  if (!state || (state.loading && !state.items)) {
+    return (
+      <div className="border-t border-dashed border-line bg-surface/40 py-4" style={indent}>
+        <Spinner />
+      </div>
+    )
+  }
+
+  return (
+    <div className="border-t border-dashed border-line bg-surface/40 py-2" style={indent}>
+      {state.items.length === 0 ? (
+        <p className="py-2 text-sm text-ink-soft">
+          No products here yet.{' '}
+          <button type="button" onClick={onAdd} className="font-medium text-primary hover:underline">
+            Add the first one
+          </button>
+        </p>
+      ) : (
+        <ul className="divide-y divide-line">
+          {state.items.map((p) => (
+            <ProductItem
+              key={p._id}
+              p={p}
+              onEdit={() => onEdit(p)}
+              onToggleLive={() => onToggleLive(p)}
+              onDelete={() => onDelete(p)}
+            />
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+function ProductItem({ p, onEdit, onToggleLive, onDelete }) {
+  const image = p.images?.find((i) => i.isPrimary)?.url ?? p.images?.[0]?.url ?? p.legacyImageUrl
+  const price = priceLabel(p)
+
+  return (
+    <li className="flex flex-wrap items-center gap-3 py-2">
+      <button type="button" onClick={onEdit} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+        <span className="h-11 w-11 shrink-0 overflow-hidden rounded bg-gray-100">
+          {image && (
+            <img src={image} alt="" referrerPolicy="no-referrer" loading="lazy" className="h-full w-full object-cover" />
+          )}
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-medium text-ink hover:text-primary">{p.name}</span>
+          <span className="block text-xs text-ink-soft">{price ?? 'No price — customers contact you'}</span>
+        </span>
+      </button>
+      <div className="flex flex-wrap items-center gap-1">
+        {!p.images?.length && <Badge tone="amber">No photo</Badge>}
+        <Badge tone={p.isActive ? 'green' : 'neutral'}>{p.isActive ? 'Live' : 'Draft'}</Badge>
+        <Btn variant="outline" size="sm" onClick={onToggleLive}>
+          {p.isActive ? 'Unpublish' : 'Make live'}
+        </Btn>
+        <Btn variant="ghost" size="sm" onClick={onEdit}>
+          Edit
+        </Btn>
+        <Btn variant="ghost" size="sm" onClick={onDelete}>
+          Delete
+        </Btn>
+      </div>
+    </li>
   )
 }
 

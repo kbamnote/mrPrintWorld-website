@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+
 /**
  * Small shared primitives for the admin panel.
  *
@@ -120,6 +122,34 @@ export function EmptyState({ title, description, action }) {
       <h3 className="font-display text-base font-semibold text-ink">{title}</h3>
       {description && <p className="mx-auto mt-1 max-w-md text-sm text-ink-soft">{description}</p>}
       {action && <div className="mt-5 flex justify-center">{action}</div>}
+    </div>
+  )
+}
+
+/**
+ * Right-hand side panel over the current page. Escape or the backdrop calls
+ * `onClose` — the caller decides whether closing is allowed (unsaved changes).
+ */
+export function Drawer({ open, onClose, children }) {
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e) => e.key === 'Escape' && onClose()
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden' // keep the page behind from scrolling
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = previous
+    }
+  }, [open, onClose])
+
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} aria-hidden="true" />
+      <div role="dialog" aria-modal="true" className="relative h-full w-full max-w-4xl overflow-y-auto bg-surface shadow-2xl">
+        {children}
+      </div>
     </div>
   )
 }
