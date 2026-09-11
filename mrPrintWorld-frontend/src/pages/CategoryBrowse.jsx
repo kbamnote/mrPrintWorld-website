@@ -22,7 +22,7 @@ export default function CategoryBrowse() {
   const activeSlug = subcategory ?? category
 
   const [meta, setMeta] = useState({ data: null, loading: isApiEnabled, notFound: false })
-  const { items, loading: productsLoading } = useProducts({ category: activeSlug })
+  const { items, loading: productsLoading, error: productsError } = useProducts({ category: activeSlug })
 
   useEffect(() => {
     if (!isApiEnabled) return
@@ -130,6 +130,16 @@ export default function CategoryBrowse() {
                   </div>
                 </div>
               ))}
+            </div>
+          ) : productsError ? (
+            <div className="rounded-[var(--radius-lg)] border border-line bg-white p-10 text-center">
+              <h2 className="mb-2 font-display text-lg font-semibold text-ink">Couldn&rsquo;t load products</h2>
+              <p className="mx-auto mb-6 max-w-md text-sm text-ink-soft">
+                Please check your connection and refresh the page.
+              </p>
+              <Button onClick={() => window.location.reload()} variant="primary">
+                Refresh
+              </Button>
             </div>
           ) : items.length === 0 ? (
             <div className="rounded-[var(--radius-lg)] border border-line bg-white p-10 text-center">

@@ -1,18 +1,56 @@
-import React from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { services } from '../data/services';
-import { products } from '../data/products';
-import { company, whatsappLink } from '../data/company';
+import { useProducts } from '../lib/useCatalogue';
+import { whatsappLink } from '../data/company';
 import { useSeo, breadcrumbLd } from '../lib/seo';
 import Container from '../components/primitives/Container';
 import Reveal from '../components/primitives/Reveal';
 import Button from '../components/primitives/Button';
 import Icon from '../components/primitives/Icon';
 
+// Service → the catalogue category whose products it makes. Slugs from the
+// admin-managed category tree; if one is renamed or removed the section
+// simply hides instead of linking to products that no longer exist.
+const SERVICE_CATEGORY = {
+  printing: 'printing-stationery',
+  signage: 'signage',
+  corporate: 'corporate-gifts',
+  fabrication: 'fabrication-cutting',
+  event: 'advertising-products',
+  'laser-cutting': 'laser-cutting',
+  'cnc-cutting': 'cnc-cutting',
+  'metal-marking': 'corporate-gifts',
+  'uv-printing': 'printing-stationery',
+  'diy-craft': 'laser-cutting',
+  'acrylic-creations': 'acrylic-products',
+  'interior-solutions': 'interior-decor',
+};
+
 export default function ServiceDetail() {
   const { slug } = useParams();
   const service = services.find(s => s.slug === slug);
-  
+
+  // Hooks run before the early return below — React requires the same hooks
+  // on every render, so they tolerate a missing service.
+  const categorySlug = SERVICE_CATEGORY[service?.id];
+  const { items: categoryItems } = useProducts({ category: categorySlug, enabled: Boolean(categorySlug) });
+  const relatedProducts = categoryItems.slice(0, 6);
+
+  useSeo({
+    title: service?.seo?.title || `${service?.title ?? 'Services'} | MRPrint World`,
+    description: service?.seo?.description || service?.description,
+    path: `/services/${service?.slug ?? slug}`,
+    schema: service
+      ? [
+          breadcrumbLd([
+            { name: 'Home', url: '/' },
+            { name: 'Services', url: '/services' },
+            { name: service.title, url: `/services/${service.slug}` }
+          ])
+        ]
+      : undefined
+  });
+
   if (!service || slug === 'custom-solutions') {
     return <Navigate to="/services" replace />;
   }
@@ -22,40 +60,6 @@ export default function ServiceDetail() {
     .slice(0, 3);
 
   const whatsappUrl = whatsappLink({ service: service.title });
-
-  // Map service ID to related product categories
-  const serviceToCategoryMap = {
-    'printing': ['Printing Products', 'Business Branding', 'Promotional Products'],
-    'signage': ['Signage & Boards', 'Acrylic Products'],
-    'corporate': ['Corporate Gifts', 'Promotional Products'],
-    'fabrication': ['Laser-Cut Products', 'CNC Products', 'Custom Products'],
-    'event': ['Promotional Products', 'Signage & Boards'],
-    'laser-cutting': ['Laser-Cut Products'],
-    'cnc-cutting': ['CNC Products'],
-    'metal-marking': ['UV Printed Products', 'Corporate Gifts'],
-    'uv-printing': ['UV Printed Products'],
-    'diy-craft': ['DIY Craft Products', 'Laser-Cut Products'],
-    'acrylic-creations': ['Acrylic Products'],
-    'interior-solutions': ['Interior & Decor', 'CNC Products']
-  };
-
-  const targetCategories = serviceToCategoryMap[service.id] || [];
-  const relatedProducts = products
-    .filter(p => targetCategories.includes(p.category))
-    .slice(0, 6);
-
-  useSeo({
-    title: service.seo?.title || `${service.title} | MRPrint World`,
-    description: service.seo?.description || service.description,
-    path: `/services/${service.slug}`,
-    schema: [
-      breadcrumbLd([
-        { name: 'Home', url: '/' },
-        { name: 'Services', url: '/services' },
-        { name: service.title, url: `/services/${service.slug}` }
-      ])
-    ]
-  });
 
   return (
     <>
@@ -203,20 +207,20 @@ export default function ServiceDetail() {
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
               {relatedProducts.map((p, idx) => (
-                <Reveal key={p.id} delay={idx * 0.1}>
+                <Reveal key={p.slug} delay={idx * 0.1}>
                   <Link to={`/products/${p.slug}`} className="group block overflow-hidden rounded-[var(--radius-lg)] border border-line bg-white shadow-soft hover:shadow-card transition-all h-full">
                     <div className="relative aspect-[4/3] overflow-hidden bg-surface">
-                      {p.image ? (
-                        <img referrerPolicy="no-referrer" src={p.image} alt={p.name} className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      {p.image?.url ? (
+                        <img referrerPolicy="no-referrer" src={p.image.url} alt={p.image.alt ?? p.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       ) : (
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                           <Icon name="package" size={28} className="text-line-strong" />
-                          <span className="mt-3 text-xs uppercase tracking-[0.18em] text-muted">{p.category}</span>
+                          <span className="mt-3 text-xs uppercase tracking-[0.18em] text-muted">{p.categories?.[0]?.name}</span>
                         </div>
                       )}
                     </div>
                     <div className="p-5">
-                      <p className="text-[0.65rem] uppercase tracking-[0.16em] text-gold-deep font-semibold">{p.category}</p>
+                      <p className="text-[0.65rem] uppercase tracking-[0.16em] text-gold-deep font-semibold">{p.categories?.[0]?.name}</p>
                       <h3 className="mt-2 font-display text-base font-bold text-ink group-hover:text-primary transition-colors">{p.name}</h3>
                       <p className="mt-2 text-xs text-muted line-clamp-2">{p.shortDescription}</p>
                     </div>

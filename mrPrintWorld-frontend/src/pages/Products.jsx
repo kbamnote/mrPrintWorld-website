@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useProducts } from '../lib/useCatalogue'
 import { isApiEnabled, fetchCategories } from '../lib/api'
+import { useCustomerAuth } from '../lib/customerAuthContext'
 import { useSeo, breadcrumbLd } from '../lib/seo'
 import PageHeader from '../components/layout/PageHeader'
 import Container from '../components/primitives/Container'
@@ -18,12 +19,16 @@ export default function Products() {
   const [activeSub, setActiveSub] = useState(null)
 
   const [tree, setTree] = useState([])
-  const { items, loading } = useProducts({
+  const { items, loading, error } = useProducts({
     category: activeSub ?? (activeRoot === 'all' ? undefined : activeRoot),
   })
 
+  // The tree comes from the admin panel and only lists categories that hold
+  // products this visitor can see — so it is re-read after sign-in, when a
+  // trade or corporate account may see a different set.
+  const { isSignedIn, booting } = useCustomerAuth()
   useEffect(() => {
-    if (!isApiEnabled) return
+    if (!isApiEnabled || booting) return
     let cancelled = false
     fetchCategories()
       .then((data) => !cancelled && setTree(data))
@@ -31,7 +36,7 @@ export default function Products() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [isSignedIn, booting])
 
   useSeo({
     title: 'Products | MRPrint World',
@@ -60,6 +65,13 @@ export default function Products() {
         : 'bg-white text-ink-soft hover:text-ink hover:bg-gray-50 border border-line'
     }`
 
+  const subPill = (isActive) =>
+    `rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+      isActive
+        ? 'bg-primary/10 text-primary ring-1 ring-primary/40'
+        : 'bg-surface text-ink-soft hover:bg-gray-100 hover:text-ink'
+    }`
+
   return (
     <>
       <PageHeader
@@ -86,34 +98,44 @@ export default function Products() {
             ))}
           </div>
 
-          {/* Subcategories, only once a root with children is chosen */}
+          {/* Subcategories — appear once a category that has them is chosen */}
           {subcategories.length > 0 && (
-            <div className="mb-10 flex flex-wrap gap-2 border-l-2 border-line pl-4">
-              <button
-                type="button"
-                onClick={() => setActiveSub(null)}
-                className={`text-sm font-medium transition-colors ${
-                  activeSub === null ? 'text-primary' : 'text-ink-soft hover:text-ink'
-                }`}
-              >
-                All {currentRoot.name}
-              </button>
-              {subcategories.map((sub) => (
-                <button
-                  key={sub.slug}
-                  type="button"
-                  onClick={() => setActiveSub(sub.slug)}
-                  className={`text-sm font-medium transition-colors ${
-                    activeSub === sub.slug ? 'text-primary' : 'text-ink-soft hover:text-ink'
-                  }`}
-                >
-                  · {sub.name}
+            <div className="mb-8 rounded-[var(--radius-lg)] border border-line bg-white p-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-soft">
+                {currentRoot.name}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => setActiveSub(null)} className={subPill(activeSub === null)}>
+                  All {currentRoot.name}
                 </button>
-              ))}
+                {subcategories.map((sub) => (
+                  <button
+                    key={sub.slug}
+                    type="button"
+                    onClick={() => setActiveSub(sub.slug)}
+                    className={subPill(activeSub === sub.slug)}
+                  >
+                    {sub.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {subcategories.length === 0 && <div className="mb-6" />}
+
+          {error && !loading && (
+            <div className="rounded-[var(--radius-lg)] border border-line bg-white p-10 text-center">
+              <h2 className="mb-2 font-display text-lg font-semibold text-ink">Couldn&rsquo;t load products</h2>
+              <p className="mx-auto mb-6 max-w-md text-sm text-ink-soft">
+                Please check your connection and refresh the page.
+              </p>
+              <Button onClick={() => window.location.reload()} variant="primary">
+                Refresh
+              </Button>
             </div>
           )}
 
-          {!loading && (
+          {!loading && !error && (
             <p className="mb-6 text-sm text-ink-soft">
               {items.length} product{items.length === 1 ? '' : 's'}
             </p>
@@ -134,7 +156,7 @@ export default function Products() {
             </div>
           )}
 
-          {!loading && items.length === 0 && (
+          {!loading && !error && items.length === 0 && (
             <div className="rounded-[var(--radius-lg)] border border-line bg-white p-10 text-center">
               <Icon name="Image" size={40} strokeWidth={1} className="mx-auto mb-4 text-gray-300" />
               <h2 className="mb-2 font-display text-lg font-semibold text-ink">Nothing here yet</h2>

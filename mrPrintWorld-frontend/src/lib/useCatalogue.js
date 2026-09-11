@@ -1,71 +1,35 @@
 import { useEffect, useState } from 'react'
 import { isApiEnabled, fetchProducts, fetchProduct } from './api'
-import { products as staticProducts, productCategories } from '../data/products'
 
 /**
- * Catalogue data with a static fallback.
+ * Catalogue data — from the admin-managed backend, and ONLY from there.
  *
- * These hooks are the ONLY place that knows the catalogue might come from
- * either source. Pages just render `{ items, loading, error }` and never have
- * to think about the migration.
- *
- * The fallback is deliberate and temporary: it stays until the API has run in
- * production without incident, then both it and src/data/products.js are
- * deleted (migration plan, step 5).
+ * There used to be a fallback to the old bundled product list whenever the
+ * API was slow or down. That meant the website could show products the admin
+ * had never added, renamed or deleted — so it is gone. If the API fails, the
+ * pages say so and offer a refresh instead of quietly showing stale data.
  */
-
-/** Shape a static product to look like an API card, so pages need one branch. */
-function asCard(p) {
-  return {
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    shortDescription: p.shortDescription ?? null,
-    image: p.image ? { url: p.image, alt: p.name } : null,
-    featured: Boolean(p.featured),
-    purchaseMode: 'QUOTE_ONLY',
-    categories: [{ name: p.category, slug: p.category }],
-    price: null,
-  }
-}
-
-function asDetail(p) {
-  return {
-    ...asCard(p),
-    description: p.description ?? null,
-    images: p.image ? [{ url: p.image, alt: p.name, isPrimary: true }] : [],
-    specifications: p.specifications ?? [],
-    applications: p.applications ?? [],
-    customization: p.customization ?? [],
-    materials: p.materials ?? [],
-    sizes: p.sizes ?? [],
-    moq: p.moq ? { qty: null, unit: p.moq } : null,
-    primaryCategory: { name: p.category, slug: p.category },
-    pricingModel: 'QUOTE_ONLY',
-    options: [],
-    seo: { title: p.seo?.title ?? p.name, description: p.seo?.description ?? p.shortDescription ?? null },
-  }
-}
 
 /**
- * @param {object} params  { category, featured, search }
- * @returns {{ items, loading, error, usingFallback }}
+ * @param {object} params  { category, featured, search, enabled }
+ *   `enabled: false` skips the request entirely (a page with nothing to ask for).
+ * @returns {{ items, loading, error }}
  */
-export function useProducts({ category, featured, search } = {}) {
+export function useProducts({ category, featured, search, enabled = true } = {}) {
+  const active = isApiEnabled && enabled
   const [state, setState] = useState(() => ({
-    items: isApiEnabled ? [] : staticProducts.map(asCard),
-    loading: isApiEnabled,
-    error: null,
-    usingFallback: !isApiEnabled,
+    items: [],
+    loading: active,
+    error: isApiEnabled ? null : new Error('Catalogue API not configured'),
   }))
 
   useEffect(() => {
-    if (!isApiEnabled) return
+    if (!active) return
 
     const controller = new AbortController()
     let cancelled = false
 
-    setState((s) => ({ ...s, loading: true }))
+    setState((s) => ({ ...s, loading: true, error: null }))
 
     // Fetch EVERY page. The API caps a single page at 60; asking for one page
     // silently hid 28 of 88 products, with nothing to indicate anything was
@@ -83,37 +47,36 @@ export function useProducts({ category, featured, search } = {}) {
       return all
     })()
       .then((items) => {
-        if (cancelled) return
-        setState({ items, loading: false, error: null, usingFallback: false })
+        if (!cancelled) setState({ items, loading: false, error: null })
       })
       .catch((err) => {
         if (cancelled || err.name === 'AbortError') return
-        // Degrade to the static catalogue rather than showing an empty shop.
-        console.warn('Catalogue API unavailable, using bundled data:', err.message)
-        setState({
-          items: staticProducts.map(asCard),
-          loading: false,
-          error: null,
-          usingFallback: true,
-        })
+        // A category that no longer exists (renamed or removed in the admin
+        // panel) is simply empty, not an outage.
+        if (err.status === 404) {
+          setState({ items: [], loading: false, error: null })
+          return
+        }
+        setState({ items: [], loading: false, error: err })
       })
 
     return () => {
       cancelled = true
       controller.abort()
     }
-  }, [category, featured, search])
+  }, [active, category, featured, search])
 
-  return state
+  // A disabled hook is never loading, even if it was mid-request when disabled.
+  return active ? state : { ...state, loading: false }
 }
 
-/** Single product by slug, with the same fallback behaviour. */
+/** Single product by slug. */
 export function useProduct(slug) {
-  const [state, setState] = useState(() => {
-    if (isApiEnabled) return { product: null, loading: true, notFound: false, usingFallback: false }
-    const found = staticProducts.find((p) => p.slug === slug)
-    return { product: found ? asDetail(found) : null, loading: false, notFound: !found, usingFallback: true }
-  })
+  const [state, setState] = useState(() => ({
+    product: null,
+    loading: isApiEnabled,
+    notFound: !isApiEnabled,
+  }))
 
   useEffect(() => {
     if (!isApiEnabled) return
@@ -124,24 +87,13 @@ export function useProduct(slug) {
 
     fetchProduct(slug, { signal: controller.signal })
       .then((product) => {
-        if (!cancelled) setState({ product, loading: false, notFound: false, usingFallback: false })
+        if (!cancelled) setState({ product, loading: false, notFound: false })
       })
       .catch((err) => {
         if (cancelled || err.name === 'AbortError') return
-        // A genuine 404 is a real "not found" — do NOT mask it with the
-        // fallback, or a deleted product would resurrect from the bundle.
-        if (err.status === 404) {
-          setState({ product: null, loading: false, notFound: true, usingFallback: false })
-          return
-        }
-        const found = staticProducts.find((p) => p.slug === slug)
-        console.warn('Product API unavailable, using bundled data:', err.message)
-        setState({
-          product: found ? asDetail(found) : null,
-          loading: false,
-          notFound: !found,
-          usingFallback: true,
-        })
+        // Deleted, unpublished, or unreachable — either way there is nothing
+        // real to show, and the product list explains an outage properly.
+        setState({ product: null, loading: false, notFound: true })
       })
 
     return () => {
@@ -152,6 +104,3 @@ export function useProduct(slug) {
 
   return state
 }
-
-/** Category list — falls back to the flat string list from the static data. */
-export const staticCategoryNames = productCategories
