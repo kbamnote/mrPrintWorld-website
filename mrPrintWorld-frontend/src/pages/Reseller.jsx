@@ -63,9 +63,10 @@ export default function Reseller() {
 
   const code = me?.code ?? user.reseller.code
   const origin = window.location.origin
+  // Store links: products only, with the code kept in every address.
   const links = {
-    store: `${origin}/?ref=${code}`,
-    product: (slug) => `${origin}/products/${slug}?ref=${code}`,
+    store: `${origin}/store/${code}`,
+    product: (slug) => `${origin}/store/${code}/products/${slug}`,
   }
   const storeName = me?.storeName ?? user.reseller.storeName
 

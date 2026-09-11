@@ -73,7 +73,8 @@ export default function Register() {
             }
           : {}),
       })
-      navigate('/account', { replace: true })
+      // A store customer goes straight back to shopping in the store.
+      navigate(referral ? `/store/${referral.code}` : '/account', { replace: true })
     } catch (err) {
       setError(err.message)
       setBusy(false)

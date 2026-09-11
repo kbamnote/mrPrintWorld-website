@@ -40,6 +40,7 @@ const Checkout = lazy(() => import('./pages/Checkout'))
 const OrderList = lazy(() => import('./pages/Orders').then((m) => ({ default: m.OrderList })))
 const OrderDetail = lazy(() => import('./pages/Orders').then((m) => ({ default: m.OrderDetail })))
 const Reseller = lazy(() => import('./pages/Reseller'))
+const StoreHome = lazy(() => import('./pages/StoreHome'))
 
 // The whole admin panel behind a single lazy boundary — one chunk, fetched
 // only when an admin actually navigates to /admin.
@@ -69,6 +70,11 @@ export default function App() {
             <Route path="/products/c/:category" element={<CategoryBrowse />} />
             <Route path="/products/c/:category/:subcategory" element={<CategoryBrowse />} />
             <Route path="/products/:slug" element={<ProductDetail />} />
+
+            {/* Reseller stores — products only. A product inside a store keeps
+                the store in its address, so a shared link never loses it. */}
+            <Route path="/store/:code" element={<StoreHome />} />
+            <Route path="/store/:code/products/:slug" element={<ProductDetail />} />
 
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/about" element={<About />} />
