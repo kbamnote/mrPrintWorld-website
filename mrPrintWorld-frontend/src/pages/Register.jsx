@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCustomerAuth } from '../lib/customerAuthContext'
 import { useSeo } from '../lib/seo'
+import { readReferral } from '../lib/referral'
 import Container from '../components/primitives/Container'
 import Button from '../components/primitives/Button'
 
@@ -39,6 +40,7 @@ export default function Register() {
   })
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [referral] = useState(() => readReferral())
 
   useSeo({
     title: 'Create an account | MRPrint World',
@@ -89,6 +91,13 @@ export default function Register() {
           <p className="mt-2 text-ink-soft">
             Track your enquiries and, for trade and corporate accounts, see your agreed pricing.
           </p>
+
+          {referral && (
+            <p className="mt-4 rounded-[var(--radius-card)] border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-ink">
+              You&rsquo;re joining through <strong>{referral.storeName}</strong>. They&rsquo;ll look after your
+              orders, and can see your name, city and order history.
+            </p>
+          )}
 
           <form onSubmit={submit} className="mt-8 rounded-[var(--radius-lg)] border border-line bg-white p-6 shadow-soft md:p-8">
             {error && (

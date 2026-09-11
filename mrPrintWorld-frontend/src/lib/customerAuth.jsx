@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { setAuthToken, apiPost, isApiEnabled } from './api'
+import { setAuthToken, apiPost, apiGet, isApiEnabled } from './api'
 import { CustomerAuthContext } from './customerAuthContext'
+import { readReferral, clearReferral } from './referral'
 
 /**
  * Customer session.
@@ -49,9 +50,22 @@ export function CustomerAuthProvider({ children }) {
   }, [])
 
   const register = useCallback(async (payload) => {
-    const { data } = await apiPost('/api/auth/register', payload)
+    // A reseller's share link, remembered from an earlier visit.
+    const ref = readReferral()
+    const { data } = await apiPost('/api/auth/register', {
+      ...payload,
+      ...(ref ? { referralCode: ref.code } : {}),
+    })
+    clearReferral()
     setAuthToken(data.accessToken)
     setUser(data.user)
+    return data
+  }, [])
+
+  /** Re-read the account after something server-side changed it. */
+  const refreshUser = useCallback(async () => {
+    const { data } = await apiGet('/api/auth/me')
+    setUser(data)
     return data
   }, [])
 
@@ -76,12 +90,16 @@ export function CustomerAuthProvider({ children }) {
       tierCode: user?.tier?.code ?? 'B2C',
       tierName: user?.tier?.name ?? 'Retail',
       hasPendingApplication: ['B2B_PENDING', 'CORPORATE_PENDING'].includes(user?.status),
+      // The reseller this customer buys through — shown as "Sold via …".
+      soldBy: user?.soldBy ?? null,
+      resellerStatus: user?.reseller?.status ?? null,
       signIn,
       register,
       signOut,
       applyForTier,
+      refreshUser,
     }),
-    [user, booting, signIn, register, signOut, applyForTier],
+    [user, booting, signIn, register, signOut, applyForTier, refreshUser],
   )
 
   return <CustomerAuthContext.Provider value={value}>{children}</CustomerAuthContext.Provider>

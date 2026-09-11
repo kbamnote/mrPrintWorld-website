@@ -165,6 +165,9 @@ export const rejectCustomer = (id, reason) =>
   request(`/api/admin/customers/${id}/reject`, { method: 'PATCH', body: { reason } }).then((r) => r.data)
 export const revokeCustomerTier = (id, reason) =>
   request(`/api/admin/customers/${id}/revoke`, { method: 'PATCH', body: reason ? { reason } : {} }).then((r) => r.data)
+/** Reseller standing: { action: 'approve' | 'decline' | 'pause' | 'resume', storeName? } */
+export const setReseller = (id, body) =>
+  request(`/api/admin/customers/${id}/reseller`, { method: 'PATCH', body }).then((r) => r.data)
 
 /* ── Organizations (Phase 4) ───────────────────────────────────────────── */
 export function listOrganizations(params = {}) {

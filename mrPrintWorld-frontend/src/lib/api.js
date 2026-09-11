@@ -92,6 +92,11 @@ export function fetchProducts({ category, featured, search, page = 1, limit = 24
   return request(`/api/public/products?${qs}`, opts).then((r) => ({ items: r.data, meta: r.meta }))
 }
 
+/** PATCH / PUT / DELETE on the customer session — used by the reseller dashboard. */
+export function apiSend(method, path, body, opts) {
+  return request(path, { method, body, ...opts })
+}
+
 export function fetchProduct(slug, opts) {
   return request(`/api/public/products/${encodeURIComponent(slug)}`, opts).then((r) => r.data)
 }

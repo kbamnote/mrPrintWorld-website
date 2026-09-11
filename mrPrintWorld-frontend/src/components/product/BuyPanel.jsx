@@ -210,6 +210,7 @@ export default function BuyPanel({ product }) {
             {quote.negotiated && (
               <p className="mt-1 text-sm font-medium text-green-700">Your contracted rate</p>
             )}
+            {quote.soldBy && <p className="mt-1 text-sm text-ink-soft">Sold via {quote.soldBy}</p>}
           </>
         ) : (
           <p className="text-sm text-ink-soft">

@@ -56,6 +56,11 @@ export default function Cart() {
             Prices shown are your <strong className="text-ink">{tierName}</strong> rates.
           </p>
         )}
+        {priced?.soldBy && (
+          <p className="mt-1 text-sm text-ink-soft">
+            Sold via <strong className="text-ink">{priced.soldBy}</strong>
+          </p>
+        )}
 
         {hasIssues && (
           <div className="mt-6 rounded-[var(--radius-card)] border border-amber-200 bg-amber-50 px-4 py-3">

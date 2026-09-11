@@ -39,6 +39,7 @@ const Cart = lazy(() => import('./pages/Cart'))
 const Checkout = lazy(() => import('./pages/Checkout'))
 const OrderList = lazy(() => import('./pages/Orders').then((m) => ({ default: m.OrderList })))
 const OrderDetail = lazy(() => import('./pages/Orders').then((m) => ({ default: m.OrderDetail })))
+const Reseller = lazy(() => import('./pages/Reseller'))
 
 // The whole admin panel behind a single lazy boundary — one chunk, fetched
 // only when an admin actually navigates to /admin.
@@ -88,6 +89,7 @@ export default function App() {
             <Route path="/account" element={<Account />} />
             <Route path="/account/orders" element={<OrderList />} />
             <Route path="/account/orders/:id" element={<OrderDetail />} />
+            <Route path="/account/reseller" element={<Reseller />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="*" element={<NotFound />} />

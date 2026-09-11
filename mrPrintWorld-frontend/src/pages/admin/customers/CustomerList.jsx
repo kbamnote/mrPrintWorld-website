@@ -67,6 +67,7 @@ export default function CustomerList() {
   }
 
   const pending = state.meta?.pendingCount ?? 0
+  const resellerPending = state.meta?.resellerPendingCount ?? 0
 
   return (
     <div className="space-y-5">
@@ -82,9 +83,16 @@ export default function CustomerList() {
             )}
           </p>
         </div>
-        {pending > 0 && query.status !== 'PENDING' && (
-          <Btn onClick={() => setParam('status', 'PENDING')}>Review {pending} pending</Btn>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {pending > 0 && query.status !== 'PENDING' && (
+            <Btn onClick={() => setParam('status', 'PENDING')}>Review {pending} pending</Btn>
+          )}
+          {resellerPending > 0 && query.status !== 'RESELLER_PENDING' && (
+            <Btn variant="outline" onClick={() => setParam('status', 'RESELLER_PENDING')}>
+              {resellerPending} reseller application{resellerPending === 1 ? '' : 's'}
+            </Btn>
+          )}
+        </div>
       </div>
 
       <ErrorBanner error={state.error} onDismiss={() => setState((s) => ({ ...s, error: null }))} />
@@ -104,6 +112,8 @@ export default function CustomerList() {
           <option value="CORPORATE_APPROVED">Corporate approved</option>
           <option value="B2B_REJECTED">Trade declined</option>
           <option value="CORPORATE_REJECTED">Corporate declined</option>
+          <option value="RESELLER_PENDING">Reseller applications</option>
+          <option value="RESELLERS">Resellers</option>
         </Select>
         <Select
           value={query.accountType}
@@ -137,13 +147,14 @@ export default function CustomerList() {
         />
       ) : (
         <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-line bg-white">
-          <table className="w-full min-w-[48rem] text-sm">
+          <table className="w-full min-w-[62rem] text-sm">
             <thead>
               <tr className="border-b border-line bg-surface text-left text-[0.7rem] uppercase tracking-wider text-ink-soft">
                 <th className="px-4 py-3 font-semibold">Customer</th>
                 <th className="px-4 py-3 font-semibold">Business</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
                 <th className="px-4 py-3 font-semibold">Priced at</th>
+                <th className="px-4 py-3 font-semibold">Reseller</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -171,7 +182,11 @@ export default function CustomerList() {
                     <td className="px-4 py-3">
                       <Badge tone={c.resolvedTier === 'B2C' ? 'neutral' : 'green'}>{c.resolvedTier}</Badge>
                     </td>
+                    <td className="px-4 py-3">
+                      <ResellerCell customer={c} />
+                    </td>
                     <td className="px-4 py-3 text-right">
+                      <div className="flex flex-wrap justify-end gap-1">
                       {isPending ? (
                         <Btn size="sm" onClick={() => setActing(c)}>
                           Review
@@ -193,6 +208,12 @@ export default function CustomerList() {
                           Revoke
                         </Btn>
                       ) : null}
+                        <ResellerActions
+                          customer={c}
+                          onDone={load}
+                          onError={(error) => setState((s) => ({ ...s, error }))}
+                        />
+                      </div>
                     </td>
                   </tr>
                 )
@@ -203,6 +224,90 @@ export default function CustomerList() {
       )}
     </div>
   )
+}
+
+const RESELLER_TONE = { PENDING: 'amber', ACTIVE: 'green', PAUSED: 'neutral' }
+
+/** A reseller's standing — or, for a customer, which reseller they belong to. */
+function ResellerCell({ customer: c }) {
+  if (c.reseller) {
+    return (
+      <div>
+        <Badge tone={RESELLER_TONE[c.reseller.status] ?? 'neutral'}>
+          {c.reseller.status === 'PENDING' ? 'applied' : c.reseller.status.toLowerCase()}
+        </Badge>
+        {c.reseller.code && <code className="ml-1 text-[0.7rem] text-ink-soft">{c.reseller.code}</code>}
+        {c.reseller.storeName && <span className="mt-0.5 block text-xs text-ink-soft">{c.reseller.storeName}</span>}
+      </div>
+    )
+  }
+  if (c.referredBy) {
+    return <span className="text-xs text-ink-soft">Customer of {c.referredBy.storeName}</span>
+  }
+  return <span className="text-ink-soft">—</span>
+}
+
+function ResellerActions({ customer: c, onDone, onError }) {
+  const status = c.reseller?.status
+
+  async function act(action, extra = {}) {
+    try {
+      await api.setReseller(c.id, { action, ...extra })
+      onDone()
+    } catch (error) {
+      onError(error)
+    }
+  }
+
+  if (status === 'PENDING') {
+    return (
+      <>
+        <Btn size="sm" onClick={() => act('approve')}>
+          Approve reseller
+        </Btn>
+        <Btn variant="ghost" size="sm" onClick={() => act('decline')}>
+          Decline
+        </Btn>
+      </>
+    )
+  }
+  if (status === 'ACTIVE') {
+    return (
+      <Btn
+        variant="ghost"
+        size="sm"
+        onClick={() =>
+          window.confirm(`Pause ${c.name}'s reseller account? Their customers go back to normal retail pricing.`) &&
+          act('pause')
+        }
+      >
+        Pause reseller
+      </Btn>
+    )
+  }
+  if (status === 'PAUSED') {
+    return (
+      <Btn variant="outline" size="sm" onClick={() => act('resume')}>
+        Resume reseller
+      </Btn>
+    )
+  }
+  // Only a trade-approved account has a margin to earn.
+  if (c.resolvedTier !== 'B2C') {
+    return (
+      <Btn
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          const name = window.prompt('Store name their customers will see', c.businessProfile?.businessName ?? c.name)
+          if (name && name.trim().length >= 2) act('approve', { storeName: name.trim() })
+        }}
+      >
+        Make reseller
+      </Btn>
+    )
+  }
+  return null
 }
 
 function ReviewPanel({ customer, onApprove, onReject, onCancel }) {
