@@ -12,7 +12,22 @@ import { normaliseCode } from '../../lib/referral'
  * portfolio, contact…) sends them back to their store, so a reseller's
  * customer only ever sees products and the steps to buy them.
  */
-const STORE_PAGES = /^\/(store\/[^/]+(\/.*)?|account(\/.*)?|login|register|cart|checkout|terms|privacy-policy|refund-policy|shipping-policy)$/
+const STORE_PAGE_PREFIXES = ['/store/', '/account', '/templates']
+const STORE_PAGES_EXACT = new Set([
+  '/login',
+  '/register',
+  '/cart',
+  '/checkout',
+  '/terms',
+  '/privacy-policy',
+  '/refund-policy',
+  '/shipping-policy',
+])
+
+function isStorePage(pathname) {
+  if (STORE_PAGES_EXACT.has(pathname)) return true
+  return STORE_PAGE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix))
+}
 
 /** The store address for a main-site address: a product keeps its product. */
 function storePathFor(pathname, code) {
@@ -38,13 +53,13 @@ export default function Layout() {
       // Still finding out who this is. Show nothing rather than either the
       // main site (which would flash for a store customer) or a redirect
       // based on a guess (which could strand someone who is not one).
-      if (!STORE_PAGES.test(path)) return null
+      if (!isStorePage(path)) return null
     } else {
       // A customer belongs to one reseller — another store's link opens theirs.
       if (routeCode && routeCode !== store.code) {
         return <Navigate to={path.replace(/^\/store\/[^/]+/, `/store/${store.code}`)} replace />
       }
-      if (!STORE_PAGES.test(path)) return <Navigate to={storePathFor(path, store.code)} replace />
+      if (!isStorePage(path)) return <Navigate to={storePathFor(path, store.code)} replace />
     }
   }
 
