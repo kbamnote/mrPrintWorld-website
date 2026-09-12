@@ -45,8 +45,17 @@ loadDotEnv()
 
 const API = (process.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '')
 
-/** Refuse to publish a sitemap that has lost the catalogue. */
-const MIN_PRODUCT_URLS = 20
+/**
+ * How many product URLs we expect. Below this the build stops — but only when
+ * the figure came from a FALLBACK, which is the dangerous case: the API was
+ * unreachable at build time and the sitemap silently lost the catalogue.
+ *
+ * An API that answers "zero products" is telling the truth (the catalogue is
+ * genuinely empty, or being rebuilt), and must not block a deploy — otherwise
+ * an empty catalogue locks you out of shipping the very fixes needed to fill
+ * it again. That case warns loudly instead.
+ */
+const MIN_PRODUCT_URLS = Number(process.env.SITEMAP_MIN_PRODUCTS ?? 20)
 
 /** Fallback: pull `slug: 'value'` out of a data file. */
 function slugsFromFile(file) {
@@ -128,12 +137,22 @@ const serviceRoutes = slugsFromFile('services.js').map((s) => [`/services/${s}`,
 const { products, categories, source } = await collectDynamicUrls()
 
 if (products.length < MIN_PRODUCT_URLS) {
-  console.error(
-    `\n✗ sitemap: only ${products.length} product URLs (source: ${source}).\n` +
-      `  Expected at least ${MIN_PRODUCT_URLS}. Refusing to publish a sitemap that has\n` +
-      `  lost the catalogue — this would silently deindex product pages.\n`,
-  )
-  process.exit(1)
+  if (source === 'api') {
+    // The catalogue itself is short or empty. That is a real answer from the
+    // API, so the sitemap reflects it rather than blocking the deploy.
+    console.warn(
+      `\n!  sitemap: only ${products.length} product URLs — the catalogue is nearly empty.\n` +
+        `   Publishing anyway because the API answered. Search engines will pick the\n` +
+        `   products back up once they are live again.\n`,
+    )
+  } else {
+    console.error(
+      `\n✗ sitemap: only ${products.length} product URLs (source: ${source}).\n` +
+        `  The catalogue API was unreachable, so this sitemap would silently deindex\n` +
+        `  every product page. Refusing to publish it.\n`,
+    )
+    process.exit(1)
+  }
 }
 
 const routes = [...staticRoutes, ...serviceRoutes, ...categories, ...products]
