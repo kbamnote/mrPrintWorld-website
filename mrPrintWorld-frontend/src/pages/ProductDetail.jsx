@@ -7,6 +7,7 @@ import Reveal from '../components/primitives/Reveal';
 import Button from '../components/primitives/Button';
 import Icon from '../components/primitives/Icon';
 import BuyPanel from '../components/product/BuyPanel';
+import Gallery from '../components/product/Gallery';
 
 export default function ProductDetail() {
   const { slug } = useParams();
@@ -79,13 +80,7 @@ export default function ProductDetail() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
             <Reveal>
-              <div className="aspect-square bg-white rounded-[var(--radius-lg)] border border-line overflow-hidden shadow-sm flex items-center justify-center">
-                {product.images?.[0]?.url ? (
-                  <img referrerPolicy="no-referrer" src={product.images[0].url} alt={product.images[0].alt ?? product.name} className="w-full h-full object-cover" />
-                ) : (
-                  <Icon name="Image" size={64} className="text-gray-300" />
-                )}
-              </div>
+              <Gallery images={product.images ?? []} name={product.name} />
             </Reveal>
 
             <Reveal delay={0.2}>

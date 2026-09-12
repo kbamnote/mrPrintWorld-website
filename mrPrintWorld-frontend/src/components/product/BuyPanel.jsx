@@ -57,6 +57,18 @@ export default function BuyPanel({ product }) {
     }
   }, [product.slug, qty, dims, selections, needsSize, buyable, isSignedIn])
 
+  /**
+   * A slab-priced product is only sold in set quantities. If the current
+   * number is not one of them — the default of 1 on a product that starts at
+   * 100, say — move to the nearest quantity at or above it, which is what the
+   * customer would have had to pick anyway.
+   */
+  const bands = quote?.quantityOptions
+  useEffect(() => {
+    if (!bands?.length || bands.some((band) => band.quantity === qty)) return
+    setQty((bands.find((band) => band.quantity >= qty) ?? bands[0]).quantity)
+  }, [bands, qty])
+
   if (booting) {
     return (
       <div className="rounded-[var(--radius-lg)] border border-line bg-white p-6">
@@ -175,11 +187,28 @@ export default function BuyPanel({ product }) {
 
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium text-ink">Quantity</span>
-          <input
-            type="number" min={product.moq?.qty ?? 1} value={qty}
-            onChange={(e) => setQty(Math.max(1, Number(e.target.value)))}
-            className={`${field} tabular-nums`}
-          />
+          {quote?.quantityOptions?.length ? (
+            // Sold in set quantities: show what each one costs, so the customer
+            // picks a pack rather than guessing a number that may fall between
+            // two price bands.
+            <select
+              value={qty}
+              onChange={(e) => setQty(Number(e.target.value))}
+              className={`${field} tabular-nums`}
+            >
+              {quote.quantityOptions.map((band) => (
+                <option key={band.quantity} value={band.quantity}>
+                  {band.quantity.toLocaleString('en-IN')} — {money(band.total)} ({money(band.unitPrice)} each)
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="number" min={product.moq?.qty ?? 1} value={qty}
+              onChange={(e) => setQty(Math.max(1, Number(e.target.value)))}
+              className={`${field} tabular-nums`}
+            />
+          )}
           {product.moq?.qty > 1 && (
             <span className="mt-1 block text-xs text-ink-soft">
               Minimum order {product.moq.qty} {product.moq.unit ?? 'units'}.
