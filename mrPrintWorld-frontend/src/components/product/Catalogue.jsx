@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useProducts } from '../../lib/useCatalogue'
 import { isApiEnabled, fetchCategories } from '../../lib/api'
 import { useCustomerAuth } from '../../lib/customerAuthContext'
@@ -8,24 +8,21 @@ import Button from '../primitives/Button'
 import Icon from '../primitives/Icon'
 
 /**
- * The browsable catalogue: category pills, subcategories, product grid.
+ * The browsable catalogue: picture tiles for the categories, then the
+ * products inside the one you are looking at.
  *
- * Shared by the main Products page and every reseller store, so both always
- * show the same admin-managed categories and products. `productHref` decides
- * where a card leads — /products/:slug on the main site, the store's own
- * product URL inside a store.
+ * Browsing is a DRILL-DOWN of any depth, matching the admin tree: tapping a
+ * category shows the categories inside it, and so on, until a level has none
+ * — the same way a customer expects a shop to work. The products shown are
+ * always everything beneath the current category, so a parent is never empty.
+ *
+ * Shared by the main Products page and every reseller store; `productHref`
+ * decides where a card leads.
  */
 export default function Catalogue({ productHref = (slug) => `/products/${slug}`, showContact = true }) {
-  // A category SLUG, or 'all'. Filtering happens server-side: the API matches
-  // a category and everything beneath it, so choosing "Signage" returns every
-  // outdoor, indoor, retail and custom product too.
-  const [activeRoot, setActiveRoot] = useState('all')
-  const [activeSub, setActiveSub] = useState(null)
-
   const [tree, setTree] = useState([])
-  const { items, loading, error } = useProducts({
-    category: activeSub ?? (activeRoot === 'all' ? undefined : activeRoot),
-  })
+  // Where the customer has drilled to, as category slugs.
+  const [trail, setTrail] = useState([])
 
   // The tree comes from the admin panel and only lists categories that hold
   // products this visitor can see — so it is re-read after sign-in, when a
@@ -42,70 +39,100 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
     }
   }, [isSignedIn, booting])
 
-  const currentRoot = tree.find((r) => r.slug === activeRoot)
-  const subcategories = currentRoot?.children ?? []
+  // Resolve the trail against the current tree, so renamed or removed
+  // categories cannot leave the page pointing at something that is gone.
+  const { path, children } = useMemo(() => {
+    const out = []
+    let level = tree
+    for (const slug of trail) {
+      const found = level.find((node) => node.slug === slug)
+      if (!found) break
+      out.push(found)
+      level = found.children ?? []
+    }
+    return { path: out, children: level }
+  }, [tree, trail])
 
-  function chooseRoot(slug) {
-    setActiveRoot(slug)
-    setActiveSub(null)
-  }
+  const current = path[path.length - 1] ?? null
+  const { items, loading, error } = useProducts({ category: current?.slug })
 
-  const pill = (isActive) =>
-    `px-4 py-2 rounded-[var(--radius-card)] text-sm font-medium transition-colors ${
-      isActive
-        ? 'bg-primary text-white shadow-soft'
-        : 'bg-white text-ink-soft hover:text-ink hover:bg-gray-50 border border-line'
-    }`
-
-  const subPill = (isActive) =>
-    `rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-      isActive
-        ? 'bg-primary/10 text-primary ring-1 ring-primary/40'
-        : 'bg-surface text-ink-soft hover:bg-gray-100 hover:text-ink'
-    }`
+  const tile =
+    'group flex w-24 shrink-0 flex-col items-center gap-2 text-center sm:w-28'
+  const circle =
+    'grid h-20 w-20 place-items-center overflow-hidden rounded-full border border-line bg-white shadow-sm transition-shadow group-hover:shadow-card sm:h-24 sm:w-24'
 
   return (
     <section className="section-y bg-surface">
       <Container>
-        {/* Top-level categories */}
-        <div className="mb-4 flex flex-wrap gap-2">
-          <button type="button" onClick={() => chooseRoot('all')} className={pill(activeRoot === 'all')}>
-            All Products
+        {/* Where am I */}
+        <nav className="mb-5 flex flex-wrap items-center gap-2 text-sm" aria-label="Breadcrumb">
+          <button
+            type="button"
+            onClick={() => setTrail([])}
+            className={path.length === 0 ? 'font-medium text-ink' : 'text-ink-soft transition-colors hover:text-primary'}
+          >
+            All products
           </button>
-          {tree.map((root) => (
-            <button
-              key={root.slug}
-              type="button"
-              onClick={() => chooseRoot(root.slug)}
-              className={pill(activeRoot === root.slug)}
-            >
-              {root.name}
-            </button>
-          ))}
-        </div>
-
-        {/* Subcategories — appear once a category that has them is chosen */}
-        {subcategories.length > 0 && (
-          <div className="mb-8 rounded-[var(--radius-lg)] border border-line bg-white p-4">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-soft">{currentRoot.name}</p>
-            <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => setActiveSub(null)} className={subPill(activeSub === null)}>
-                All {currentRoot.name}
+          {path.map((node, i) => (
+            <span key={node.slug} className="flex items-center gap-2">
+              <span aria-hidden="true" className="text-ink-soft/60">
+                ›
+              </span>
+              <button
+                type="button"
+                onClick={() => setTrail(trail.slice(0, i + 1))}
+                className={
+                  i === path.length - 1
+                    ? 'font-medium text-ink'
+                    : 'text-ink-soft transition-colors hover:text-primary'
+                }
+              >
+                {node.name}
               </button>
-              {subcategories.map((sub) => (
+            </span>
+          ))}
+        </nav>
+
+        {/* Picture tiles for this level */}
+        {children.length > 0 && (
+          <div className="mb-8 overflow-x-auto pb-2">
+            <div className="flex gap-4 sm:gap-6">
+              {path.length > 0 && (
+                <button type="button" onClick={() => setTrail(trail.slice(0, -1))} className={tile}>
+                  <span className={circle}>
+                    <span className="text-2xl text-ink-soft" aria-hidden="true">←</span>
+                  </span>
+                  <span className="text-xs font-medium text-ink-soft sm:text-sm">Back</span>
+                </button>
+              )}
+              {children.map((node) => (
                 <button
-                  key={sub.slug}
+                  key={node.slug}
                   type="button"
-                  onClick={() => setActiveSub(sub.slug)}
-                  className={subPill(activeSub === sub.slug)}
+                  onClick={() => setTrail([...trail, node.slug])}
+                  className={tile}
                 >
-                  {sub.name}
+                  <span className={circle}>
+                    {node.image?.url ? (
+                      <img
+                        src={node.image.url}
+                        alt=""
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="font-display text-2xl font-bold text-primary/70" aria-hidden="true">
+                        {node.name.charAt(0)}
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-xs font-medium leading-snug text-ink sm:text-sm">{node.name}</span>
                 </button>
               ))}
             </div>
           </div>
         )}
-        {subcategories.length === 0 && <div className="mb-6" />}
 
         {error && !loading && (
           <div className="rounded-[var(--radius-lg)] border border-line bg-white p-10 text-center">
@@ -122,6 +149,7 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
         {!loading && !error && (
           <p className="mb-6 text-sm text-ink-soft">
             {items.length} product{items.length === 1 ? '' : 's'}
+            {current ? ` in ${current.name}` : ''}
           </p>
         )}
 

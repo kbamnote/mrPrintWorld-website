@@ -78,6 +78,7 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
   const [savedAt, setSavedAt] = useState(null)
   const [error, setError] = useState(null)
   const [legacyImageUrl, setLegacyImageUrl] = useState(null)
+  const [uploading, setUploading] = useState(null) // { done, total } while photos upload
 
   useEffect(() => {
     api.listCategories().then(setCategories).catch(setError)
@@ -199,18 +200,37 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
     }
   }
 
-  async function handleUpload(file) {
+  /**
+   * Several photographs at once — how a product actually arrives from a shoot.
+   * Uploaded one after another rather than all at once, so a slow connection
+   * cannot stall every request, and progress can be shown honestly. Whatever
+   * succeeded before a failure is still kept.
+   */
+  async function handleUploads(fileList) {
+    const files = Array.from(fileList ?? [])
+    if (!files.length) return
     setError(null)
+    setUploading({ done: 0, total: files.length })
+
+    const added = []
     try {
-      const img = await api.uploadImage(file)
-      set({
-        images: [
-          ...form.images,
-          { url: img.url, publicId: img.publicId, alt: form.name, isPrimary: form.images.length === 0 },
-        ],
-      })
+      for (const file of files) {
+        const img = await api.uploadImage(file)
+        added.push({ url: img.url, publicId: img.publicId, alt: form.name })
+        setUploading({ done: added.length, total: files.length })
+      }
     } catch (err) {
       setError(err)
+    } finally {
+      setUploading(null)
+      if (added.length) {
+        set({
+          images: [
+            ...form.images,
+            ...added.map((img, i) => ({ ...img, isPrimary: form.images.length === 0 && i === 0 })),
+          ],
+        })
+      }
     }
   }
 
@@ -394,17 +414,25 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
               </div>
             )}
 
-            <Field label="Upload" hint="JPEG, PNG, WebP or AVIF. Up to 8 MB.">
+            <Field
+              label="Upload"
+              hint="JPEG, PNG, WebP or AVIF, up to 8 MB each. Select several at once to add them together."
+            >
               <input
                 type="file"
+                multiple
                 accept="image/jpeg,image/png,image/webp,image/avif"
                 onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) handleUpload(file)
+                  handleUploads(e.target.files)
                   e.target.value = ''
                 }}
                 className="block w-full text-sm text-ink-soft file:mr-4 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20"
               />
+              {uploading && (
+                <span className="mt-2 block text-sm font-medium text-primary" role="status" aria-live="polite">
+                  Uploading {Math.min(uploading.done + 1, uploading.total)} of {uploading.total}…
+                </span>
+              )}
             </Field>
 
             {form.images.length > 0 && (
