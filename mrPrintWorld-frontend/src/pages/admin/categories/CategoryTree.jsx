@@ -185,7 +185,7 @@ export default function CategoryTree() {
           <h1 className="font-display text-2xl font-bold text-ink">Categories &amp; products</h1>
           <p className="mt-1 text-sm text-ink-soft">
             {roots.length} top level · {items.length - roots.length} inside them. Open one to see and add its
-            products. A category shows on the website once it has a live product.
+            products. Every category shows on the website unless you hide it, even before it has products.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -395,11 +395,11 @@ function Row({
         </button>
         {!cat.image?.url && <Badge tone="amber">No picture</Badge>}
         {!cat.isActive ? (
-          <Badge tone="neutral">Hidden</Badge>
+          <Badge tone="neutral">Hidden from website</Badge>
         ) : (
           cat.liveCount === 0 && (
-            <span title="It appears on the website once it has a live product.">
-              <Badge tone="amber">Not on website yet</Badge>
+            <span title="Shown on the website, but customers will find it empty until a product is live.">
+              <Badge tone="amber">No live products</Badge>
             </span>
           )
         )}

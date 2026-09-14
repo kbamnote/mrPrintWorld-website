@@ -75,10 +75,17 @@ async function fetchJson(path) {
   return json.data
 }
 
-/** Flatten the category tree into browse URLs. */
+/**
+ * Flatten the category tree into browse URLs.
+ *
+ * Empty categories are shown to shoppers but kept out of the sitemap — an
+ * empty page is not one to send search engines to. Nothing beneath an empty
+ * category has products either, so its whole branch is skipped.
+ */
 function categoryUrls(tree, parentSlug = null) {
   const out = []
   for (const node of tree) {
+    if (node.hasProducts === false) continue
     const path = parentSlug ? `/products/c/${parentSlug}/${node.slug}` : `/products/c/${node.slug}`
     out.push([path, 'weekly', parentSlug ? '0.7' : '0.8'])
     if (node.children?.length) out.push(...categoryUrls(node.children, parentSlug ?? node.slug))
