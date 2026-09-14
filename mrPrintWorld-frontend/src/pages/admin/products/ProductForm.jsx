@@ -4,6 +4,7 @@ import * as api from '../adminApi'
 import { Field, Input, Textarea, Select, Btn, Badge, Spinner, ErrorBanner } from '../ui'
 import PricingTab from './PricingTab'
 import OptionsTab from './OptionsTab'
+import QuantityPacks from './QuantityPacks'
 
 const TABS = ['General', 'Images', 'Pricing', 'Options', 'Visibility', 'SEO']
 
@@ -30,6 +31,25 @@ const EMPTY = {
   seo: { title: '', description: '' },
   hsnCode: '',
   taxPercent: null,
+}
+
+/**
+ * Pricing as the API should receive it. Quantity packs still being typed — an
+ * empty quantity, or the same one listed twice — are dropped rather than
+ * failing the whole save (the server refuses overlapping quantities).
+ */
+function cleanPricing(form) {
+  const pricing = form.pricing
+  if (!pricing) return undefined
+  if (form.pricingModel !== 'SLAB' || !pricing.slabs) return pricing
+  const seen = new Set()
+  const slabs = pricing.slabs.filter((s) => {
+    const qty = Number(s.minQty)
+    if (!Number.isInteger(qty) || qty < 1 || seen.has(qty)) return false
+    seen.add(qty)
+    return true
+  })
+  return { ...pricing, slabs }
 }
 
 /** The full-page editor at /admin/products/new and /admin/products/:id. */
@@ -175,7 +195,7 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
       customization: form.customization,
       pricingModel: form.pricingModel,
       purchaseMode: form.purchaseMode,
-      pricing: form.pricingModel === 'QUOTE_ONLY' ? null : (form.pricing ?? undefined),
+      pricing: form.pricingModel === 'QUOTE_ONLY' ? null : cleanPricing(form),
       // Only the fields the API accepts: the populated group is display-only.
       options: (form.options ?? []).map((po, i) => ({
         optionGroup: po.optionGroup,
@@ -508,16 +528,20 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
             // Routed through set() so editing a price clears the "Saved"
             // confirmation, same as every other field.
             onChange={(next) => set(next)}
+            onGoToOptions={() => setTab('Options')}
           />
         )}
 
         {tab === 'Options' && (
-          <OptionsTab
-            value={form.options ?? []}
-            groups={optionGroups}
-            onChange={(options) => set({ options })}
-            onGroupCreated={(group) => setOptionGroups((list) => [...list, group])}
-          />
+          <div className="space-y-6">
+            <QuantityPacks value={form} onChange={(patch) => set(patch)} />
+            <OptionsTab
+              value={form.options ?? []}
+              groups={optionGroups}
+              onChange={(options) => set({ options })}
+              onGroupCreated={(group) => setOptionGroups((list) => [...list, group])}
+            />
+          </div>
         )}
 
         {tab === 'Visibility' && (

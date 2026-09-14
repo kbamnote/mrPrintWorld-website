@@ -11,7 +11,7 @@ const TIERS = [
 const MODELS = [
   { value: 'QUOTE_ONLY', label: 'Quote only — no automatic price' },
   { value: 'FIXED', label: 'Fixed price per unit' },
-  { value: 'SLAB', label: 'Quantity slabs (e.g. visiting cards)' },
+  { value: 'SLAB', label: 'Quantity packs, e.g. visiting cards — set on the Options tab' },
   { value: 'AREA', label: 'Per sq.ft (e.g. flex, ACP board)' },
 ]
 
@@ -34,7 +34,7 @@ function marginVsRetail(retail, tierValue) {
  *      calculator uses, so what is shown here is what a customer is quoted.
  *      A second calculation in the UI is how admin and customer drift apart.
  */
-export default function PricingTab({ productId, value, onChange }) {
+export default function PricingTab({ productId, value, onChange, onGoToOptions }) {
   const [preview, setPreview] = useState({ loading: false, result: null, error: null })
   const [previewInput, setPreviewInput] = useState({ tier: 'B2C', quantity: 1, width: 4, height: 8 })
 
@@ -197,7 +197,20 @@ export default function PricingTab({ productId, value, onChange }) {
             </Card>
           )}
 
-          {model === 'SLAB' && <SlabEditor pricing={pricing} setPricing={setPricing} />}
+          {/* Packs moved to the Options tab, beside the product's other choices. */}
+          {model === 'SLAB' && (
+            <Card title="Quantity packs" description="Priced per pack — for example 500, 1,000, 1,500.">
+              <p className="text-sm text-ink-soft">
+                {(pricing.slabs ?? []).length} pack{(pricing.slabs ?? []).length === 1 ? '' : 's'} set. Packs and
+                their prices are managed on the Options tab, with the product&rsquo;s other choices.
+              </p>
+              {onGoToOptions && (
+                <Btn size="sm" className="mt-3" onClick={onGoToOptions}>
+                  Set quantity packs
+                </Btn>
+              )}
+            </Card>
+          )}
 
           {/* ── Live preview ───────────────────────────────────────────── */}
           <Card title="Live preview" description="Runs through the same engine that quotes the customer.">
@@ -293,107 +306,3 @@ export default function PricingTab({ productId, value, onChange }) {
   )
 }
 
-function SlabEditor({ pricing, setPricing }) {
-  const slabs = pricing.slabs ?? []
-
-  const update = (i, patch) =>
-    setPricing({ slabs: slabs.map((s, idx) => (idx === i ? { ...s, ...patch } : s)) })
-
-  const setAmount = (i, tier, val) => {
-    const amounts = { ...(slabs[i].amounts ?? {}) }
-    if (val === '') delete amounts[tier]
-    else amounts[tier] = Number(val)
-    update(i, { amounts })
-  }
-
-  return (
-    <Card
-      title="Quantity slabs"
-      description="Each band is the price FOR that quantity, not per unit."
-      actions={
-        <Btn
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            setPricing({
-              slabs: [...slabs, { minQty: slabs.length ? (slabs[slabs.length - 1].maxQty ?? 0) + 1 : 100, maxQty: null, amounts: {} }],
-            })
-          }
-        >
-          Add band
-        </Btn>
-      }
-    >
-      {slabs.length === 0 ? (
-        <p className="text-sm text-ink-soft">No bands yet. Add one to start.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[38rem] text-sm">
-            <thead>
-              <tr className="text-left text-[0.7rem] uppercase tracking-wider text-ink-soft">
-                <th className="pb-2 font-semibold">From</th>
-                <th className="pb-2 font-semibold">To</th>
-                {TIERS.map((t) => (
-                  <th key={t.code} className="pb-2 font-semibold">
-                    {t.label}
-                  </th>
-                ))}
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {slabs.map((s, i) => (
-                <tr key={i} className="border-t border-line">
-                  <td className="py-2 pr-2">
-                    <Input
-                      type="number"
-                      min="1"
-                      value={s.minQty ?? ''}
-                      onChange={(e) => update(i, { minQty: Number(e.target.value) })}
-                      className="w-24 tabular-nums"
-                    />
-                  </td>
-                  <td className="py-2 pr-2">
-                    <Input
-                      type="number"
-                      min="1"
-                      value={s.maxQty ?? ''}
-                      onChange={(e) => update(i, { maxQty: e.target.value === '' ? null : Number(e.target.value) })}
-                      className="w-24 tabular-nums"
-                      placeholder="∞"
-                    />
-                  </td>
-                  {TIERS.map((t) => (
-                    <td key={t.code} className="py-2 pr-2">
-                      <Input
-                        type="number"
-                        min="0"
-                        value={s.amounts?.[t.code] ?? ''}
-                        onChange={(e) => setAmount(i, t.code, e.target.value)}
-                        className="w-24 tabular-nums"
-                        placeholder="—"
-                      />
-                    </td>
-                  ))}
-                  <td className="py-2 text-right">
-                    <Btn
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setPricing({ slabs: slabs.filter((_, idx) => idx !== i) })}
-                    >
-                      Remove
-                    </Btn>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      <p className="mt-3 text-xs text-ink-soft">
-        Leave the last band&rsquo;s <strong>To</strong> empty for &ldquo;and above&rdquo;. Bands must not overlap —
-        the server rejects them if they do.
-      </p>
-    </Card>
-  )
-}
