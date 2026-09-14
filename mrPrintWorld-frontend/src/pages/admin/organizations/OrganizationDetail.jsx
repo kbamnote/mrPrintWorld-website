@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import * as api from '../adminApi'
+import { useCanDelete } from '../authContext'
 import { Field, Input, Select, Btn, Card, Badge, Spinner, ErrorBanner } from '../ui'
 
 export default function OrganizationDetail() {
@@ -164,6 +165,7 @@ function AccessPanel({ org, categories, products, onSaved, onError }) {
 /* ── Members ────────────────────────────────────────────────────────────── */
 
 function MembersPanel({ org, onSaved, onError }) {
+  const canDelete = useCanDelete()
   const [email, setEmail] = useState('')
   const [orgRole, setOrgRole] = useState('PURCHASER')
   const [busy, setBusy] = useState(false)
@@ -233,9 +235,11 @@ function MembersPanel({ org, onSaved, onError }) {
                     <Badge tone={m.resolvedTier === 'B2C' ? 'neutral' : 'green'}>{m.resolvedTier}</Badge>
                   </td>
                   <td className="py-2 text-right">
-                    <Btn variant="ghost" size="sm" onClick={() => remove(m)}>
-                      Remove
-                    </Btn>
+                    {canDelete && (
+                      <Btn variant="ghost" size="sm" onClick={() => remove(m)}>
+                        Remove
+                      </Btn>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -250,6 +254,7 @@ function MembersPanel({ org, onSaved, onError }) {
 /* ── Negotiated rates ───────────────────────────────────────────────────── */
 
 function OverridesPanel({ org, products, categories, onSaved, onError }) {
+  const canDelete = useCanDelete()
   const [form, setForm] = useState({
     target: 'product',
     product: '',
@@ -344,9 +349,11 @@ function OverridesPanel({ org, products, categories, onSaved, onError }) {
                   </td>
                   <td className="px-3 py-2 text-xs text-ink-soft">{o.note ?? '—'}</td>
                   <td className="px-3 py-2 text-right">
-                    <Btn variant="ghost" size="sm" onClick={() => remove(o)}>
-                      Remove
-                    </Btn>
+                    {canDelete && (
+                      <Btn variant="ghost" size="sm" onClick={() => remove(o)}>
+                        Remove
+                      </Btn>
+                    )}
                   </td>
                 </tr>
               ))}

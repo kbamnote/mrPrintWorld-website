@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as api from '../adminApi'
+import { useCanDelete } from '../authContext'
 import { Input, Select, Btn, Badge, Spinner, ErrorBanner, EmptyState, Drawer } from '../ui'
 import { ProductEditor } from '../products/ProductForm'
 
@@ -361,6 +362,7 @@ function Row({
   onEdit,
   onDelete,
 }) {
+  const canDelete = useCanDelete()
   return (
     <div
       className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 hover:bg-surface/60"
@@ -416,9 +418,11 @@ function Row({
         <Btn variant="ghost" size="sm" onClick={onEdit}>
           Edit
         </Btn>
-        <Btn variant="ghost" size="sm" onClick={onDelete} disabled={hasChildren && cat.productCount > 0}>
-          Delete
-        </Btn>
+        {canDelete && (
+          <Btn variant="ghost" size="sm" onClick={onDelete} disabled={hasChildren && cat.productCount > 0}>
+            Delete
+          </Btn>
+        )}
       </div>
     </div>
   )
@@ -482,6 +486,7 @@ function ProductPanel({ state, depth, canAdd, onAdd, onEdit, onToggleLive, onDel
 }
 
 function ProductItem({ p, onEdit, onToggleLive, onDelete }) {
+  const canDelete = useCanDelete()
   const image = p.images?.find((i) => i.isPrimary)?.url ?? p.images?.[0]?.url ?? p.legacyImageUrl
   const price = priceLabel(p)
 
@@ -507,9 +512,11 @@ function ProductItem({ p, onEdit, onToggleLive, onDelete }) {
         <Btn variant="ghost" size="sm" onClick={onEdit}>
           Edit
         </Btn>
-        <Btn variant="ghost" size="sm" onClick={onDelete}>
-          Delete
-        </Btn>
+        {canDelete && (
+          <Btn variant="ghost" size="sm" onClick={onDelete}>
+            Delete
+          </Btn>
+        )}
       </div>
     </li>
   )

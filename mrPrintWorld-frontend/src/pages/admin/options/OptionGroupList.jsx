@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import * as api from '../adminApi'
+import { useCanDelete } from '../authContext'
 import { Field, Input, Select, Btn, Card, Badge, Spinner, ErrorBanner, EmptyState } from '../ui'
 import { OPTION_PRESETS, PRESET_SECTIONS } from './presets'
 
@@ -21,6 +22,7 @@ export default function OptionGroupList() {
   const [error, setError] = useState(null)
   const [editing, setEditing] = useState(null)
   const [library, setLibrary] = useState(false)
+  const canDelete = useCanDelete()
 
   const load = useCallback(() => {
     setLoading(true)
@@ -151,9 +153,11 @@ export default function OptionGroupList() {
                 <Btn variant="ghost" size="sm" onClick={() => setEditing(g)}>
                   Edit
                 </Btn>
-                <Btn variant="ghost" size="sm" onClick={() => remove(g)}>
-                  Delete
-                </Btn>
+                {canDelete && (
+                  <Btn variant="ghost" size="sm" onClick={() => remove(g)}>
+                    Delete
+                  </Btn>
+                )}
               </div>
             </div>
           ))}
