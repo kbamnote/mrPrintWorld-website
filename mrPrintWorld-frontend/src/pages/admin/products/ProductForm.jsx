@@ -516,6 +516,7 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
             value={form.options ?? []}
             groups={optionGroups}
             onChange={(options) => set({ options })}
+            onGroupCreated={(group) => setOptionGroups((list) => [...list, group])}
           />
         )}
 

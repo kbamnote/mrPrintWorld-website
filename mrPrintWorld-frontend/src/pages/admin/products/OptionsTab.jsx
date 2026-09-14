@@ -1,4 +1,5 @@
 import { Field, Input, Select, Btn, Badge } from '../ui'
+import NewFieldForm from './NewFieldForm'
 
 const TIERS = ['B2C', 'B2B', 'CORPORATE']
 
@@ -10,7 +11,7 @@ const TIERS = ['B2C', 'B2B', 'CORPORATE']
  * you only choose which ones apply, whether they must be answered, and
  * whether this product charges differently for them.
  */
-export default function OptionsTab({ value = [], groups = [], onChange }) {
+export default function OptionsTab({ value = [], groups = [], onChange, onGroupCreated }) {
   const attachedIds = new Set(value.map((po) => String(po.optionGroup)))
   const available = groups.filter((g) => !attachedIds.has(String(g._id)) && g.isActive !== false)
 
@@ -157,9 +158,15 @@ export default function OptionsTab({ value = [], groups = [], onChange }) {
         </div>
       )}
 
-      <Field label="Add a specification field" hint="Fields come from the shared library.">
+      <Field label="Add an existing field" hint="Fields already in your library.">
         <Select value="" onChange={(e) => add(e.target.value)} className="w-auto" disabled={available.length === 0}>
-          <option value="">{available.length === 0 ? 'Every field is already added' : 'Choose a field…'}</option>
+          <option value="">
+            {groups.length === 0
+              ? 'No fields in your library yet — create one below'
+              : available.length === 0
+                ? 'Every library field is already on this product'
+                : 'Choose a field…'}
+          </option>
           {available.map((g) => (
             <option key={g._id} value={String(g._id)}>
               {g.label}
@@ -168,6 +175,15 @@ export default function OptionsTab({ value = [], groups = [], onChange }) {
           ))}
         </Select>
       </Field>
+
+      <NewFieldForm
+        existingCodes={groups.map((g) => g.code)}
+        startOpen={groups.length === 0}
+        onCreated={(group) => {
+          onGroupCreated?.(group)
+          add(String(group._id))
+        }}
+      />
     </div>
   )
 }
