@@ -79,6 +79,25 @@ function keptUnavailable(po, form) {
   return Object.keys(kept).length ? kept : null
 }
 
+/** A field's prices per choice of another field, keeping only packs the product still sells. */
+function keptDriverPrices(po, form) {
+  if (!po.driverPrices) return null
+  const packs = new Set(packQuantities(form).map(String))
+  const kept = {}
+  for (const [driverCode, prices] of Object.entries(po.driverPrices)) {
+    const every = prices?.every && Object.keys(prices.every).length ? prices.every : null
+    const packEntries = Object.entries(prices?.packs ?? {}).filter(
+      ([qty, byChoice]) => packs.has(qty) && byChoice && Object.keys(byChoice).length > 0,
+    )
+    const entry = {
+      ...(every ? { every } : {}),
+      ...(packEntries.length ? { packs: Object.fromEntries(packEntries) } : {}),
+    }
+    if (Object.keys(entry).length) kept[driverCode] = entry
+  }
+  return Object.keys(kept).length ? kept : null
+}
+
 /** The full-page editor at /admin/products/new and /admin/products/:id. */
 export default function ProductForm() {
   const { id } = useParams()
@@ -162,6 +181,8 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
             valueOverrides: po.valueOverrides ?? null,
             packOverrides: po.packOverrides ?? null,
             packUnavailable: po.packUnavailable ?? null,
+            dependsOn: po.dependsOn ? String(po.dependsOn._id ?? po.dependsOn) : null,
+            driverPrices: po.driverPrices ?? null,
           })),
         })
       })
@@ -230,6 +251,14 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
       options: (form.options ?? []).map((po, i) => {
         const packPrices = keptPackPrices(po, form)
         const packBlocked = keptUnavailable(po, form)
+        // Only depend on a field still on this product — the server refuses anything else.
+        const dependsOn =
+          po.dependsOn &&
+          po.dependsOn !== po.optionGroup &&
+          (form.options ?? []).some((o) => o.optionGroup === po.dependsOn)
+            ? po.dependsOn
+            : null
+        const driverPrices = keptDriverPrices(po, form)
         return {
           optionGroup: po.optionGroup,
           order: i,
@@ -246,6 +275,10 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
           ...(packPrices ? { packOverrides: packPrices } : {}),
           // …and choices not offered on particular packs.
           ...(packBlocked ? { packUnavailable: packBlocked } : {}),
+          // Prices by another field's choice (e.g. per Size). Kept even while not
+          // depending on anything, so switching back does not lose them.
+          ...(dependsOn ? { dependsOn } : {}),
+          ...(driverPrices ? { driverPrices } : {}),
         }
       }),
       visibility: form.visibility,

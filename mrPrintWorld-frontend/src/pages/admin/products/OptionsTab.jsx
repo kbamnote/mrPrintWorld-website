@@ -2,15 +2,9 @@ import { useState } from 'react'
 import { Field, Input, Select, Btn, Badge } from '../ui'
 import { percentOrNull, fromRetail, tiersFromRetail, inferPercent } from './tierPercents'
 import FieldForm from './FieldForm'
+import DriverPrices from './DriverPrices'
 
-const TIERS = ['B2C', 'B2B', 'CORPORATE']
-const TIER_LABELS = { B2C: 'Retail', B2B: 'Trade', CORPORATE: 'Corporate' }
-
-/** What a choice's number means, shown beside its name. */
-const DELTA_HINT = { FLAT: '+ ₹', PERCENT: '+ %', PER_SQFT: '+ ₹ per sq.ft', MULTIPLIER: '×' }
-
-/** One tier's library price, from a Map or a plain object. */
-const readTier = (map, tier) => (map ? (typeof map.get === 'function' ? map.get(tier) : map[tier]) : undefined)
+import { TIERS, TIER_LABELS, DELTA_HINT, readTier } from './choicePricing'
 
 const hasLegacyOverride = (po) => Boolean(po.deltaOverrides && Object.keys(po.deltaOverrides).length)
 
@@ -47,6 +41,8 @@ export default function OptionsTab({
   const [editingField, setEditingField] = useState(null)
   // Each field's trade and corporate percentages below retail, by field id, once typed.
   const [percentsFor, setPercentsFor] = useState({})
+  // For a field priced by another field (e.g. Size), which of that field's choices is showing.
+  const [driverTabFor, setDriverTabFor] = useState({})
   const attachedIds = new Set(value.map((po) => String(po.optionGroup)))
   const available = groups.filter((g) => !attachedIds.has(String(g._id)) && g.isActive !== false)
 
@@ -92,6 +88,56 @@ export default function OptionsTab({
     if (Object.keys(forChoice).length) all[code] = forChoice
     else delete all[code]
     patch(i, { valueOverrides: Object.keys(all).length ? all : null })
+  }
+
+  /** The field this one's prices depend on (e.g. Size), with its name and choices — or null. */
+  function driverOf(i) {
+    const po = value[i]
+    if (!po.dependsOn || String(po.dependsOn) === String(po.optionGroup)) return null
+    const driverPo = value.find((o) => String(o.optionGroup) === String(po.dependsOn))
+    const driverChoices = driverPo ? (groupFor(driverPo)?.values ?? []) : []
+    if (!driverChoices.length) return null
+    return { label: driverPo.labelOverride || groupFor(driverPo)?.label || 'Other field', choices: driverChoices }
+  }
+
+  /** Which of the driving field's choices is showing: the one picked, else the first. */
+  function driverCodeFor(i, driver) {
+    const picked = driverTabFor[String(value[i].optionGroup)]
+    return driver.choices.some((c) => c.code === picked) ? picked : driver.choices[0].code
+  }
+
+  /**
+   * This field's price for one choice while another field (e.g. Size) has a
+   * given choice: for every quantity (pack null) or for one pack. Blank falls back.
+   */
+  function setDriverPrice(i, driverCode, pack, code, tier, raw) {
+    const all = { ...(value[i].driverPrices ?? {}) }
+    const every = { ...(all[driverCode]?.every ?? {}) }
+    const packsMap = { ...(all[driverCode]?.packs ?? {}) }
+    const target = pack === null ? every : { ...(packsMap[pack] ?? {}) }
+    const forChoice = { ...(target[code] ?? {}) }
+
+    if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0) delete forChoice[tier]
+    else {
+      forChoice[tier] = Number(raw)
+      // With the field's percentages set, trade and corporate follow retail.
+      if (tier === 'B2C') Object.assign(forChoice, followRetail(i, code, Number(raw)))
+    }
+
+    if (Object.keys(forChoice).length) target[code] = forChoice
+    else delete target[code]
+    if (pack !== null) {
+      if (Object.keys(target).length) packsMap[pack] = target
+      else delete packsMap[pack]
+    }
+
+    const entry = {
+      ...(Object.keys(every).length ? { every } : {}),
+      ...(Object.keys(packsMap).length ? { packs: packsMap } : {}),
+    }
+    if (Object.keys(entry).length) all[driverCode] = entry
+    else delete all[driverCode]
+    patch(i, { driverPrices: Object.keys(all).length ? all : null })
   }
 
   /** This product's retail price for a choice, falling back to the library's. */
@@ -142,9 +188,35 @@ export default function OptionsTab({
       }
     }
 
+    // Prices set per choice of another field (e.g. per Size) follow the same percentages.
+    const driverPrices = { ...(po.driverPrices ?? {}) }
+    const priced = (groupFor(po)?.values ?? []).filter(scales)
+    for (const [driverCode, prices] of Object.entries(driverPrices)) {
+      const every = { ...(prices?.every ?? {}) }
+      const packsMap = { ...(prices?.packs ?? {}) }
+      for (const choice of priced) {
+        const decimals = decimalsFor(choice)
+        const own = every[choice.code]
+        const filled = tiersFromRetail(own?.B2C, next.trade, next.corporate, decimals)
+        if (Object.keys(filled).length) every[choice.code] = { ...own, ...filled }
+        for (const pack of Object.keys(packsMap)) {
+          const ownOnPack = packsMap[pack]?.[choice.code]
+          const onPack = tiersFromRetail(ownOnPack?.B2C, next.trade, next.corporate, decimals)
+          if (Object.keys(onPack).length) {
+            packsMap[pack] = { ...packsMap[pack], [choice.code]: { ...ownOnPack, ...onPack } }
+          }
+        }
+      }
+      driverPrices[driverCode] = {
+        ...(Object.keys(every).length ? { every } : {}),
+        ...(Object.keys(packsMap).length ? { packs: packsMap } : {}),
+      }
+    }
+
     patch(i, {
       valueOverrides: Object.keys(valueOverrides).length ? valueOverrides : null,
       packOverrides: Object.keys(packOverrides).length ? packOverrides : null,
+      driverPrices: Object.keys(driverPrices).length ? driverPrices : null,
     })
   }
 
@@ -311,6 +383,24 @@ export default function OptionsTab({
                       maxLength={120}
                     />
                   </Field>
+
+                  {value.some((o) => o.optionGroup !== po.optionGroup && (groupFor(o)?.values?.length ?? 0) > 0) && (
+                    <Field
+                      label="Price depends on"
+                      hint="Give this field its own prices for each choice of another field — for example, per Size."
+                    >
+                      <Select value={po.dependsOn ?? ''} onChange={(e) => patch(i, { dependsOn: e.target.value || null })}>
+                        <option value="">Nothing — one set of prices</option>
+                        {value
+                          .filter((o) => o.optionGroup !== po.optionGroup && (groupFor(o)?.values?.length ?? 0) > 0)
+                          .map((o) => (
+                            <option key={o.optionGroup} value={String(o.optionGroup)}>
+                              {o.labelOverride || groupFor(o)?.label}
+                            </option>
+                          ))}
+                      </Select>
+                    </Field>
+                  )}
                 </div>
 
                 {choices.length > 0 && (
@@ -341,7 +431,20 @@ export default function OptionsTab({
                       />
                     )}
 
-                    {packs.length > 0 ? (
+                    {driverOf(i) ? (
+                      <DriverPrices
+                        po={po}
+                        fieldIndex={i}
+                        choices={choices}
+                        packs={packs}
+                        driver={driverOf(i)}
+                        driverCode={driverCodeFor(i, driverOf(i))}
+                        onDriverCode={(code) => setDriverTabFor((m) => ({ ...m, [po.optionGroup]: code }))}
+                        tier={tierFor[po.optionGroup] ?? 'B2C'}
+                        onTier={(tier) => setTierFor((m) => ({ ...m, [po.optionGroup]: tier }))}
+                        setDriverPrice={setDriverPrice}
+                      />
+                    ) : packs.length > 0 ? (
                       <PackPriceTable
                         po={po}
                         fieldIndex={i}
