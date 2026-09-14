@@ -68,6 +68,17 @@ function keptPackPrices(po, form) {
   return Object.keys(kept).length ? kept : null
 }
 
+/** A field's "not offered on this pack" marks, keeping only the packs the product still sells. */
+function keptUnavailable(po, form) {
+  const packs = new Set(packQuantities(form).map(String))
+  const kept = Object.fromEntries(
+    Object.entries(po.packUnavailable ?? {}).filter(
+      ([qty, codes]) => packs.has(qty) && Array.isArray(codes) && codes.length > 0,
+    ),
+  )
+  return Object.keys(kept).length ? kept : null
+}
+
 /** The full-page editor at /admin/products/new and /admin/products/:id. */
 export default function ProductForm() {
   const { id } = useParams()
@@ -150,6 +161,7 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
             deltaOverrides: po.deltaOverrides ?? null,
             valueOverrides: po.valueOverrides ?? null,
             packOverrides: po.packOverrides ?? null,
+            packUnavailable: po.packUnavailable ?? null,
           })),
         })
       })
@@ -217,6 +229,7 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
       // Only the fields the API accepts: the populated group is display-only.
       options: (form.options ?? []).map((po, i) => {
         const packPrices = keptPackPrices(po, form)
+        const packBlocked = keptUnavailable(po, form)
         return {
           optionGroup: po.optionGroup,
           order: i,
@@ -231,6 +244,8 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
             : {}),
           // …and for particular quantity packs.
           ...(packPrices ? { packOverrides: packPrices } : {}),
+          // …and choices not offered on particular packs.
+          ...(packBlocked ? { packUnavailable: packBlocked } : {}),
         }
       }),
       visibility: form.visibility,

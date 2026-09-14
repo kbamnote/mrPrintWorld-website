@@ -65,9 +65,19 @@ export default function BuyPanel({ product }) {
    */
   const bands = quote?.quantityOptions
   useEffect(() => {
-    if (!bands?.length || bands.some((band) => band.quantity === qty)) return
-    setQty((bands.find((band) => band.quantity >= qty) ?? bands[0]).quantity)
+    const open = (bands ?? []).filter((band) => band.available !== false)
+    if (!open.length || open.some((band) => band.quantity === qty)) return
+    setQty((open.find((band) => band.quantity >= qty) ?? open[0]).quantity)
   }, [bands, qty])
+
+  /** The name of a chosen option that a pack does not offer, or null. */
+  function blockingChoice(packQty) {
+    for (const opt of product.options ?? []) {
+      const chosen = opt.values.find((v) => v.code === selections[opt.code])
+      if (chosen?.unavailableFor?.includes(packQty)) return chosen.label
+    }
+    return null
+  }
 
   if (booting) {
     return (
@@ -168,7 +178,11 @@ export default function BuyPanel({ product }) {
         {product.options?.map((opt) => {
           // A short set of alternatives reads better as buttons than as a
           // dropdown — "Single side / Both sides" is a choice, not a list.
-          const asButtons = opt.inputType === 'RADIO' && opt.values.length <= 4
+          // Choices this product does not offer on the chosen pack are left out,
+          // and a field with nothing left to choose is hidden for that pack.
+          const offered = opt.values.filter((v) => !v.unavailableFor?.includes(qty))
+          if (offered.length === 0) return null
+          const asButtons = opt.inputType === 'RADIO' && offered.length <= 4
 
           return (
             <div key={opt.code}>
@@ -179,7 +193,7 @@ export default function BuyPanel({ product }) {
 
               {asButtons ? (
                 <div className="flex flex-wrap gap-2">
-                  {opt.values.map((v) => {
+                  {offered.map((v) => {
                     const chosen = selections[opt.code] === v.code
                     return (
                       <button
@@ -205,7 +219,7 @@ export default function BuyPanel({ product }) {
                   className={field}
                 >
                   <option value="">Choose…</option>
-                  {opt.values.map((v) => (
+                  {offered.map((v) => (
                     <option key={v.code} value={v.code}>{v.label}</option>
                   ))}
                 </select>
@@ -227,11 +241,18 @@ export default function BuyPanel({ product }) {
               onChange={(e) => setQty(Number(e.target.value))}
               className={`${field} tabular-nums`}
             >
-              {quote.quantityOptions.map((band) => (
-                <option key={band.quantity} value={band.quantity}>
-                  {band.quantity.toLocaleString('en-IN')} — {money(band.total)} ({money(band.unitPrice)} each)
-                </option>
-              ))}
+              {quote.quantityOptions.map((band) => {
+                // Block the switch: a pack that does not offer something already
+                // chosen stays listed, greyed out, and cannot be picked.
+                const blocker = blockingChoice(band.quantity) ?? (band.available === false ? 'your choices' : null)
+                return (
+                  <option key={band.quantity} value={band.quantity} disabled={Boolean(blocker)}>
+                    {blocker
+                      ? `${band.quantity.toLocaleString('en-IN')} — not available with ${blocker}`
+                      : `${band.quantity.toLocaleString('en-IN')} — ${money(band.total)} (${money(band.unitPrice)} each)`}
+                  </option>
+                )
+              })}
             </select>
           ) : (
             <input

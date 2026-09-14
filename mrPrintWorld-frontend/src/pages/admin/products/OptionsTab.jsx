@@ -13,6 +13,9 @@ const readTier = (map, tier) => (map ? (typeof map.get === 'function' ? map.get(
 
 const hasLegacyOverride = (po) => Boolean(po.deltaOverrides && Object.keys(po.deltaOverrides).length)
 
+/** What a pack cell accepts to mean "not offered on this pack": –, x, na or n/a. */
+const NOT_AVAILABLE = /^\s*(-|–|—|x|na|n\/a)\s*$/i
+
 /**
  * Which specification fields this product asks the customer, in what order.
  *
@@ -76,18 +79,41 @@ export default function OptionsTab({
     patch(i, { valueOverrides: Object.keys(all).length ? all : null })
   }
 
-  /** This product's price for one choice on one pack, for one customer type. Blank falls back. */
-  function setPackPrice(i, pack, code, tier, raw) {
-    const all = { ...(value[i].packOverrides ?? {}) }
-    const forPack = { ...(all[pack] ?? {}) }
+  /**
+   * One cell of a field's pack price table. A price sets this choice's price
+   * on the pack for one customer type; "–" (or x, na) marks the choice as not
+   * offered on that pack, for every customer type; clearing it offers the
+   * choice again. Both are written in one change so neither overwrites the other.
+   */
+  function setPackCell(i, pack, code, tier, raw) {
+    const po = value[i]
+    const unavailable = { ...(po.packUnavailable ?? {}) }
+    const blocked = new Set(unavailable[pack] ?? [])
+    const prices = { ...(po.packOverrides ?? {}) }
+    const forPack = { ...(prices[pack] ?? {}) }
     const forChoice = { ...(forPack[code] ?? {}) }
-    if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0) delete forChoice[tier]
-    else forChoice[tier] = Number(raw)
-    if (Object.keys(forChoice).length) forPack[code] = forChoice
-    else delete forPack[code]
-    if (Object.keys(forPack).length) all[pack] = forPack
-    else delete all[pack]
-    patch(i, { packOverrides: Object.keys(all).length ? all : null })
+
+    if (NOT_AVAILABLE.test(raw)) {
+      blocked.add(code)
+      // A price for something not offered on this pack would mean nothing.
+      delete forPack[code]
+    } else {
+      blocked.delete(code)
+      if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0) delete forChoice[tier]
+      else forChoice[tier] = Number(raw)
+      if (Object.keys(forChoice).length) forPack[code] = forChoice
+      else delete forPack[code]
+    }
+
+    if (blocked.size) unavailable[pack] = [...blocked]
+    else delete unavailable[pack]
+    if (Object.keys(forPack).length) prices[pack] = forPack
+    else delete prices[pack]
+
+    patch(i, {
+      packUnavailable: Object.keys(unavailable).length ? unavailable : null,
+      packOverrides: Object.keys(prices).length ? prices : null,
+    })
   }
 
   return (
@@ -207,7 +233,7 @@ export default function OptionsTab({
                     </span>
                     <p className="mt-1 text-xs text-ink-soft">
                       {packs.length > 0
-                        ? 'Faded figures show what applies when a box is left blank. Set a price under All quantities, then change it for any pack that costs differently.'
+                        ? 'Faded figures show what applies when a box is left blank. Set a price under All quantities, then change it for any pack that costs differently. Type – in a pack where a choice is not offered.'
                         : 'Faded figures are the library prices. Type a price to charge differently on this product only — leave it blank to keep the library price.'}
                     </p>
 
@@ -229,7 +255,7 @@ export default function OptionsTab({
                         tier={tierFor[po.optionGroup] ?? 'B2C'}
                         onTier={(tier) => setTierFor((m) => ({ ...m, [po.optionGroup]: tier }))}
                         setChoicePrice={setChoicePrice}
-                        setPackPrice={setPackPrice}
+                        setPackCell={setPackCell}
                       />
                     ) : (
                     <div className="mt-2 overflow-x-auto">
@@ -319,7 +345,7 @@ export default function OptionsTab({
  * per pack, for one customer type at a time. "All quantities" is the fallback
  * for any pack left blank, and the library price is the fallback for that.
  */
-function PackPriceTable({ po, fieldIndex, choices, packs, tier, onTier, setChoicePrice, setPackPrice }) {
+function PackPriceTable({ po, fieldIndex, choices, packs, tier, onTier, setChoicePrice, setPackCell }) {
   const faded = (n) => (n === undefined || n === null ? '0' : String(n))
 
   return (
@@ -376,20 +402,28 @@ function PackPriceTable({ po, fieldIndex, choices, packs, tier, onTier, setChoic
                       className="w-24 tabular-nums"
                     />
                   </td>
-                  {packs.map((qty) => (
-                    <td key={qty} className="py-2 pr-2">
-                      <Input
-                        type="number"
-                        min="0"
-                        step="any"
-                        value={po.packOverrides?.[String(qty)]?.[choice.code]?.[tier] ?? ''}
-                        onChange={(e) => setPackPrice(fieldIndex, String(qty), choice.code, tier, e.target.value)}
-                        placeholder={faded(everyQty ?? library)}
-                        aria-label={`${TIER_LABELS[tier]} price for ${choice.label} on ${qty}`}
-                        className="w-24 tabular-nums"
-                      />
-                    </td>
-                  ))}
+                  {packs.map((qty) => {
+                    const unavailable = (po.packUnavailable?.[String(qty)] ?? []).includes(choice.code)
+                    return (
+                      <td key={qty} className="py-2 pr-2">
+                        {/* Text, not number: the cell also accepts "–" for not available. */}
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          value={unavailable ? '–' : (po.packOverrides?.[String(qty)]?.[choice.code]?.[tier] ?? '')}
+                          onChange={(e) => setPackCell(fieldIndex, String(qty), choice.code, tier, e.target.value)}
+                          placeholder={faded(everyQty ?? library)}
+                          title={
+                            unavailable
+                              ? 'Not available on this pack — clear it to offer this choice again'
+                              : 'Type – if this choice is not available on this pack'
+                          }
+                          aria-label={`${TIER_LABELS[tier]} price for ${choice.label} on ${qty}${unavailable ? ', not available' : ''}`}
+                          className={`w-24 tabular-nums ${unavailable ? 'bg-gray-100 text-center text-ink-soft' : ''}`}
+                        />
+                      </td>
+                    )
+                  })}
                 </tr>
               )
             })}
