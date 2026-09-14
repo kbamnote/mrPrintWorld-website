@@ -13,7 +13,20 @@ const DELTA_LABELS = {
   MULTIPLIER: '× multiply by',
 }
 
+const SHOWN_AS = {
+  RADIO: 'Buttons — best for 2 to 4 choices',
+  DROPDOWN: 'Dropdown — best for a longer list',
+}
+
 const blankChoice = () => ({ code: null, label: '', deltaType: 'FLAT', prices: {} })
+
+/** A saved choice, as this form edits it. */
+const fromValue = (v) => ({
+  code: v.code,
+  label: v.label,
+  deltaType: v.deltaType ?? 'FLAT',
+  prices: { ...(v.priceDelta ?? {}) },
+})
 
 /** UPPER_SNAKE from a label: "Paper type" becomes "PAPER_TYPE". */
 function snake(text) {
@@ -34,11 +47,17 @@ function fieldCode(label, preferred, taken) {
   return code
 }
 
-/** Unique codes for the choices within one field. */
+/**
+ * Codes for a field's choices. A choice that already exists keeps its code
+ * even when renamed: products store their own prices against that code, so
+ * changing it would quietly drop them. New choices get a code from their name
+ * that clashes with none of the existing ones.
+ */
 function choiceCodes(choices) {
-  const used = new Set()
+  const used = new Set(choices.map((c) => c.code).filter(Boolean))
   return choices.map((c) => {
-    const base = c.code || snake(c.label).slice(0, 55) || 'CHOICE'
+    if (c.code) return c.code
+    const base = snake(c.label).slice(0, 55) || 'CHOICE'
     let code = base
     for (let n = 2; used.has(code); n += 1) code = `${base}_${n}`
     used.add(code)
@@ -47,19 +66,22 @@ function choiceCodes(choices) {
 }
 
 /**
- * Create a specification field without leaving the product.
+ * Create a specification field, or edit one already in the library — its
+ * name, how it is shown, its help text, and its choices with their prices.
  *
- * The field goes into the shared library straight away (so any other product
- * can reuse it) and is attached to this product. Start blank, or from the
- * print library, where the name and choices arrive filled in.
+ * Pass `group` to edit. Edits change the shared library field, so they apply
+ * to every product that uses it; prices a product sets for itself are kept.
  */
-export default function NewFieldForm({ existingCodes = [], startOpen = false, onCreated }) {
-  const [open, setOpen] = useState(startOpen)
+export default function FieldForm({ group = null, existingCodes = [], startOpen = false, onSaved, onCancel }) {
+  const editing = Boolean(group)
+  const [open, setOpen] = useState(editing || startOpen)
   const [presetCode, setPresetCode] = useState(null)
-  const [label, setLabel] = useState('')
-  const [inputType, setInputType] = useState('RADIO')
-  const [helpText, setHelpText] = useState('')
-  const [choices, setChoices] = useState([blankChoice(), blankChoice()])
+  const [label, setLabel] = useState(group?.label ?? '')
+  const [inputType, setInputType] = useState(group?.inputType ?? 'RADIO')
+  const [helpText, setHelpText] = useState(group?.helpText ?? '')
+  const [choices, setChoices] = useState(() =>
+    group?.values?.length ? group.values.map(fromValue) : [blankChoice(), blankChoice()],
+  )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
@@ -72,6 +94,15 @@ export default function NewFieldForm({ existingCodes = [], startOpen = false, on
     setHelpText('')
     setChoices([blankChoice(), blankChoice()])
     setError(null)
+  }
+
+  function close() {
+    if (editing) {
+      onCancel?.()
+      return
+    }
+    reset()
+    setOpen(false)
   }
 
   function applyPreset(code) {
@@ -99,7 +130,7 @@ export default function NewFieldForm({ existingCodes = [], startOpen = false, on
       }),
     )
 
-  const named = choices.filter((c) => c.label.trim())
+  const named = choices.filter((c) => String(c.label).trim())
   const canSave = Boolean(label.trim()) && named.length >= 2 && !saving
 
   async function save() {
@@ -107,29 +138,37 @@ export default function NewFieldForm({ existingCodes = [], startOpen = false, on
     setError(null)
     try {
       const codes = choiceCodes(named)
-      const created = await api.createOptionGroup({
-        code: fieldCode(label, presetCode, taken),
-        label: label.trim(),
-        inputType,
-        ...(helpText.trim() ? { helpText: helpText.trim() } : {}),
-        values: named.map((c, i) => {
-          const priceDelta = Object.fromEntries(
-            Object.entries(c.prices)
-              .filter(([, raw]) => raw !== '' && Number.isFinite(Number(raw)) && Number(raw) >= 0)
-              .map(([tier, raw]) => [tier, Number(raw)]),
-          )
-          return {
-            code: codes[i],
-            label: c.label.trim(),
-            order: i,
-            deltaType: c.deltaType,
-            ...(Object.keys(priceDelta).length ? { priceDelta } : {}),
-          }
-        }),
+      const values = named.map((c, i) => {
+        const priceDelta = Object.fromEntries(
+          Object.entries(c.prices)
+            .filter(([, raw]) => raw !== '' && Number.isFinite(Number(raw)) && Number(raw) >= 0)
+            .map(([tier, raw]) => [tier, Number(raw)]),
+        )
+        return {
+          code: codes[i],
+          label: String(c.label).trim(),
+          order: i,
+          deltaType: c.deltaType,
+          ...(Object.keys(priceDelta).length ? { priceDelta } : {}),
+        }
       })
-      onCreated(created)
-      reset()
-      setOpen(false)
+
+      const saved = editing
+        ? // The field's code is permanent, so it is never sent on an edit.
+          await api.updateOptionGroup(group._id, { label: label.trim(), inputType, helpText: helpText.trim(), values })
+        : await api.createOptionGroup({
+            code: fieldCode(label, presetCode, taken),
+            label: label.trim(),
+            inputType,
+            ...(helpText.trim() ? { helpText: helpText.trim() } : {}),
+            values,
+          })
+
+      onSaved(saved)
+      if (!editing) {
+        reset()
+        setOpen(false)
+      }
     } catch (err) {
       setError(err)
     } finally {
@@ -150,40 +189,48 @@ export default function NewFieldForm({ existingCodes = [], startOpen = false, on
     )
   }
 
+  const used = group?.usedByProducts ?? 0
+
   return (
     <div className="rounded-[var(--radius-card)] border border-primary/40 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-display text-base font-semibold text-ink">Create a new field</h3>
-        <Btn
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            reset()
-            setOpen(false)
-          }}
-        >
+        <h3 className="font-display text-base font-semibold text-ink">
+          {editing ? `Edit “${group.label}”` : 'Create a new field'}
+        </h3>
+        <Btn variant="ghost" size="sm" onClick={close}>
           Cancel
         </Btn>
       </div>
 
+      {editing && (
+        <p className="mt-2 rounded-[var(--radius-card)] bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          {used > 1
+            ? `This field is used by ${used} products. Changes to its name and choices apply to all of them.`
+            : 'Changes to this field apply to every product that uses it.'}{' '}
+          Prices a product sets for itself are kept.
+        </p>
+      )}
+
       <ErrorBanner error={error} onDismiss={() => setError(null)} />
 
       <div className="mt-3 grid gap-4 sm:grid-cols-2">
-        <Field label="Start from the print library" hint="Optional — fills in the name and choices for you.">
-          <Select value={presetCode ?? ''} onChange={(e) => (e.target.value ? applyPreset(e.target.value) : reset())}>
-            <option value="">Blank field</option>
-            {PRESET_SECTIONS.map((section) => (
-              <optgroup key={section} label={section}>
-                {OPTION_PRESETS.filter((p) => p.section === section).map((p) => (
-                  <option key={p.code} value={p.code} disabled={taken.has(p.code)}>
-                    {p.label}
-                    {taken.has(p.code) ? ' (already in the library)' : ''}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </Select>
-        </Field>
+        {!editing && (
+          <Field label="Start from the print library" hint="Optional — fills in the name and choices for you.">
+            <Select value={presetCode ?? ''} onChange={(e) => (e.target.value ? applyPreset(e.target.value) : reset())}>
+              <option value="">Blank field</option>
+              {PRESET_SECTIONS.map((section) => (
+                <optgroup key={section} label={section}>
+                  {OPTION_PRESETS.filter((p) => p.section === section).map((p) => (
+                    <option key={p.code} value={p.code} disabled={taken.has(p.code)}>
+                      {p.label}
+                      {taken.has(p.code) ? ' (already in the library)' : ''}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </Select>
+          </Field>
+        )}
 
         <Field label="Field name" required hint="What the customer sees.">
           <Input value={label} onChange={(e) => setLabel(e.target.value)} maxLength={120} placeholder="Printing sides" />
@@ -191,8 +238,12 @@ export default function NewFieldForm({ existingCodes = [], startOpen = false, on
 
         <Field label="Shown as">
           <Select value={inputType} onChange={(e) => setInputType(e.target.value)}>
-            <option value="RADIO">Buttons — best for 2 to 4 choices</option>
-            <option value="DROPDOWN">Dropdown — best for a longer list</option>
+            {Object.entries(SHOWN_AS).map(([type, text]) => (
+              <option key={type} value={type}>
+                {text}
+              </option>
+            ))}
+            {!SHOWN_AS[inputType] && <option value={inputType}>{inputType.toLowerCase()}</option>}
           </Select>
         </Field>
 
@@ -203,11 +254,14 @@ export default function NewFieldForm({ existingCodes = [], startOpen = false, on
 
       <div className="mt-5">
         <span className="block text-sm font-medium text-ink">Choices</span>
-        <span className="block text-xs text-ink-soft">Leave the prices blank for a choice that costs nothing extra.</span>
+        <span className="block text-xs text-ink-soft">
+          Library prices — leave blank for a choice that costs nothing extra.
+          {editing && ' Removing a choice also removes the prices products had set for it.'}
+        </span>
 
         <div className="mt-2 space-y-2">
           {choices.map((c, i) => (
-            <div key={i} className="flex flex-wrap items-end gap-2 rounded-[var(--radius-card)] bg-surface p-2">
+            <div key={c.code ?? `new-${i}`} className="flex flex-wrap items-end gap-2 rounded-[var(--radius-card)] bg-surface p-2">
               <label className="min-w-[10rem] flex-1 text-xs text-ink-soft">
                 <span className="mb-1 block font-medium text-ink">Choice {i + 1}</span>
                 <Input
@@ -261,12 +315,14 @@ export default function NewFieldForm({ existingCodes = [], startOpen = false, on
 
       <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-line pt-4">
         <Btn onClick={save} disabled={!canSave}>
-          {saving ? 'Creating…' : 'Create field and add to this product'}
+          {saving ? 'Saving…' : editing ? 'Save field' : 'Create field and add to this product'}
         </Btn>
         <span className="text-xs text-ink-soft">
           {named.length < 2
             ? 'Give it at least two choices.'
-            : 'Saved to your field library straight away — press Save at the top to keep it on this product.'}
+            : editing
+              ? 'Saved to the library straight away.'
+              : 'Saved to your field library straight away — press Save at the top to keep it on this product.'}
         </span>
       </div>
     </div>

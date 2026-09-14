@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Field, Input, Select, Btn, Badge } from '../ui'
-import NewFieldForm from './NewFieldForm'
+import FieldForm from './FieldForm'
 
 const TIERS = ['B2C', 'B2B', 'CORPORATE']
 const TIER_LABELS = { B2C: 'Retail', B2B: 'Trade', CORPORATE: 'Corporate' }
@@ -21,9 +21,18 @@ const hasLegacyOverride = (po) => Boolean(po.deltaOverrides && Object.keys(po.de
  * you only choose which ones apply, whether they must be answered, and
  * whether this product charges differently for them.
  */
-export default function OptionsTab({ value = [], groups = [], packs = [], onChange, onGroupCreated }) {
+export default function OptionsTab({
+  value = [],
+  groups = [],
+  packs = [],
+  onChange,
+  onGroupCreated,
+  onGroupUpdated,
+}) {
   // Which customer type each field's pack price table is showing.
   const [tierFor, setTierFor] = useState({})
+  // The field whose library definition is open for editing, by id.
+  const [editingField, setEditingField] = useState(null)
   const attachedIds = new Set(value.map((po) => String(po.optionGroup)))
   const available = groups.filter((g) => !attachedIds.has(String(g._id)) && g.isActive !== false)
 
@@ -128,6 +137,17 @@ export default function OptionsTab({ value = [], groups = [], packs = [], onChan
                   </div>
 
                   <div className="flex shrink-0 items-center gap-1">
+                    {group && (
+                      <Btn
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setEditingField(editingField === String(po.optionGroup) ? null : String(po.optionGroup))
+                        }
+                      >
+                        {editingField === String(po.optionGroup) ? 'Close editor' : 'Edit field'}
+                      </Btn>
+                    )}
                     <Btn variant="ghost" size="sm" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up">
                       ↑
                     </Btn>
@@ -145,6 +165,20 @@ export default function OptionsTab({ value = [], groups = [], packs = [], onChan
                     </Btn>
                   </div>
                 </div>
+
+                {editingField === String(po.optionGroup) && group && (
+                  <div className="mt-4">
+                    <FieldForm
+                      key={group.updatedAt ?? group._id}
+                      group={group}
+                      onCancel={() => setEditingField(null)}
+                      onSaved={(saved) => {
+                        onGroupUpdated?.(saved)
+                        setEditingField(null)
+                      }}
+                    />
+                  </div>
+                )}
 
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <label className="flex items-center gap-2 text-sm text-ink">
@@ -268,10 +302,10 @@ export default function OptionsTab({ value = [], groups = [], packs = [], onChan
         </Select>
       </Field>
 
-      <NewFieldForm
+      <FieldForm
         existingCodes={groups.map((g) => g.code)}
         startOpen={groups.length === 0}
-        onCreated={(group) => {
+        onSaved={(group) => {
           onGroupCreated?.(group)
           add(String(group._id))
         }}

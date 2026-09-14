@@ -568,6 +568,13 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
               packs={packQuantities(form)}
               onChange={(options) => set({ options })}
               onGroupCreated={(group) => setOptionGroups((list) => [...list, group])}
+              // Keep what the list already knew (like how many products use the
+              // field), refreshed with the saved definition.
+              onGroupUpdated={(group) =>
+                setOptionGroups((list) =>
+                  list.map((g) => (String(g._id) === String(group._id) ? { ...g, ...group } : g)),
+                )
+              }
             />
           </div>
         )}
