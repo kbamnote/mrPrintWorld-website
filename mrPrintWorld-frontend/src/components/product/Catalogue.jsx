@@ -88,9 +88,11 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
             {row.parent && (
               <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-soft">{row.parent.name}</p>
             )}
-            {/* Padding keeps the selected tile's ring from being clipped by the scroller. */}
-            <div className="overflow-x-auto px-1 pb-3 pt-1">
-              <div className="flex gap-4 sm:gap-6">
+            {/* Phones: one swipeable line with the scrollbar hidden. Larger
+                screens: the tiles wrap onto more lines, so nothing scrolls at
+                all. The padding keeps a selected tile's ring from being clipped. */}
+            <div className="overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] sm:overflow-visible [&::-webkit-scrollbar]:hidden">
+              <div className="flex gap-4 sm:flex-wrap sm:gap-6">
                 {level === 0 && (
                   <button
                     type="button"
