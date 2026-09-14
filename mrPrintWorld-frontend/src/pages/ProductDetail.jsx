@@ -9,6 +9,28 @@ import Icon from '../components/primitives/Icon';
 import BuyPanel from '../components/product/BuyPanel';
 import Gallery from '../components/product/Gallery';
 
+/** The entries actually filled in — blank lines left in the admin form don't count. */
+function clean(list) {
+  return (list ?? []).map((item) => String(item ?? '').trim()).filter(Boolean);
+}
+
+/** A titled row of chips, or nothing at all when there is nothing to show. */
+function DetailChips({ title, items }) {
+  if (!items.length) return null;
+  return (
+    <div>
+      <h3 className="text-lg font-bold text-ink mb-3">{title}</h3>
+      <div className="flex flex-wrap gap-2">
+        {items.map((item, i) => (
+          <span key={i} className="px-3 py-1 bg-gray-100 text-ink-soft text-sm rounded-[var(--radius-card)]">
+            {item}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function ProductDetail() {
   const { slug } = useParams();
   const { product, loading, notFound } = useProduct(slug);
@@ -97,11 +119,13 @@ export default function ProductDetail() {
                 </div>
 
                 <div className="space-y-6 mb-8">
-                  {product.specifications && (
+                  {/* Only what the admin filled in. An empty list is still
+                      truthy in JavaScript, so each section checks for entries. */}
+                  {clean(product.specifications).length > 0 && (
                     <div>
                       <h3 className="text-lg font-bold text-ink mb-3">Specifications</h3>
                       <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {product.specifications.map((spec, i) => (
+                        {clean(product.specifications).map((spec, i) => (
                           <li key={i} className="flex items-start text-sm text-ink-soft">
                             <Icon name="CheckCircle2" size={16} className="text-primary mt-1 mr-2 flex-shrink-0" />
                             <span>{spec}</span>
@@ -111,18 +135,16 @@ export default function ProductDetail() {
                     </div>
                   )}
 
-                  {product.applications && (
-                    <div>
-                      <h3 className="text-lg font-bold text-ink mb-3">Common Applications</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {product.applications.map((app, i) => (
-                          <span key={i} className="px-3 py-1 bg-gray-100 text-ink-soft text-sm rounded-[var(--radius-card)]">
-                            {app}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <DetailChips
+                    title={clean(product.materials).length === 1 ? 'Material' : 'Materials'}
+                    items={clean(product.materials)}
+                  />
+                  <DetailChips
+                    title={clean(product.sizes).length === 1 ? 'Size' : 'Available sizes'}
+                    items={clean(product.sizes)}
+                  />
+                  <DetailChips title="Customisation" items={clean(product.customization)} />
+                  <DetailChips title="Common Applications" items={clean(product.applications)} />
 
                   {product.moq && (
                     <div>
