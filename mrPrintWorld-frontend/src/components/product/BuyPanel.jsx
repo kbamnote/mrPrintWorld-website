@@ -165,25 +165,56 @@ export default function BuyPanel({ product }) {
 
         {/* Options are rendered from the API's description of them — this
             component has no knowledge of any specific product. */}
-        {product.options?.map((opt) => (
-          <label key={opt.code} className="block">
-            <span className="mb-1.5 block text-sm font-medium text-ink">
-              {opt.label}
-              {opt.required && <span className="ml-0.5 text-red-500">*</span>}
-            </span>
-            <select
-              value={selections[opt.code] ?? ''}
-              onChange={(e) => setSelections({ ...selections, [opt.code]: e.target.value })}
-              className={field}
-            >
-              <option value="">Choose…</option>
-              {opt.values.map((v) => (
-                <option key={v.code} value={v.code}>{v.label}</option>
-              ))}
-            </select>
-            {opt.helpText && <span className="mt-1 block text-xs text-ink-soft">{opt.helpText}</span>}
-          </label>
-        ))}
+        {product.options?.map((opt) => {
+          // A short set of alternatives reads better as buttons than as a
+          // dropdown — "Single side / Both sides" is a choice, not a list.
+          const asButtons = opt.inputType === 'RADIO' && opt.values.length <= 4
+
+          return (
+            <div key={opt.code}>
+              <span className="mb-1.5 block text-sm font-medium text-ink">
+                {opt.label}
+                {opt.required && <span className="ml-0.5 text-red-500">*</span>}
+              </span>
+
+              {asButtons ? (
+                <div className="flex flex-wrap gap-2">
+                  {opt.values.map((v) => {
+                    const chosen = selections[opt.code] === v.code
+                    return (
+                      <button
+                        key={v.code}
+                        type="button"
+                        onClick={() => setSelections({ ...selections, [opt.code]: v.code })}
+                        aria-pressed={chosen}
+                        className={`rounded-[var(--radius-card)] border px-3 py-2 text-sm font-medium transition-colors ${
+                          chosen
+                            ? 'border-primary bg-primary text-white'
+                            : 'border-line bg-white text-ink-soft hover:bg-gray-50'
+                        }`}
+                      >
+                        {v.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : (
+                <select
+                  value={selections[opt.code] ?? ''}
+                  onChange={(e) => setSelections({ ...selections, [opt.code]: e.target.value })}
+                  className={field}
+                >
+                  <option value="">Choose…</option>
+                  {opt.values.map((v) => (
+                    <option key={v.code} value={v.code}>{v.label}</option>
+                  ))}
+                </select>
+              )}
+
+              {opt.helpText && <span className="mt-1 block text-xs text-ink-soft">{opt.helpText}</span>}
+            </div>
+          )
+        })}
 
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium text-ink">Quantity</span>

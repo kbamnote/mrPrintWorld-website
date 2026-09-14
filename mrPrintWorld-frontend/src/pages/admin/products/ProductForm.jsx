@@ -3,8 +3,9 @@ import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import * as api from '../adminApi'
 import { Field, Input, Textarea, Select, Btn, Badge, Spinner, ErrorBanner } from '../ui'
 import PricingTab from './PricingTab'
+import OptionsTab from './OptionsTab'
 
-const TABS = ['General', 'Images', 'Pricing', 'Visibility', 'SEO']
+const TABS = ['General', 'Images', 'Pricing', 'Options', 'Visibility', 'SEO']
 
 const EMPTY = {
   name: '',
@@ -22,6 +23,7 @@ const EMPTY = {
   pricingModel: 'QUOTE_ONLY',
   purchaseMode: 'QUOTE_ONLY',
   pricing: null,
+  options: [],
   visibility: { b2c: true, b2b: true, corporate: true },
   featured: false,
   isActive: false,
@@ -73,6 +75,7 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
     presetCategory ? { ...EMPTY, categories: [presetCategory], primaryCategory: presetCategory } : EMPTY,
   )
   const [categories, setCategories] = useState([])
+  const [optionGroups, setOptionGroups] = useState([])
   const [loading, setLoading] = useState(Boolean(productId))
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState(null)
@@ -82,6 +85,7 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
 
   useEffect(() => {
     api.listCategories().then(setCategories).catch(setError)
+    api.listOptionGroups().then(setOptionGroups).catch(setError)
   }, [])
 
   useEffect(() => {
@@ -99,6 +103,16 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
           // Mongo returns Maps as plain objects through .lean() — normalise so
           // the pricing inputs are always editing the same shape.
           pricing: p.pricing ?? null,
+          // The API populates each option's group: keep the id for saving and
+          // the group itself for display.
+          options: (p.options ?? []).map((po, i) => ({
+            optionGroup: String(po.optionGroup?._id ?? po.optionGroup),
+            group: typeof po.optionGroup === 'object' ? po.optionGroup : null,
+            order: po.order ?? i,
+            required: Boolean(po.required),
+            labelOverride: po.labelOverride ?? '',
+            deltaOverrides: po.deltaOverrides ?? null,
+          })),
         })
       })
       .catch(setError)
@@ -162,6 +176,16 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
       pricingModel: form.pricingModel,
       purchaseMode: form.purchaseMode,
       pricing: form.pricingModel === 'QUOTE_ONLY' ? null : (form.pricing ?? undefined),
+      // Only the fields the API accepts: the populated group is display-only.
+      options: (form.options ?? []).map((po, i) => ({
+        optionGroup: po.optionGroup,
+        order: i,
+        required: Boolean(po.required),
+        ...(po.labelOverride ? { labelOverride: po.labelOverride } : {}),
+        ...(po.deltaOverrides && Object.keys(po.deltaOverrides).length
+          ? { deltaOverrides: po.deltaOverrides }
+          : {}),
+      })),
       visibility: form.visibility,
       featured: form.featured,
       isActive: form.isActive,
@@ -484,6 +508,14 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
             // Routed through set() so editing a price clears the "Saved"
             // confirmation, same as every other field.
             onChange={(next) => set(next)}
+          />
+        )}
+
+        {tab === 'Options' && (
+          <OptionsTab
+            value={form.options ?? []}
+            groups={optionGroups}
+            onChange={(options) => set({ options })}
           />
         )}
 

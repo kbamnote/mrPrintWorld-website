@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import * as api from '../adminApi'
 import { Field, Input, Select, Btn, Card, Badge, Spinner, ErrorBanner, EmptyState } from '../ui'
+import { OPTION_PRESETS, PRESET_SECTIONS } from './presets'
 
 const INPUT_TYPES = ['DROPDOWN', 'RADIO', 'CHECKBOX', 'NUMBER', 'DIMENSION', 'TEXT', 'FILE', 'BOOLEAN']
 const DELTA_TYPES = ['FLAT', 'PER_SQFT', 'PERCENT', 'MULTIPLIER']
@@ -19,6 +20,7 @@ export default function OptionGroupList() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [editing, setEditing] = useState(null)
+  const [library, setLibrary] = useState(false)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -58,10 +60,59 @@ export default function OptionGroupList() {
             Reusable fields like Width, Thickness or Lighting — defined once, attached to any product.
           </p>
         </div>
-        <Btn onClick={() => setEditing('new')}>New option</Btn>
+        <div className="flex flex-wrap gap-2">
+          <Btn variant="outline" onClick={() => setLibrary((open) => !open)}>
+            {library ? 'Hide library' : 'Add from library'}
+          </Btn>
+          <Btn onClick={() => setEditing('new')}>New option</Btn>
+        </div>
       </div>
 
       <ErrorBanner error={error} onDismiss={() => setError(null)} />
+
+      {library && (
+        <Card
+          title="Add from the print library"
+          description="Ready-made fields for printing work. Clicking one opens the form filled in — set your prices, then save. Nothing is added until you do."
+        >
+          <div className="space-y-5">
+            {PRESET_SECTIONS.map((section) => (
+              <div key={section}>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-soft">{section}</h3>
+                <div className="flex flex-wrap gap-2">
+                  {OPTION_PRESETS.filter((p) => p.section === section).map((preset) => {
+                    const already = items.some((g) => g.code === preset.code)
+                    const priced = preset.values.filter((v) => v.priced).length
+                    return (
+                      <button
+                        key={preset.code}
+                        type="button"
+                        disabled={already}
+                        onClick={() => {
+                          setEditing(preset)
+                          setLibrary(false)
+                        }}
+                        className={`rounded-[var(--radius-card)] border px-3 py-2 text-left transition-colors ${
+                          already
+                            ? 'cursor-not-allowed border-line bg-surface text-ink-soft'
+                            : 'border-line bg-white hover:border-primary hover:bg-primary/5'
+                        }`}
+                      >
+                        <span className="block text-sm font-medium text-ink">{preset.label}</span>
+                        <span className="block text-xs text-ink-soft">
+                          {already
+                            ? 'already added'
+                            : `${preset.values.length} choices${priced ? ` · ${priced} usually priced` : ''}`}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {editing && (
         <OptionEditor
@@ -113,7 +164,9 @@ export default function OptionGroupList() {
 }
 
 function OptionEditor({ group, onCancel, onSaved, onError }) {
-  const isNew = !group
+  // A library preset arrives shaped like a group but without an id — it is
+  // still a NEW option, pre-filled rather than saved.
+  const isNew = !group?._id
   const [form, setForm] = useState({
     code: group?.code ?? '',
     label: group?.label ?? '',
