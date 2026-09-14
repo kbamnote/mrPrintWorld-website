@@ -63,22 +63,46 @@ export default function CategoryTree() {
     return acc
   }
 
-  function toggleProducts(catId) {
+  const isLeaf = (catId) => childrenOf(catId).length === 0
+
+  /**
+   * Open or close a category. Open shows what is inside it: its subcategories,
+   * or — at the deepest level — its products. Closing also closes everything
+   * inside, so reopening it starts tidy instead of springing open three levels.
+   */
+  function toggleOpen(catId) {
     const next = new Set(open)
-    if (next.has(catId)) next.delete(catId)
-    else {
+    if (next.has(catId)) {
+      const inner = descendantIds(catId)
+      next.delete(catId)
+      for (const innerId of inner) next.delete(innerId)
+      // A half-typed subcategory inside a closed branch would float out of place.
+      if (adding && (adding === catId || inner.has(adding))) setAdding(null)
+    } else {
       next.add(catId)
-      loadProducts(catId)
+      if (isLeaf(catId)) loadProducts(catId)
     }
     setOpen(next)
   }
 
-  /** After any product change: fresh counts, and every open list reloaded. */
+  /** Open a category if it is not already — used before adding inside it. */
+  function expand(catId) {
+    if (open.has(catId)) return
+    setOpen((prev) => new Set(prev).add(catId))
+    if (isLeaf(catId)) loadProducts(catId)
+  }
+
+  function collapseAll() {
+    setOpen(new Set())
+    setAdding(null)
+  }
+
+  /** After any product change: fresh counts, and every open product list reloaded. */
   async function refreshProducts(alsoOpen) {
     const ids = new Set(open)
     if (alsoOpen) ids.add(alsoOpen)
     if (alsoOpen && !open.has(alsoOpen)) setOpen(ids)
-    await Promise.all([load(), ...[...ids].map(loadProducts)])
+    await Promise.all([load(), ...[...ids].filter(isLeaf).map(loadProducts)])
   }
 
   async function create(name, parent) {
@@ -143,7 +167,8 @@ export default function CategoryTree() {
     setAdding,
     setEditingId,
     setError,
-    toggleProducts,
+    toggleOpen,
+    expand,
     create,
     load,
     removeCategory,
@@ -163,7 +188,12 @@ export default function CategoryTree() {
             products. A category shows on the website once it has a live product.
           </p>
         </div>
-        <Btn onClick={() => setAdding('root')}>New category</Btn>
+        <div className="flex flex-wrap gap-2">
+          <Btn variant="outline" onClick={collapseAll} disabled={open.size === 0}>
+            Collapse all
+          </Btn>
+          <Btn onClick={() => setAdding('root')}>New category</Btn>
+        </div>
       </div>
 
       <ErrorBanner error={error} onDismiss={() => setError(null)} />
@@ -177,7 +207,9 @@ export default function CategoryTree() {
             onError={setError}
             onSubmit={async (name) => {
               const created = await create(name, null)
-              setAdding(String(created._id)) // straight on to its subcategories
+              // Straight on to its subcategories, with the category open to show them.
+              expand(String(created._id))
+              setAdding(String(created._id))
             }}
           />
         </div>
@@ -248,19 +280,25 @@ function CategoryNode({ cat, depth, ctx }) {
           depth={depth}
           productsOpen={isOpen}
           hasChildren={children.length > 0}
-          onToggleProducts={() => ctx.toggleProducts(id)}
-          onAddSub={() => ctx.setAdding(id)}
+          childCount={children.length}
+          onToggleProducts={() => ctx.toggleOpen(id)}
+          onAddSub={() => {
+            ctx.expand(id)
+            ctx.setAdding(id)
+          }}
           onAddProduct={children.length === 0 ? () => ctx.addProduct(id) : undefined}
           onEdit={() => ctx.setEditingId(id)}
           onDelete={() => ctx.removeCategory(cat)}
         />
       )}
 
-      {isOpen && (
+      {/* Everything inside a category shows only while it is open: its
+          subcategories, or — at the deepest level — its products. */}
+      {isOpen && children.length === 0 && (
         <ProductPanel
           state={ctx.products[id]}
           depth={depth}
-          canAdd={children.length === 0}
+          canAdd
           onAdd={() => ctx.addProduct(id)}
           onEdit={ctx.openProduct}
           onToggleLive={ctx.toggleLive}
@@ -268,9 +306,8 @@ function CategoryNode({ cat, depth, ctx }) {
         />
       )}
 
-      {children.map((child) => (
-        <CategoryNode key={child._id} cat={child} depth={depth + 1} ctx={ctx} />
-      ))}
+      {isOpen &&
+        children.map((child) => <CategoryNode key={child._id} cat={child} depth={depth + 1} ctx={ctx} />)}
 
       {ctx.adding === id && (
         <div className="bg-surface/60 px-4 py-3" style={{ paddingLeft: `${2.75 + depth * 1.75}rem` }}>
@@ -312,7 +349,18 @@ function Thumb({ cat, size = 'h-9 w-9' }) {
   )
 }
 
-function Row({ cat, depth = 0, productsOpen, hasChildren, onToggleProducts, onAddSub, onAddProduct, onEdit, onDelete }) {
+function Row({
+  cat,
+  depth = 0,
+  productsOpen,
+  hasChildren,
+  childCount = 0,
+  onToggleProducts,
+  onAddSub,
+  onAddProduct,
+  onEdit,
+  onDelete,
+}) {
   return (
     <div
       className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 hover:bg-surface/60"
@@ -336,6 +384,11 @@ function Row({ cat, depth = 0, productsOpen, hasChildren, onToggleProducts, onAd
           <span className={`truncate hover:text-primary ${depth === 0 ? 'font-semibold text-ink' : 'text-ink'}`}>
             {cat.name}
           </span>
+          {hasChildren && (
+            <Badge tone="neutral">
+              {childCount} subcategor{childCount === 1 ? 'y' : 'ies'}
+            </Badge>
+          )}
           <Badge tone={cat.productCount > 0 ? 'blue' : 'neutral'}>
             {cat.productCount} product{cat.productCount === 1 ? '' : 's'}
           </Badge>
