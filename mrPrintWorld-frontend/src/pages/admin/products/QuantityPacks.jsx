@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Field, Input, Btn, Badge } from '../ui'
+import { percentOrNull, fromRetail, tiersFromRetail, inferPercent } from './tierPercents'
 
 const TIERS = [
   { code: 'B2C', label: 'Retail' },
@@ -9,48 +10,8 @@ const TIERS = [
 
 const money = (n) => `₹${Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`
 
-/** A usable discount percentage (0 to 99), or null when blank or invalid. */
-function percentOrNull(raw) {
-  if (raw === '' || raw === null || raw === undefined) return null
-  const n = Number(raw)
-  return Number.isFinite(n) && n >= 0 && n < 100 ? n : null
-}
-
-/**
- * The cheaper tiers worked out from the price above them, rounded to the
- * nearest rupee: trade from retail, corporate from trade. Only the tiers at
- * or below the one that changed are recalculated, and only where a
- * percentage is set.
- */
-function followPercents(amounts, changedTier, tradeOff, corporateOff) {
-  const t = percentOrNull(tradeOff)
-  const c = percentOrNull(corporateOff)
-  const out = {}
-  const retail = Number(amounts.B2C)
-  if (changedTier === 'B2C' && t !== null && retail > 0) out.B2B = Math.round(retail * (1 - t / 100))
-  const trade = out.B2B ?? Number(amounts.B2B)
-  if ((changedTier === 'B2C' || changedTier === 'B2B') && c !== null && trade > 0) {
-    out.CORPORATE = Math.round(trade * (1 - c / 100))
-  }
-  return out
-}
-
-/**
- * The percentage a product's saved prices already follow, so reopening it
- * shows the same figure. Needs at least two packs that all agree (to the
- * rupee) — one pack alone could just be a price someone typed.
- */
-function inferPercent(packs, fromTier, toTier) {
-  const pairs = packs
-    .map((p) => [Number(p.amounts?.[fromTier]), Number(p.amounts?.[toTier])])
-    .filter(([from, to]) => from > 0 && to > 0 && to <= from)
-  if (pairs.length < 2) return ''
-  const [from0, to0] = pairs[0]
-  const pct = Math.round((1 - to0 / from0) * 1000) / 10
-  if (!(pct > 0)) return ''
-  const fits = pairs.every(([from, to]) => Math.abs(Math.round(from * (1 - pct / 100)) - to) <= 1)
-  return fits ? String(pct) : ''
-}
+// Trade and corporate as a percentage below retail live in ./tierPercents,
+// shared with every option field's price table.
 
 /**
  * Quantity packs — 500, 1,000, 1,500 — set alongside the product's other
@@ -68,10 +29,13 @@ export default function QuantityPacks({ value, onChange }) {
   const hasRanges = slabs.some((s) => s.maxQty !== s.minQty)
   const packs = slabs.map((s) => ({ qty: s.minQty, amounts: s.amounts ?? {} }))
 
-  // How much cheaper trade is than retail, and corporate than trade. Not saved
-  // with the product — a typing aid; the prices it fills in are what is saved.
-  const [tradeOff, setTradeOff] = useState(() => inferPercent(packs, 'B2C', 'B2B'))
-  const [corporateOff, setCorporateOff] = useState(() => inferPercent(packs, 'B2B', 'CORPORATE'))
+  // How much cheaper trade and corporate are than RETAIL — both off retail.
+  // Not saved with the product; the prices they fill in are. Read back from
+  // the saved packs when those all follow one percentage.
+  const [tradeOff, setTradeOff] = useState(() => inferPercent(packs.map((p) => [p.amounts.B2C, p.amounts.B2B])))
+  const [corporateOff, setCorporateOff] = useState(() =>
+    inferPercent(packs.map((p) => [p.amounts.B2C, p.amounts.CORPORATE])),
+  )
 
   const writePacks = (next) =>
     onChange({
@@ -114,8 +78,9 @@ export default function QuantityPacks({ value, onChange }) {
         const amounts = { ...p.amounts }
         if (raw === '') delete amounts[tier]
         else amounts[tier] = Number(raw)
-        // With percentages set, the cheaper tiers follow the price above them.
-        return { ...p, amounts: { ...amounts, ...followPercents(amounts, tier, tradeOff, corporateOff) } }
+        // With percentages set, trade and corporate follow the retail price.
+        const follow = tier === 'B2C' ? tiersFromRetail(amounts.B2C, tradeOff, corporateOff) : {}
+        return { ...p, amounts: { ...amounts, ...follow } }
       }),
     )
 
@@ -124,7 +89,7 @@ export default function QuantityPacks({ value, onChange }) {
     writePacks(
       packs.map((p) => ({
         ...p,
-        amounts: { ...p.amounts, ...followPercents(p.amounts, 'B2C', nextTradeOff, nextCorporateOff) },
+        amounts: { ...p.amounts, ...tiersFromRetail(p.amounts.B2C, nextTradeOff, nextCorporateOff) },
       })),
     )
   }
@@ -132,9 +97,9 @@ export default function QuantityPacks({ value, onChange }) {
   // A worked example, from the first pack's retail price when there is one.
   const exampleRetail = Number(packs.find((p) => Number(p.amounts.B2C) > 0)?.amounts.B2C) || 1000
   const exampleTradeOff = percentOrNull(tradeOff) ?? 15
-  const exampleCorporateOff = percentOrNull(corporateOff) ?? 10
-  const exampleTrade = Math.round(exampleRetail * (1 - exampleTradeOff / 100))
-  const exampleCorporate = Math.round(exampleTrade * (1 - exampleCorporateOff / 100))
+  const exampleCorporateOff = percentOrNull(corporateOff) ?? 22
+  const exampleTrade = fromRetail(exampleRetail, exampleTradeOff)
+  const exampleCorporate = fromRetail(exampleRetail, exampleCorporateOff)
 
   if (!isPacks) {
     return (
@@ -214,7 +179,7 @@ export default function QuantityPacks({ value, onChange }) {
             </span>
           </label>
           <label className="text-sm text-ink">
-            <span className="mb-1 block text-xs text-ink-soft">Corporate is below trade by</span>
+            <span className="mb-1 block text-xs text-ink-soft">Corporate is below retail by</span>
             <span className="flex items-center gap-1.5">
               <Input
                 type="number"
@@ -226,8 +191,8 @@ export default function QuantityPacks({ value, onChange }) {
                   setCorporateOff(e.target.value)
                   applyPercents(tradeOff, e.target.value)
                 }}
-                placeholder="10"
-                aria-label="Corporate price, percent below trade"
+                placeholder="22"
+                aria-label="Corporate price, percent below retail"
                 className="w-20 tabular-nums"
               />
               %
@@ -235,13 +200,14 @@ export default function QuantityPacks({ value, onChange }) {
           </label>
           <p className="text-sm tabular-nums text-ink">
             <span className="text-ink-soft">Example: </span>
-            {money(exampleRetail)} retail → {money(exampleTrade)} trade ({exampleTradeOff}% less) →{' '}
-            {money(exampleCorporate)} corporate ({exampleCorporateOff}% less)
+            {money(exampleRetail)} retail → {money(exampleTrade)} trade ({exampleTradeOff}% less) ·{' '}
+            {money(exampleCorporate)} corporate ({exampleCorporateOff}% less than retail)
           </p>
         </div>
         <p className="mt-2 text-xs text-ink-soft">
-          Entering a percentage fills every pack that has a retail price. While it is set, typing a retail price
-          fills that pack too, rounded to the nearest rupee. Clear a percentage to type those prices by hand.
+          Both percentages are taken off the retail price. Entering one fills every pack that has a retail price;
+          while it is set, typing a retail price fills that pack too, rounded to the nearest rupee. Clear a
+          percentage to type those prices by hand.
         </p>
       </div>
 

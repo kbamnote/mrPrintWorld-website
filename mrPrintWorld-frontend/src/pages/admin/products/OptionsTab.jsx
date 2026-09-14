@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Field, Input, Select, Btn, Badge } from '../ui'
+import { percentOrNull, fromRetail, tiersFromRetail, inferPercent } from './tierPercents'
 import FieldForm from './FieldForm'
 
 const TIERS = ['B2C', 'B2B', 'CORPORATE']
@@ -15,6 +16,14 @@ const hasLegacyOverride = (po) => Boolean(po.deltaOverrides && Object.keys(po.de
 
 /** What a pack cell accepts to mean "not offered on this pack": –, x, na or n/a. */
 const NOT_AVAILABLE = /^\s*(-|–|—|x|na|n\/a)\s*$/i
+
+/** Flat and per-sq.ft choices are amounts; percentage and multiplier ones already scale with the price. */
+const scales = (choice) => !choice?.deltaType || choice.deltaType === 'FLAT' || choice.deltaType === 'PER_SQFT'
+
+/** Whole rupees for a flat amount, paise for a per-sq.ft rate. */
+const decimalsFor = (choice) => (choice?.deltaType === 'PER_SQFT' ? 2 : 0)
+
+const rupees = (n) => `₹${Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`
 
 /**
  * Which specification fields this product asks the customer, in what order.
@@ -36,6 +45,8 @@ export default function OptionsTab({
   const [tierFor, setTierFor] = useState({})
   // The field whose library definition is open for editing, by id.
   const [editingField, setEditingField] = useState(null)
+  // Each field's trade and corporate percentages below retail, by field id, once typed.
+  const [percentsFor, setPercentsFor] = useState({})
   const attachedIds = new Set(value.map((po) => String(po.optionGroup)))
   const available = groups.filter((g) => !attachedIds.has(String(g._id)) && g.isActive !== false)
 
@@ -73,10 +84,83 @@ export default function OptionsTab({
     const all = { ...(value[i].valueOverrides ?? {}) }
     const forChoice = { ...(all[code] ?? {}) }
     if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0) delete forChoice[tier]
-    else forChoice[tier] = Number(raw)
+    else {
+      forChoice[tier] = Number(raw)
+      // With the field's percentages set, trade and corporate follow retail.
+      if (tier === 'B2C') Object.assign(forChoice, followRetail(i, code, Number(raw)))
+    }
     if (Object.keys(forChoice).length) all[code] = forChoice
     else delete all[code]
     patch(i, { valueOverrides: Object.keys(all).length ? all : null })
+  }
+
+  /** This product's retail price for a choice, falling back to the library's. */
+  const retailOf = (po, choice) => po.valueOverrides?.[choice.code]?.B2C ?? readTier(choice.priceDelta, 'B2C')
+
+  /**
+   * A field's trade and corporate percentages below retail: as typed, or read
+   * back from its saved prices when every priced choice follows one figure.
+   */
+  function fieldPercents(i) {
+    const po = value[i]
+    const typed = percentsFor[String(po.optionGroup)]
+    if (typed) return typed
+    const priced = (groupFor(po)?.values ?? []).filter(scales)
+    const pairsFor = (tier) => priced.map((c) => [retailOf(po, c), po.valueOverrides?.[c.code]?.[tier]])
+    return { trade: inferPercent(pairsFor('B2B')), corporate: inferPercent(pairsFor('CORPORATE')) }
+  }
+
+  /** The trade and corporate prices that follow a retail price just typed, when percentages are set. */
+  function followRetail(i, code, retail) {
+    const choice = groupFor(value[i])?.values?.find((v) => v.code === code)
+    if (!choice || !scales(choice)) return {}
+    const pct = fieldPercents(i)
+    return tiersFromRetail(retail, pct.trade, pct.corporate, decimalsFor(choice))
+  }
+
+  /**
+   * Set a field's percentages and fill trade and corporate from retail for
+   * every choice priced in rupees: its every-quantity price, and any pack
+   * where a retail price was typed for it. Packs without one inherit the
+   * every-quantity prices, so they need nothing written.
+   */
+  function applyFieldPercents(i, next) {
+    const po = value[i]
+    setPercentsFor((m) => ({ ...m, [String(po.optionGroup)]: next }))
+    const valueOverrides = { ...(po.valueOverrides ?? {}) }
+    const packOverrides = { ...(po.packOverrides ?? {}) }
+
+    for (const choice of (groupFor(po)?.values ?? []).filter(scales)) {
+      const decimals = decimalsFor(choice)
+      const everyQty = tiersFromRetail(retailOf(po, choice), next.trade, next.corporate, decimals)
+      if (Object.keys(everyQty).length) valueOverrides[choice.code] = { ...(valueOverrides[choice.code] ?? {}), ...everyQty }
+
+      for (const pack of Object.keys(packOverrides)) {
+        const own = packOverrides[pack]?.[choice.code]
+        const onPack = tiersFromRetail(own?.B2C, next.trade, next.corporate, decimals)
+        if (Object.keys(onPack).length) packOverrides[pack] = { ...packOverrides[pack], [choice.code]: { ...own, ...onPack } }
+      }
+    }
+
+    patch(i, {
+      valueOverrides: Object.keys(valueOverrides).length ? valueOverrides : null,
+      packOverrides: Object.keys(packOverrides).length ? packOverrides : null,
+    })
+  }
+
+  /** "₹200 retail → ₹170 trade · ₹156 corporate", from the field's first priced choice. */
+  function percentExample(i) {
+    const po = value[i]
+    const priced = (groupFor(po)?.values ?? []).filter(scales)
+    const choice = priced.find((c) => Number(retailOf(po, c)) > 0)
+    const retail = choice ? Number(retailOf(po, choice)) : 200
+    const decimals = decimalsFor(choice)
+    const pct = fieldPercents(i)
+    const t = percentOrNull(pct.trade) ?? 15
+    const c = percentOrNull(pct.corporate) ?? 22
+    return `${rupees(retail)} retail → ${rupees(fromRetail(retail, t, decimals))} trade (${t}% less) · ${rupees(
+      fromRetail(retail, c, decimals),
+    )} corporate (${c}% less)`
   }
 
   /**
@@ -100,7 +184,10 @@ export default function OptionsTab({
     } else {
       blocked.delete(code)
       if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0) delete forChoice[tier]
-      else forChoice[tier] = Number(raw)
+      else {
+        forChoice[tier] = Number(raw)
+        if (tier === 'B2C') Object.assign(forChoice, followRetail(i, code, Number(raw)))
+      }
       if (Object.keys(forChoice).length) forPack[code] = forChoice
       else delete forPack[code]
     }
@@ -244,6 +331,14 @@ export default function OptionsTab({
                           Clear it
                         </Btn>
                       </div>
+                    )}
+
+                    {choices.some(scales) && (
+                      <FieldPercents
+                        value={fieldPercents(i)}
+                        example={percentExample(i)}
+                        onChange={(next) => applyFieldPercents(i, next)}
+                      />
                     )}
 
                     {packs.length > 0 ? (
@@ -431,5 +526,60 @@ function PackPriceTable({ po, fieldIndex, choices, packs, tier, onTier, setChoic
         </table>
       </div>
     </>
+  )
+}
+
+/**
+ * A field's "trade and corporate are this much below retail" controls. Both
+ * are taken off the retail price; the parent does the filling.
+ */
+function FieldPercents({ value, example, onChange }) {
+  return (
+    <div className="mt-3 rounded-[var(--radius-card)] bg-surface px-3 py-2">
+      <div className="flex flex-wrap items-end gap-x-5 gap-y-2">
+        <label className="text-xs text-ink-soft">
+          <span className="mb-1 block">Trade below retail by</span>
+          <span className="flex items-center gap-1.5 text-sm text-ink">
+            <Input
+              type="number"
+              min="0"
+              max="99"
+              step="0.5"
+              value={value.trade}
+              onChange={(e) => onChange({ ...value, trade: e.target.value })}
+              placeholder="15"
+              aria-label="Trade price, percent below retail"
+              className="w-20 tabular-nums"
+            />
+            %
+          </span>
+        </label>
+        <label className="text-xs text-ink-soft">
+          <span className="mb-1 block">Corporate below retail by</span>
+          <span className="flex items-center gap-1.5 text-sm text-ink">
+            <Input
+              type="number"
+              min="0"
+              max="99"
+              step="0.5"
+              value={value.corporate}
+              onChange={(e) => onChange({ ...value, corporate: e.target.value })}
+              placeholder="22"
+              aria-label="Corporate price, percent below retail"
+              className="w-20 tabular-nums"
+            />
+            %
+          </span>
+        </label>
+        <p className="text-xs tabular-nums text-ink">
+          <span className="text-ink-soft">Example: </span>
+          {example}
+        </p>
+      </div>
+      <p className="mt-1.5 text-xs text-ink-soft">
+        Fills trade and corporate for every choice priced in rupees, from its retail price. Percentage and multiplier
+        choices already scale with the price, so they are left as they are.
+      </p>
+    </div>
   )
 }
