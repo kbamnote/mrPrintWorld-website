@@ -2,6 +2,15 @@ import { Field, Input, Select, Btn, Badge } from '../ui'
 import NewFieldForm from './NewFieldForm'
 
 const TIERS = ['B2C', 'B2B', 'CORPORATE']
+const TIER_LABELS = { B2C: 'Retail', B2B: 'Trade', CORPORATE: 'Corporate' }
+
+/** What a choice's number means, shown beside its name. */
+const DELTA_HINT = { FLAT: '+ ₹', PERCENT: '+ %', PER_SQFT: '+ ₹ per sq.ft', MULTIPLIER: '×' }
+
+/** One tier's library price, from a Map or a plain object. */
+const readTier = (map, tier) => (map ? (typeof map.get === 'function' ? map.get(tier) : map[tier]) : undefined)
+
+const hasLegacyOverride = (po) => Boolean(po.deltaOverrides && Object.keys(po.deltaOverrides).length)
 
 /**
  * Which specification fields this product asks the customer, in what order.
@@ -23,7 +32,14 @@ export default function OptionsTab({ value = [], groups = [], onChange, onGroupC
     if (!id) return
     onChange([
       ...value,
-      { optionGroup: id, order: value.length, required: false, labelOverride: '', deltaOverrides: null },
+      {
+        optionGroup: id,
+        order: value.length,
+        required: false,
+        labelOverride: '',
+        deltaOverrides: null,
+        valueOverrides: null,
+      },
     ])
   }
 
@@ -37,11 +53,15 @@ export default function OptionsTab({ value = [], groups = [], onChange, onGroupC
     onChange(next.map((po, pi) => ({ ...po, order: pi })))
   }
 
-  function setOverride(i, tier, raw) {
-    const deltaOverrides = { ...(value[i].deltaOverrides ?? {}) }
-    if (raw === '') delete deltaOverrides[tier]
-    else deltaOverrides[tier] = Number(raw)
-    patch(i, { deltaOverrides: Object.keys(deltaOverrides).length ? deltaOverrides : null })
+  /** This product's own price for one choice and customer type. Blank means the library price. */
+  function setChoicePrice(i, code, tier, raw) {
+    const all = { ...(value[i].valueOverrides ?? {}) }
+    const forChoice = { ...(all[code] ?? {}) }
+    if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0) delete forChoice[tier]
+    else forChoice[tier] = Number(raw)
+    if (Object.keys(forChoice).length) all[code] = forChoice
+    else delete all[code]
+    patch(i, { valueOverrides: Object.keys(all).length ? all : null })
   }
 
   return (
@@ -129,29 +149,70 @@ export default function OptionsTab({ value = [], groups = [], onChange, onGroupC
                   </Field>
                 </div>
 
-                <div className="mt-4 border-t border-line pt-4">
-                  <span className="block text-xs font-semibold uppercase tracking-wider text-ink-soft">
-                    Charge differently on this product
-                  </span>
-                  <p className="mt-1 text-xs text-ink-soft">
-                    Replaces the library price for <strong>every</strong> choice in this field, on this product
-                    only. Leave blank to use the library prices.
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-3">
-                    {TIERS.map((tier) => (
-                      <label key={tier} className="text-xs text-ink-soft">
-                        <span className="mb-1 block font-medium text-ink">{tier}</span>
-                        <Input
-                          type="number"
-                          value={po.deltaOverrides?.[tier] ?? ''}
-                          onChange={(e) => setOverride(i, tier, e.target.value)}
-                          placeholder="library"
-                          className="w-28 tabular-nums"
-                        />
-                      </label>
-                    ))}
+                {choices.length > 0 && (
+                  <div className="mt-4 border-t border-line pt-4">
+                    <span className="block text-xs font-semibold uppercase tracking-wider text-ink-soft">
+                      Prices on this product
+                    </span>
+                    <p className="mt-1 text-xs text-ink-soft">
+                      Faded figures are the library prices. Type a price to charge differently on this product
+                      only — leave it blank to keep the library price.
+                    </p>
+
+                    {hasLegacyOverride(po) && (
+                      <div className="mt-2 flex flex-wrap items-center gap-2 rounded-[var(--radius-card)] bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                        <span>An older setting charges one price for every choice here. Prices typed below take priority.</span>
+                        <Btn size="sm" variant="outline" onClick={() => patch(i, { deltaOverrides: null })}>
+                          Clear it
+                        </Btn>
+                      </div>
+                    )}
+
+                    <div className="mt-2 overflow-x-auto">
+                      <table className="w-full min-w-[34rem] text-sm">
+                        <thead>
+                          <tr className="text-left text-[0.7rem] uppercase tracking-wider text-ink-soft">
+                            <th className="pb-2 font-semibold">Choice</th>
+                            {TIERS.map((tier) => (
+                              <th key={tier} className="pb-2 font-semibold">
+                                {TIER_LABELS[tier]}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {choices.map((choice) => (
+                            <tr key={choice.code} className="border-t border-line">
+                              <td className="py-2 pr-3">
+                                <span className="text-ink">{choice.label}</span>
+                                <span className="ml-1.5 text-xs text-ink-soft">
+                                  {DELTA_HINT[choice.deltaType ?? 'FLAT']}
+                                </span>
+                              </td>
+                              {TIERS.map((tier) => {
+                                const library = readTier(choice.priceDelta, tier)
+                                return (
+                                  <td key={tier} className="py-2 pr-2">
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      step="any"
+                                      value={po.valueOverrides?.[choice.code]?.[tier] ?? ''}
+                                      onChange={(e) => setChoicePrice(i, choice.code, tier, e.target.value)}
+                                      placeholder={library === undefined || library === null ? '0' : String(library)}
+                                      aria-label={`${TIER_LABELS[tier]} price for ${choice.label}`}
+                                      className="w-24 tabular-nums"
+                                    />
+                                  </td>
+                                )
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )
           })}

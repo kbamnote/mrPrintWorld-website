@@ -132,6 +132,7 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
             required: Boolean(po.required),
             labelOverride: po.labelOverride ?? '',
             deltaOverrides: po.deltaOverrides ?? null,
+            valueOverrides: po.valueOverrides ?? null,
           })),
         })
       })
@@ -204,6 +205,10 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
         ...(po.labelOverride ? { labelOverride: po.labelOverride } : {}),
         ...(po.deltaOverrides && Object.keys(po.deltaOverrides).length
           ? { deltaOverrides: po.deltaOverrides }
+          : {}),
+        // This product's own prices for individual choices.
+        ...(po.valueOverrides && Object.keys(po.valueOverrides).length
+          ? { valueOverrides: po.valueOverrides }
           : {}),
       })),
       visibility: form.visibility,
