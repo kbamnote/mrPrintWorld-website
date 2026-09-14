@@ -52,6 +52,22 @@ function cleanPricing(form) {
   return { ...pricing, slabs }
 }
 
+/** The pack quantities a product is sold in, smallest first. Empty when it isn't priced in packs. */
+function packQuantities(form) {
+  if (form.pricingModel !== 'SLAB') return []
+  const quantities = (form.pricing?.slabs ?? [])
+    .map((s) => Number(s.minQty))
+    .filter((qty) => Number.isInteger(qty) && qty >= 1)
+  return [...new Set(quantities)].sort((a, b) => a - b)
+}
+
+/** A field's per-pack prices, keeping only the packs the product still sells. */
+function keptPackPrices(po, form) {
+  const packs = new Set(packQuantities(form).map(String))
+  const kept = Object.fromEntries(Object.entries(po.packOverrides ?? {}).filter(([qty]) => packs.has(qty)))
+  return Object.keys(kept).length ? kept : null
+}
+
 /** The full-page editor at /admin/products/new and /admin/products/:id. */
 export default function ProductForm() {
   const { id } = useParams()
@@ -133,6 +149,7 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
             labelOverride: po.labelOverride ?? '',
             deltaOverrides: po.deltaOverrides ?? null,
             valueOverrides: po.valueOverrides ?? null,
+            packOverrides: po.packOverrides ?? null,
           })),
         })
       })
@@ -198,19 +215,24 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
       purchaseMode: form.purchaseMode,
       pricing: form.pricingModel === 'QUOTE_ONLY' ? null : cleanPricing(form),
       // Only the fields the API accepts: the populated group is display-only.
-      options: (form.options ?? []).map((po, i) => ({
-        optionGroup: po.optionGroup,
-        order: i,
-        required: Boolean(po.required),
-        ...(po.labelOverride ? { labelOverride: po.labelOverride } : {}),
-        ...(po.deltaOverrides && Object.keys(po.deltaOverrides).length
-          ? { deltaOverrides: po.deltaOverrides }
-          : {}),
-        // This product's own prices for individual choices.
-        ...(po.valueOverrides && Object.keys(po.valueOverrides).length
-          ? { valueOverrides: po.valueOverrides }
-          : {}),
-      })),
+      options: (form.options ?? []).map((po, i) => {
+        const packPrices = keptPackPrices(po, form)
+        return {
+          optionGroup: po.optionGroup,
+          order: i,
+          required: Boolean(po.required),
+          ...(po.labelOverride ? { labelOverride: po.labelOverride } : {}),
+          ...(po.deltaOverrides && Object.keys(po.deltaOverrides).length
+            ? { deltaOverrides: po.deltaOverrides }
+            : {}),
+          // This product's own prices for individual choices, at every quantity…
+          ...(po.valueOverrides && Object.keys(po.valueOverrides).length
+            ? { valueOverrides: po.valueOverrides }
+            : {}),
+          // …and for particular quantity packs.
+          ...(packPrices ? { packOverrides: packPrices } : {}),
+        }
+      }),
       visibility: form.visibility,
       featured: form.featured,
       isActive: form.isActive,
@@ -543,6 +565,7 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
             <OptionsTab
               value={form.options ?? []}
               groups={optionGroups}
+              packs={packQuantities(form)}
               onChange={(options) => set({ options })}
               onGroupCreated={(group) => setOptionGroups((list) => [...list, group])}
             />

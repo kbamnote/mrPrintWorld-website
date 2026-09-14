@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Field, Input, Select, Btn, Badge } from '../ui'
 import NewFieldForm from './NewFieldForm'
 
@@ -20,7 +21,9 @@ const hasLegacyOverride = (po) => Boolean(po.deltaOverrides && Object.keys(po.de
  * you only choose which ones apply, whether they must be answered, and
  * whether this product charges differently for them.
  */
-export default function OptionsTab({ value = [], groups = [], onChange, onGroupCreated }) {
+export default function OptionsTab({ value = [], groups = [], packs = [], onChange, onGroupCreated }) {
+  // Which customer type each field's pack price table is showing.
+  const [tierFor, setTierFor] = useState({})
   const attachedIds = new Set(value.map((po) => String(po.optionGroup)))
   const available = groups.filter((g) => !attachedIds.has(String(g._id)) && g.isActive !== false)
 
@@ -62,6 +65,20 @@ export default function OptionsTab({ value = [], groups = [], onChange, onGroupC
     if (Object.keys(forChoice).length) all[code] = forChoice
     else delete all[code]
     patch(i, { valueOverrides: Object.keys(all).length ? all : null })
+  }
+
+  /** This product's price for one choice on one pack, for one customer type. Blank falls back. */
+  function setPackPrice(i, pack, code, tier, raw) {
+    const all = { ...(value[i].packOverrides ?? {}) }
+    const forPack = { ...(all[pack] ?? {}) }
+    const forChoice = { ...(forPack[code] ?? {}) }
+    if (raw === '' || !Number.isFinite(Number(raw)) || Number(raw) < 0) delete forChoice[tier]
+    else forChoice[tier] = Number(raw)
+    if (Object.keys(forChoice).length) forPack[code] = forChoice
+    else delete forPack[code]
+    if (Object.keys(forPack).length) all[pack] = forPack
+    else delete all[pack]
+    patch(i, { packOverrides: Object.keys(all).length ? all : null })
   }
 
   return (
@@ -155,8 +172,9 @@ export default function OptionsTab({ value = [], groups = [], onChange, onGroupC
                       Prices on this product
                     </span>
                     <p className="mt-1 text-xs text-ink-soft">
-                      Faded figures are the library prices. Type a price to charge differently on this product
-                      only — leave it blank to keep the library price.
+                      {packs.length > 0
+                        ? 'Faded figures show what applies when a box is left blank. Set a price under All quantities, then change it for any pack that costs differently.'
+                        : 'Faded figures are the library prices. Type a price to charge differently on this product only — leave it blank to keep the library price.'}
                     </p>
 
                     {hasLegacyOverride(po) && (
@@ -168,6 +186,18 @@ export default function OptionsTab({ value = [], groups = [], onChange, onGroupC
                       </div>
                     )}
 
+                    {packs.length > 0 ? (
+                      <PackPriceTable
+                        po={po}
+                        fieldIndex={i}
+                        choices={choices}
+                        packs={packs}
+                        tier={tierFor[po.optionGroup] ?? 'B2C'}
+                        onTier={(tier) => setTierFor((m) => ({ ...m, [po.optionGroup]: tier }))}
+                        setChoicePrice={setChoicePrice}
+                        setPackPrice={setPackPrice}
+                      />
+                    ) : (
                     <div className="mt-2 overflow-x-auto">
                       <table className="w-full min-w-[34rem] text-sm">
                         <thead>
@@ -211,6 +241,7 @@ export default function OptionsTab({ value = [], groups = [], onChange, onGroupC
                         </tbody>
                       </table>
                     </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -246,5 +277,91 @@ export default function OptionsTab({ value = [], groups = [], onChange, onGroupC
         }}
       />
     </div>
+  )
+}
+
+/**
+ * A field's prices on a product sold in packs: one row per choice, one column
+ * per pack, for one customer type at a time. "All quantities" is the fallback
+ * for any pack left blank, and the library price is the fallback for that.
+ */
+function PackPriceTable({ po, fieldIndex, choices, packs, tier, onTier, setChoicePrice, setPackPrice }) {
+  const faded = (n) => (n === undefined || n === null ? '0' : String(n))
+
+  return (
+    <>
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+        <span className="text-ink-soft">Prices for</span>
+        {TIERS.map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => onTier(t)}
+            aria-pressed={tier === t}
+            className={`rounded-full px-3 py-1 font-medium transition-colors ${
+              tier === t ? 'bg-primary text-white' : 'bg-surface text-ink-soft hover:bg-gray-100'
+            }`}
+          >
+            {TIER_LABELS[t]}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-2 overflow-x-auto">
+        <table className="w-full text-sm" style={{ minWidth: `${16 + (packs.length + 1) * 7}rem` }}>
+          <thead>
+            <tr className="text-left text-[0.7rem] uppercase tracking-wider text-ink-soft">
+              <th className="pb-2 font-semibold">Choice</th>
+              <th className="pb-2 font-semibold">All quantities</th>
+              {packs.map((qty) => (
+                <th key={qty} className="pb-2 font-semibold tabular-nums">
+                  {qty.toLocaleString('en-IN')}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {choices.map((choice) => {
+              const library = readTier(choice.priceDelta, tier)
+              const everyQty = po.valueOverrides?.[choice.code]?.[tier]
+              return (
+                <tr key={choice.code} className="border-t border-line">
+                  <td className="py-2 pr-3">
+                    <span className="text-ink">{choice.label}</span>
+                    <span className="ml-1.5 text-xs text-ink-soft">{DELTA_HINT[choice.deltaType ?? 'FLAT']}</span>
+                  </td>
+                  <td className="py-2 pr-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={everyQty ?? ''}
+                      onChange={(e) => setChoicePrice(fieldIndex, choice.code, tier, e.target.value)}
+                      placeholder={faded(library)}
+                      aria-label={`${TIER_LABELS[tier]} price for ${choice.label} at every quantity`}
+                      className="w-24 tabular-nums"
+                    />
+                  </td>
+                  {packs.map((qty) => (
+                    <td key={qty} className="py-2 pr-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={po.packOverrides?.[String(qty)]?.[choice.code]?.[tier] ?? ''}
+                        onChange={(e) => setPackPrice(fieldIndex, String(qty), choice.code, tier, e.target.value)}
+                        placeholder={faded(everyQty ?? library)}
+                        aria-label={`${TIER_LABELS[tier]} price for ${choice.label} on ${qty}`}
+                        className="w-24 tabular-nums"
+                      />
+                    </td>
+                  ))}
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
   )
 }
