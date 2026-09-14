@@ -41,7 +41,7 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
 
   // Resolve the trail against the current tree, so renamed or removed
   // categories cannot leave the page pointing at something that is gone.
-  const { path, children } = useMemo(() => {
+  const path = useMemo(() => {
     const out = []
     let level = tree
     for (const slug of trail) {
@@ -50,89 +50,94 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
       out.push(found)
       level = found.children ?? []
     }
-    return { path: out, children: level }
+    return out
   }, [tree, trail])
 
   const current = path[path.length - 1] ?? null
   const { items, loading, error } = useProducts({ category: current?.slug })
 
-  const tile =
-    'group flex w-24 shrink-0 flex-col items-center gap-2 text-center sm:w-28'
-  const circle =
-    'grid h-20 w-20 place-items-center overflow-hidden rounded-full border border-line bg-white shadow-sm transition-shadow group-hover:shadow-card sm:h-24 sm:w-24'
+  // One row per level of the chosen path: the top categories, then the
+  // subcategories of whichever is chosen, and so on down. Every earlier row
+  // stays on screen, so choosing a different category never hides the rest.
+  const rows = [{ parent: null, nodes: tree }]
+  for (const node of path) {
+    if (node.children?.length) rows.push({ parent: node, nodes: node.children })
+  }
+
+  /** Choose a tile on a row. Choosing the chosen tile again closes that level. */
+  function choose(level, slug) {
+    setTrail(trail[level] === slug ? trail.slice(0, level) : [...trail.slice(0, level), slug])
+  }
+
+  const tile = 'group flex w-24 shrink-0 flex-col items-center gap-2 text-center sm:w-28'
+  const circle = (selected, small) =>
+    `grid place-items-center overflow-hidden rounded-full border bg-white shadow-sm transition ${
+      small ? 'h-16 w-16 sm:h-20 sm:w-20' : 'h-20 w-20 sm:h-24 sm:w-24'
+    } ${selected ? 'border-primary ring-2 ring-primary ring-offset-2' : 'border-line group-hover:shadow-card'}`
+  const label = (selected) =>
+    `text-xs leading-snug sm:text-sm ${selected ? 'font-semibold text-primary' : 'font-medium text-ink'}`
 
   return (
     <section className="section-y bg-surface">
       <Container>
-        {/* Where am I */}
-        <nav className="mb-5 flex flex-wrap items-center gap-2 text-sm" aria-label="Breadcrumb">
-          <button
-            type="button"
-            onClick={() => setTrail([])}
-            className={path.length === 0 ? 'font-medium text-ink' : 'text-ink-soft transition-colors hover:text-primary'}
+        {rows.map((row, level) => (
+          <div
+            key={row.parent?.slug ?? 'all'}
+            className={level === 0 ? 'mb-4' : 'mb-4 rounded-[var(--radius-lg)] border border-line bg-white px-4 pt-4'}
           >
-            All products
-          </button>
-          {path.map((node, i) => (
-            <span key={node.slug} className="flex items-center gap-2">
-              <span aria-hidden="true" className="text-ink-soft/60">
-                ›
-              </span>
-              <button
-                type="button"
-                onClick={() => setTrail(trail.slice(0, i + 1))}
-                className={
-                  i === path.length - 1
-                    ? 'font-medium text-ink'
-                    : 'text-ink-soft transition-colors hover:text-primary'
-                }
-              >
-                {node.name}
-              </button>
-            </span>
-          ))}
-        </nav>
-
-        {/* Picture tiles for this level */}
-        {children.length > 0 && (
-          <div className="mb-8 overflow-x-auto pb-2">
-            <div className="flex gap-4 sm:gap-6">
-              {path.length > 0 && (
-                <button type="button" onClick={() => setTrail(trail.slice(0, -1))} className={tile}>
-                  <span className={circle}>
-                    <span className="text-2xl text-ink-soft" aria-hidden="true">←</span>
-                  </span>
-                  <span className="text-xs font-medium text-ink-soft sm:text-sm">Back</span>
-                </button>
-              )}
-              {children.map((node) => (
-                <button
-                  key={node.slug}
-                  type="button"
-                  onClick={() => setTrail([...trail, node.slug])}
-                  className={tile}
-                >
-                  <span className={circle}>
-                    {node.image?.url ? (
-                      <img
-                        src={node.image.url}
-                        alt=""
-                        loading="lazy"
-                        referrerPolicy="no-referrer"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="font-display text-2xl font-bold text-primary/70" aria-hidden="true">
-                        {node.name.charAt(0)}
+            {row.parent && (
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-soft">{row.parent.name}</p>
+            )}
+            {/* Padding keeps the selected tile's ring from being clipped by the scroller. */}
+            <div className="overflow-x-auto px-1 pb-3 pt-1">
+              <div className="flex gap-4 sm:gap-6">
+                {level === 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setTrail([])}
+                    aria-pressed={trail.length === 0}
+                    className={tile}
+                  >
+                    <span className={circle(trail.length === 0, false)}>
+                      <span className="font-display text-sm font-bold text-primary/80">All</span>
+                    </span>
+                    <span className={label(trail.length === 0)}>All products</span>
+                  </button>
+                )}
+                {row.nodes.map((node) => {
+                  const selected = trail[level] === node.slug
+                  return (
+                    <button
+                      key={node.slug}
+                      type="button"
+                      onClick={() => choose(level, node.slug)}
+                      aria-pressed={selected}
+                      className={tile}
+                    >
+                      <span className={circle(selected, level > 0)}>
+                        {node.image?.url ? (
+                          <img
+                            src={node.image.url}
+                            alt=""
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="font-display text-2xl font-bold text-primary/70" aria-hidden="true">
+                            {node.name.charAt(0)}
+                          </span>
+                        )}
                       </span>
-                    )}
-                  </span>
-                  <span className="text-xs font-medium leading-snug text-ink sm:text-sm">{node.name}</span>
-                </button>
-              ))}
+                      <span className={label(selected)}>{node.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </div>
-        )}
+        ))}
+        <div className="mb-4" />
 
         {error && !loading && (
           <div className="rounded-[var(--radius-lg)] border border-line bg-white p-10 text-center">
