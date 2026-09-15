@@ -140,6 +140,9 @@ export const createProduct = (body) => request('/api/admin/products', { method: 
 export const updateProduct = (id, body) =>
   request(`/api/admin/products/${id}`, { method: 'PATCH', body }).then((r) => r.data)
 export const deleteProduct = (id) => request(`/api/admin/products/${id}`, { method: 'DELETE' })
+/** Bulk Excel upload for a category: { category, dryRun, rows } → per-row results. */
+export const bulkProducts = (body) =>
+  request('/api/admin/products/bulk', { method: 'POST', body }).then((r) => r.data)
 export const previewPrice = (id, body) =>
   request(`/api/admin/products/${id}/preview-price`, { method: 'POST', body }).then((r) => r.data)
 

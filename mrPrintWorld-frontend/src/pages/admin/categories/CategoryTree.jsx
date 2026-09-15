@@ -3,6 +3,7 @@ import * as api from '../adminApi'
 import { useCanDelete } from '../authContext'
 import { Input, Select, Btn, Badge, Spinner, ErrorBanner, EmptyState, Drawer } from '../ui'
 import { ProductEditor } from '../products/ProductForm'
+import BulkUpload from './BulkUpload'
 
 /**
  * Categories, subcategories and their products — all managed here.
@@ -24,6 +25,7 @@ export default function CategoryTree() {
   const [open, setOpen] = useState(() => new Set()) // categories showing their products
   const [products, setProducts] = useState({}) // category id → { loading, items }
   const [drawer, setDrawer] = useState(null) // { productId } | { category }
+  const [bulkFor, setBulkFor] = useState(null) // category being bulk-uploaded into
   const dirtyRef = useRef(false)
 
   const load = useCallback(
@@ -177,6 +179,7 @@ export default function CategoryTree() {
     removeProduct,
     openProduct: (p) => setDrawer({ productId: String(p._id) }),
     addProduct: (catId) => setDrawer({ category: catId }),
+    bulkUpload: (cat) => setBulkFor(cat),
   }
 
   return (
@@ -247,6 +250,20 @@ export default function CategoryTree() {
           </div>
         )}
       </Drawer>
+
+      <Drawer open={Boolean(bulkFor)} onClose={() => setBulkFor(null)}>
+        {bulkFor && (
+          <div className="p-5">
+            <BulkUpload
+              key={bulkFor._id}
+              category={bulkFor}
+              items={items}
+              onClose={() => setBulkFor(null)}
+              onImported={() => refreshProducts()}
+            />
+          </div>
+        )}
+      </Drawer>
     </div>
   )
 }
@@ -288,6 +305,7 @@ function CategoryNode({ cat, depth, ctx }) {
             ctx.setAdding(id)
           }}
           onAddProduct={children.length === 0 ? () => ctx.addProduct(id) : undefined}
+          onBulk={() => ctx.bulkUpload(cat)}
           onEdit={() => ctx.setEditingId(id)}
           onDelete={() => ctx.removeCategory(cat)}
         />
@@ -359,6 +377,7 @@ function Row({
   onToggleProducts,
   onAddSub,
   onAddProduct,
+  onBulk,
   onEdit,
   onDelete,
 }) {
@@ -415,6 +434,9 @@ function Row({
             + Product
           </Btn>
         )}
+        <Btn variant="outline" size="sm" onClick={onBulk} title="Add or change many products from an Excel sheet">
+          Bulk upload
+        </Btn>
         <Btn variant="ghost" size="sm" onClick={onEdit}>
           Edit
         </Btn>
