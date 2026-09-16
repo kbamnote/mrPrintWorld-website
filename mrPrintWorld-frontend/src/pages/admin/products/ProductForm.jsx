@@ -231,9 +231,11 @@ export function ProductEditor({ productId, presetCategory, onCreated, onSaved, o
       // Mongoose-generated keys (_id) that a strict write schema rejects, so
       // echoing the object straight back would fail the save.
       images: form.images?.length
-        ? form.images.map(({ url, publicId, alt, isPrimary, order }) => ({
+        ? form.images.map(({ url, publicId, sourceUrl, alt, isPrimary, order }) => ({
             url,
             ...(publicId ? { publicId } : {}),
+            // Kept so a bulk Excel upload with the same photo link does not copy it again.
+            ...(sourceUrl ? { sourceUrl } : {}),
             ...(alt ? { alt } : {}),
             ...(isPrimary !== undefined ? { isPrimary: Boolean(isPrimary) } : {}),
             ...(order !== undefined ? { order } : {}),

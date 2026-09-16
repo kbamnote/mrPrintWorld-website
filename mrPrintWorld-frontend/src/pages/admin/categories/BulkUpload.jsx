@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import * as api from '../adminApi'
 import { Btn, Badge, ErrorBanner, Spinner } from '../ui'
-import { branchLeaves, buildWorkbook, parseWorkbook, MAX_PACKS, MAX_ROWS } from './bulkExcel'
+import { branchLeaves, buildWorkbook, parseWorkbook, MAX_IMAGES, MAX_PACKS, MAX_ROWS } from './bulkExcel'
 
 /** ExcelJS is large, so it loads only when a file is downloaded or read. */
 const loadExcel = () => import('exceljs/dist/exceljs.min.js').then((mod) => mod.default ?? mod)
@@ -25,14 +25,38 @@ const fileName = (name) =>
   }-products.xlsx`
 
 /**
+ * Import in small batches: copying photos from their links takes a few
+ * seconds each, and one long request would time out. A batch holds up to 50
+ * products, or up to 10 new photos.
+ */
+function batchesOf(rows) {
+  const batches = []
+  let current = []
+  let photos = 0
+  for (const r of rows) {
+    const n = r.newImages ?? 0
+    if (current.length && (current.length >= 50 || photos + n > 10)) {
+      batches.push(current)
+      current = []
+      photos = 0
+    }
+    current.push(r)
+    photos += n
+  }
+  if (current.length) batches.push(current)
+  return batches
+}
+
+/**
  * Bulk upload for one category, Meesho-style: download the Excel, fill it in,
- * upload it, see what every row will do, then import.
+ * upload it, see what every product will do, then import.
  */
 export default function BulkUpload({ category, items, onClose, onImported }) {
   const { leaves, hasSubcategories } = useMemo(() => branchLeaves(category, items), [category, items])
   const [busy, setBusy] = useState(null) // 'download' | 'check' | 'import'
+  const [progress, setProgress] = useState(null) // { done, total }
   const [error, setError] = useState(null)
-  const [rows, setRows] = useState(null) // parsed rows merged with the dry-run result
+  const [rows, setRows] = useState(null) // parsed products merged with the check result
   const [fileLabel, setFileLabel] = useState('')
   const [done, setDone] = useState(null) // import summary
   const fileInput = useRef(null)
@@ -41,8 +65,18 @@ export default function BulkUpload({ category, items, onClose, onImported }) {
     setBusy('download')
     setError(null)
     try {
-      const [ExcelJS, products] = await Promise.all([loadExcel(), allProducts(category._id)])
-      const buffer = await buildWorkbook(ExcelJS, { categoryName: category.name, leaves, hasSubcategories, products })
+      const [ExcelJS, products, library] = await Promise.all([
+        loadExcel(),
+        allProducts(category._id),
+        api.listOptionGroups(),
+      ])
+      const buffer = await buildWorkbook(ExcelJS, {
+        categoryName: category.name,
+        leaves,
+        hasSubcategories,
+        products,
+        library,
+      })
       const url = URL.createObjectURL(
         new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
       )
@@ -66,11 +100,12 @@ export default function BulkUpload({ category, items, onClose, onImported }) {
     setDone(null)
     setFileLabel(file.name)
     try {
-      const ExcelJS = await loadExcel()
+      const [ExcelJS, library] = await Promise.all([loadExcel(), api.listOptionGroups()])
       const parsed = await parseWorkbook(ExcelJS, await file.arrayBuffer(), {
         leaves,
         hasSubcategories,
         categoryName: category.name,
+        library,
       })
       if (!parsed.length) throw new Error('The Products sheet has no rows filled in.')
 
@@ -88,7 +123,7 @@ export default function BulkUpload({ category, items, onClose, onImported }) {
         parsed.map((r) => {
           if (r.errors.length) return { ...r, action: 'error', message: r.errors.join(' · ') }
           const res = outcome.get(r.row)
-          return { ...r, action: res?.action ?? 'error', message: res?.message }
+          return { ...r, action: res?.action ?? 'error', message: res?.message, newImages: res?.newImages ?? 0 }
         }),
       )
     } catch (err) {
@@ -101,27 +136,40 @@ export default function BulkUpload({ category, items, onClose, onImported }) {
 
   async function runImport() {
     const ready = rows.filter((r) => r.action !== 'error')
+    const batches = batchesOf(ready)
+    const outcome = new Map()
     setBusy('import')
     setError(null)
+    setProgress({ done: 0, total: ready.length })
     try {
-      const result = await api.bulkProducts({
-        category: String(category._id),
-        dryRun: false,
-        rows: ready.map((r) => r.payload),
-      })
-      const outcome = new Map(result.results.map((r) => [r.row, r]))
-      setRows((prev) =>
-        prev.map((r) => {
-          const res = outcome.get(r.row)
-          return res ? { ...r, action: res.action, message: res.message } : r
-        }),
-      )
-      setDone({ created: result.created, updated: result.updated, failed: rows.length - result.created - result.updated })
-      onImported?.()
+      for (const batch of batches) {
+        const result = await api.bulkProducts({
+          category: String(category._id),
+          dryRun: false,
+          rows: batch.map((r) => r.payload),
+        })
+        for (const r of result.results) outcome.set(r.row, r)
+        setProgress((p) => ({ ...p, done: p.done + batch.length }))
+      }
     } catch (err) {
       setError(err)
     } finally {
+      const merged = rows.map((r) => {
+        const res = outcome.get(r.row)
+        if (res) return { ...r, action: res.action, message: res.message, imported: res.action !== 'error' }
+        // Not reached before a failure: shown as not imported.
+        return r.action === 'error' ? r : { ...r, action: 'error', message: 'Not imported — upload the file again' }
+      })
+      setRows(merged)
+      const imported = merged.filter((r) => r.imported)
+      setDone({
+        created: imported.filter((r) => r.action === 'create').length,
+        updated: imported.filter((r) => r.action === 'update').length,
+        failed: merged.length - imported.length,
+      })
       setBusy(null)
+      setProgress(null)
+      if (imported.length) onImported?.()
     }
   }
 
@@ -130,6 +178,7 @@ export default function BulkUpload({ category, items, onClose, onImported }) {
         create: rows.filter((r) => r.action === 'create').length,
         update: rows.filter((r) => r.action === 'update').length,
         error: rows.filter((r) => r.action === 'error').length,
+        photos: rows.filter((r) => r.action !== 'error').reduce((n, r) => n + (r.newImages ?? 0), 0),
       }
     : null
   const ready = counts ? counts.create + counts.update : 0
@@ -140,10 +189,10 @@ export default function BulkUpload({ category, items, onClose, onImported }) {
         <div>
           <h2 className="font-display text-xl font-bold text-ink">Bulk upload · {category.name}</h2>
           <p className="mt-1 text-sm text-ink-soft">
-            Add or change many products at once from an Excel sheet. Photos are added afterwards, from each product.
+            Add or change many products at once from an Excel sheet — details, photos, quantity packs and fields.
           </p>
         </div>
-        <Btn variant="ghost" size="sm" onClick={onClose}>
+        <Btn variant="ghost" size="sm" onClick={onClose} disabled={busy === 'import'}>
           Close
         </Btn>
       </div>
@@ -152,12 +201,21 @@ export default function BulkUpload({ category, items, onClose, onImported }) {
 
       <section className="rounded-[var(--radius-lg)] border border-line bg-white p-4">
         <h3 className="font-semibold text-ink">1. Download the Excel</h3>
-        <p className="mt-1 text-sm text-ink-soft">
-          One row per product, with a column for every detail and up to {MAX_PACKS} quantity packs
-          {hasSubcategories ? `, and a dropdown of the ${leaves.length} subcategories` : ''}. Products already in{' '}
-          {category.name} are filled in, so you can change them and upload them again. The Instructions sheet explains
-          each column.
-        </p>
+        <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-soft">
+          <li>
+            <strong className="font-medium text-ink">Products</strong> — one row per product: details, up to{' '}
+            {MAX_IMAGES} photo links and up to {MAX_PACKS} quantity packs
+            {hasSubcategories ? `, with a dropdown of the ${leaves.length} subcategories` : ''}.
+          </li>
+          <li>
+            <strong className="font-medium text-ink">Options</strong> — the fields each product offers (Size, Printing
+            sides…) and what each choice costs, per pack or per other field. Fields must already be in Product Options.
+          </li>
+          <li>
+            Products already in {category.name} are filled in, so you can change them and upload again. The
+            Instructions sheet explains every column.
+          </li>
+        </ul>
         <Btn className="mt-3" variant="outline" onClick={download} disabled={Boolean(busy)}>
           {busy === 'download' ? 'Preparing…' : 'Download Excel'}
         </Btn>
@@ -166,7 +224,7 @@ export default function BulkUpload({ category, items, onClose, onImported }) {
       <section className="rounded-[var(--radius-lg)] border border-line bg-white p-4">
         <h3 className="font-semibold text-ink">2. Upload the filled Excel</h3>
         <p className="mt-1 text-sm text-ink-soft">
-          Nothing is saved yet — you will see what each row will do first. Up to {MAX_ROWS} products per file.
+          Nothing is saved yet — you will see what each product will do first. Up to {MAX_ROWS} products per file.
         </p>
         <label className={`mt-3 inline-block ${busy ? 'pointer-events-none opacity-60' : ''}`}>
           <input
@@ -194,28 +252,37 @@ export default function BulkUpload({ category, items, onClose, onImported }) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="mr-1 font-semibold text-ink">{done ? 'Imported' : '3. Check and import'}</h3>
-              {counts.create > 0 && <Badge tone="green">{counts.create} new</Badge>}
-              {counts.update > 0 && <Badge tone="blue">{counts.update} to update</Badge>}
+              {!done && counts.create > 0 && <Badge tone="green">{counts.create} new</Badge>}
+              {!done && counts.update > 0 && <Badge tone="blue">{counts.update} to update</Badge>}
+              {!done && counts.photos > 0 && <Badge tone="neutral">{counts.photos} photos to copy</Badge>}
               {counts.error > 0 && <Badge tone="amber">{counts.error} with problems</Badge>}
             </div>
             {!done && (
               <Btn onClick={runImport} disabled={!ready || Boolean(busy)}>
-                {busy === 'import' ? 'Importing…' : `Import ${ready} product${ready === 1 ? '' : 's'}`}
+                {busy === 'import'
+                  ? `Importing ${progress?.done ?? 0} of ${progress?.total ?? ready}…`
+                  : `Import ${ready} product${ready === 1 ? '' : 's'}`}
               </Btn>
             )}
           </div>
 
+          {busy === 'import' && counts.photos > 0 && (
+            <p className="mt-2 text-sm text-ink-soft">Copying photos takes a few seconds each — keep this open.</p>
+          )}
+
           {done ? (
             <p className="mt-2 text-sm text-ink">
               {done.created} created and {done.updated} updated.
-              {done.failed > 0 ? ` ${done.failed} row${done.failed === 1 ? ' was' : 's were'} skipped — fix them in the Excel and upload again.` : ''}{' '}
-              New products are hidden until marked live; add their photos from each product.
+              {done.failed > 0
+                ? ` ${done.failed} product${done.failed === 1 ? ' was' : 's were'} skipped — fix them in the Excel and upload again.`
+                : ''}{' '}
+              New products are hidden until marked live.
             </p>
           ) : (
             counts.error > 0 && (
               <p className="mt-2 text-sm text-ink-soft">
-                Rows with problems are skipped. Fix them in the Excel and upload it again — rows already imported will
-                simply update.
+                Products with problems are skipped. Fix them in the Excel and upload it again — products already
+                imported will simply update.
               </p>
             )
           )}
@@ -228,16 +295,22 @@ export default function BulkUpload({ category, items, onClose, onImported }) {
                   <th className="py-2 pr-3 font-semibold">Product</th>
                   {hasSubcategories && <th className="py-2 pr-3 font-semibold">Subcategory</th>}
                   <th className="py-2 pr-3 font-semibold">Packs</th>
+                  <th className="py-2 pr-3 font-semibold">Photos</th>
+                  <th className="py-2 pr-3 font-semibold">Fields</th>
                   <th className="py-2 font-semibold">Result</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.row} className="border-t border-line align-top">
-                    <td className="py-2 pr-3 tabular-nums text-ink-soft">{r.row}</td>
+                    <td className="whitespace-nowrap py-2 pr-3 tabular-nums text-ink-soft">{r.rowLabel}</td>
                     <td className="py-2 pr-3 text-ink">{r.name || '—'}</td>
                     {hasSubcategories && <td className="py-2 pr-3 text-ink-soft">{r.categoryLabel || '—'}</td>}
                     <td className="py-2 pr-3 tabular-nums text-ink-soft">{r.packCount || '—'}</td>
+                    <td className="py-2 pr-3 tabular-nums text-ink-soft">
+                      {r.imageCount ? (r.action === 'error' || done ? r.imageCount : `${r.newImages ?? 0} new`) : '—'}
+                    </td>
+                    <td className="py-2 pr-3 tabular-nums text-ink-soft">{r.fieldCount || '—'}</td>
                     <td className="py-2">
                       {r.action === 'create' && <Badge tone="green">{done ? 'Created' : 'New'}</Badge>}
                       {r.action === 'update' && <Badge tone="blue">{done ? 'Updated' : 'Update'}</Badge>}
