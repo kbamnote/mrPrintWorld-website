@@ -206,7 +206,80 @@ function Overview({ me, links, storeName, onChanged }) {
         </div>
       </div>
 
+      <CatalogueCard storeName={storeName} links={links} />
+
       <DefaultPricing me={me} onChanged={onChanged} />
+    </div>
+  )
+}
+
+/**
+ * The reseller's price list as a PDF they can forward on WhatsApp — every
+ * product at THEIR price. The server rebuilds it whenever a product or a
+ * price has changed since the last one, so what they send is never stale.
+ */
+function CatalogueCard({ storeName, links }) {
+  const [state, setState] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    apiGet('/api/reseller/catalogue')
+      .then(setState)
+      .catch(() => setState({ url: null }))
+  }, [])
+
+  async function prepare(share) {
+    // Opened before the await: a tab opened afterwards is blocked as a popup.
+    const tab = share ? window.open('', '_blank') : null
+    setBusy(true)
+    setError(null)
+    try {
+      const data = await apiSend('POST', '/api/reseller/catalogue')
+      setState(data)
+      const message = `${storeName} — our latest price list: ${data.url}\n\nOrder online: ${links.store}`
+      if (tab) tab.location.href = whatsapp(message)
+      else if (share) window.location.href = whatsapp(message)
+    } catch (err) {
+      if (tab) tab.close()
+      setError(err?.message ?? 'Could not prepare the catalogue. Please try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="rounded-[var(--radius-lg)] border border-line bg-white p-6">
+      <h2 className="font-display text-lg font-semibold text-ink">Your catalogue</h2>
+      <p className="mt-1 text-sm text-ink-soft">
+        Every product at your prices, as a PDF you can send to customers. A fresh one is prepared whenever a product
+        or a price has changed — so what you send is always current.
+      </p>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <Button onClick={() => prepare(true)} disabled={busy}>
+          {busy ? 'Preparing…' : 'Send catalogue on WhatsApp'}
+        </Button>
+        <button type="button" onClick={() => prepare(false)} disabled={busy} className={smallBtn}>
+          Prepare without sending
+        </button>
+        {state?.url && (
+          <>
+            <a href={state.url} target="_blank" rel="noreferrer" className={smallBtn}>
+              Open PDF
+            </a>
+            <CopyButton text={state.url} label="Copy PDF link" />
+          </>
+        )}
+      </div>
+
+      {error && <p className="mt-3 text-sm text-red-700">{error}</p>}
+      {state?.builtAt && !error && (
+        <p className="mt-3 text-xs text-ink-soft">
+          Last prepared {day(state.builtAt)} · {state.productCount} product{state.productCount === 1 ? '' : 's'}. Prices
+          exclude GST.
+        </p>
+      )}
     </div>
   )
 }
