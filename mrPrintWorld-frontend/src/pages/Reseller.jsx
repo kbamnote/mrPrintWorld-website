@@ -235,7 +235,9 @@ function CatalogueCard({ storeName, links }) {
     setBusy(true)
     setError(null)
     try {
-      const data = await apiSend('POST', '/api/reseller/catalogue')
+      // Building it copies every product photo into the PDF, so it is given
+      // far longer than an ordinary request.
+      const data = await apiSend('POST', '/api/reseller/catalogue', undefined, { timeoutMs: 120_000 })
       setState(data)
       const message = `${storeName} — our latest price list: ${data.url}\n\nOrder online: ${links.store}`
       if (tab) tab.location.href = whatsapp(message)
@@ -273,6 +275,11 @@ function CatalogueCard({ storeName, links }) {
         )}
       </div>
 
+      {busy && !error && (
+        <p className="mt-3 text-xs text-ink-soft">
+          Putting your products and prices together — this can take up to a minute the first time. Keep this page open.
+        </p>
+      )}
       {error && <p className="mt-3 text-sm text-red-700">{error}</p>}
       {state?.builtAt && !error && (
         <p className="mt-3 text-xs text-ink-soft">

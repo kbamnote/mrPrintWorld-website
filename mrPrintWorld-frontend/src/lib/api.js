@@ -41,13 +41,14 @@ class ApiError extends Error {
   }
 }
 
-async function request(path, { method = 'GET', body, signal } = {}) {
+async function request(path, { method = 'GET', body, signal, timeoutMs = TIMEOUT_MS } = {}) {
   if (!isApiEnabled) throw new ApiError('API not configured', 0)
 
   // Abort on our own timeout as well as any caller-supplied signal, so a hung
-  // request cannot leave a page spinning indefinitely.
+  // request cannot leave a page spinning indefinitely. Work that legitimately
+  // takes longer — building a catalogue PDF — passes its own timeoutMs.
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
+  const timer = setTimeout(() => controller.abort(new ApiError('This took too long. Please try again.', 0)), timeoutMs)
   if (signal) signal.addEventListener('abort', () => controller.abort(), { once: true })
 
   try {
