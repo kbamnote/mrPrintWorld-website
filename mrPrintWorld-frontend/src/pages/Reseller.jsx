@@ -225,7 +225,7 @@ function CatalogueCard({ storeName, links }) {
 
   useEffect(() => {
     apiGet('/api/reseller/catalogue')
-      .then(setState)
+      .then(({ data }) => setState(data))
       .catch(() => setState({ url: null }))
   }, [])
 
@@ -237,8 +237,9 @@ function CatalogueCard({ storeName, links }) {
     try {
       // Building it copies every product photo into the PDF, so it is given
       // far longer than an ordinary request.
-      const data = await apiSend('POST', '/api/reseller/catalogue', undefined, { timeoutMs: 120_000 })
+      const { data } = await apiSend('POST', '/api/reseller/catalogue', undefined, { timeoutMs: 120_000 })
       setState(data)
+      if (!data?.url) throw new Error('The catalogue was not ready. Please try again.')
       const message = `${storeName} — our latest price list: ${data.url}\n\nOrder online: ${links.store}`
       if (tab) tab.location.href = whatsapp(message)
       else if (share) window.location.href = whatsapp(message)
