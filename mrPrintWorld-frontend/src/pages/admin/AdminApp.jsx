@@ -12,6 +12,8 @@ import OptionGroupList from './options/OptionGroupList'
 import CustomerList from './customers/CustomerList'
 import OrganizationList from './organizations/OrganizationList'
 import OrganizationDetail from './organizations/OrganizationDetail'
+import Orders from './orders/Orders'
+import Careers from './careers/Careers'
 
 /**
  * The admin panel. Loaded as a single lazy chunk from App.jsx, so none of this
@@ -66,6 +68,8 @@ export default function AdminApp() {
           <Route path="customers" element={<CustomerList />} />
           <Route path="organizations" element={<OrganizationList />} />
           <Route path="organizations/:id" element={<OrganizationDetail />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="careers" element={<Careers />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
       </Routes>

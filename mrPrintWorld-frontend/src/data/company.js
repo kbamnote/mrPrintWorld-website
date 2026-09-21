@@ -99,7 +99,9 @@ export const navLinks = [
   { label: 'Home', to: '/' },
   { label: 'Services', to: '/services' },
   { label: 'Products', to: '/products' },
-  { label: 'Work', to: '/portfolio' },
+  // Hidden from the header for now; the /portfolio page itself still works.
+  // { label: 'Work', to: '/portfolio' },
+  { label: 'Careers', to: '/careers' },
   { label: 'About', to: '/about' },
   { label: 'Achievements', to: '/achievements' },
   { label: 'Contact', to: '/contact' },

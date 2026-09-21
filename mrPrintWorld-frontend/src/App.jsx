@@ -26,6 +26,8 @@ const Portfolio = lazy(() => import('./pages/Portfolio'))
 const About = lazy(() => import('./pages/About'))
 const Achievements = lazy(() => import('./pages/Achievements'))
 const Contact = lazy(() => import('./pages/Contact'))
+const Careers = lazy(() => import('./pages/Careers'))
+const CareerDetail = lazy(() => import('./pages/CareerDetail'))
 const Faq = lazy(() => import('./pages/Faq'))
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'))
 const Terms = lazy(() => import('./pages/Terms'))
@@ -84,6 +86,8 @@ export default function App() {
             <Route path="/about" element={<About />} />
             <Route path="/achievements" element={<Achievements />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/careers" element={<Careers />} />
+            <Route path="/careers/:slug" element={<CareerDetail />} />
             {/* Retired. This URL is indexed by Google, so it redirects rather
                 than 404s — a dead indexed page is worse than a moved one. */}
             <Route path="/request-quote" element={<Navigate to="/contact" replace />} />

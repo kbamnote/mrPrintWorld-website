@@ -5,11 +5,13 @@ import { Btn } from './ui'
 
 const NAV = [
   { to: '/admin', label: 'Dashboard', end: true },
+  { to: '/admin/orders', label: 'Orders' },
   { to: '/admin/products', label: 'Products' },
   { to: '/admin/categories', label: 'Categories' },
   { to: '/admin/options', label: 'Product Options' },
   { to: '/admin/customers', label: 'Customers' },
   { to: '/admin/organizations', label: 'Organizations' },
+  { to: '/admin/careers', label: 'Careers' },
 ]
 
 export default function AdminLayout() {

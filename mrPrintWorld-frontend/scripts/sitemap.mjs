@@ -130,6 +130,7 @@ const staticRoutes = [
   ['/products', 'weekly', '0.9'],
   ['/portfolio', 'weekly', '0.8'],
   ['/contact', 'monthly', '0.8'],
+  ['/careers', 'weekly', '0.6'],
   ['/about', 'monthly', '0.7'],
   ['/achievements', 'monthly', '0.6'],
   ['/faq', 'monthly', '0.6'],

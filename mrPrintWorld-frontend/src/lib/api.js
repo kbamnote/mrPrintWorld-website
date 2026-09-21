@@ -116,6 +116,42 @@ export function calculatePrice({ slug, quantity = 1, width, height, selections =
   }).then((r) => r.data)
 }
 
+/* ── Careers ───────────────────────────────────────────────────────────── */
+
+export function fetchJobs(opts) {
+  return request('/api/public/careers', opts).then((r) => r.data)
+}
+
+export function fetchJob(slug, opts) {
+  return request(`/api/public/careers/${encodeURIComponent(slug)}`, opts).then((r) => r.data)
+}
+
+/**
+ * Apply for a job. Sent as a form, because it can carry a resume file; the
+ * JSON request helper above cannot.
+ */
+export async function applyForJob(slug, formData) {
+  if (!isApiEnabled) throw new ApiError('API not configured', 0)
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(new ApiError('This took too long. Please try again.', 0)), 60_000)
+  try {
+    const res = await fetch(`${BASE}/api/public/careers/${encodeURIComponent(slug)}/apply`, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+    })
+    const json = await res.json().catch(() => null)
+    if (!res.ok || !json?.ok) {
+      const details = json?.error?.details
+      const message = details?.length ? details.map((d) => d.message).join(' · ') : json?.error?.message
+      throw new ApiError(message ?? `Request failed (${res.status})`, res.status)
+    }
+    return json.data
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 /** Generic helpers for endpoints that return their own shapes. */
 export function apiPost(path, body) {
   return request(path, { method: 'POST', body })

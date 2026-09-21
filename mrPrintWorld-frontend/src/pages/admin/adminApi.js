@@ -205,4 +205,51 @@ export function uploadImage(file) {
   return request('/api/admin/uploads/image', { method: 'POST', body: fd, isFormData: true }).then((r) => r.data)
 }
 
+/* ── Dashboard, orders, careers ────────────────────────────────────────── */
+
+const qs = (params) => {
+  const q = new URLSearchParams()
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== '' && v !== null) q.set(k, String(v))
+  })
+  return q.toString()
+}
+
+export const getDashboard = () => request('/api/admin/dashboard').then((r) => r.data)
+
+export const listOrders = (params = {}) =>
+  request(`/api/admin/orders?${qs(params)}`).then((r) => ({ items: r.data, meta: r.meta }))
+export const getOrder = (id) => request(`/api/admin/orders/${id}`).then((r) => r.data)
+export const setOrderStatus = (id, status, note) =>
+  request(`/api/admin/orders/${id}/status`, { method: 'PATCH', body: { status, ...(note ? { note } : {}) } }).then(
+    (r) => r.data,
+  )
+
+export const listJobs = () => request('/api/admin/careers/jobs').then((r) => r.data)
+export const createJob = (body) => request('/api/admin/careers/jobs', { method: 'POST', body }).then((r) => r.data)
+export const updateJob = (id, body) =>
+  request(`/api/admin/careers/jobs/${id}`, { method: 'PATCH', body }).then((r) => r.data)
+export const deleteJob = (id) => request(`/api/admin/careers/jobs/${id}`, { method: 'DELETE' })
+
+export const listApplications = (params = {}) =>
+  request(`/api/admin/careers/applications?${qs(params)}`).then((r) => ({ items: r.data, meta: r.meta }))
+export const updateApplication = (id, body) =>
+  request(`/api/admin/careers/applications/${id}`, { method: 'PATCH', body }).then((r) => r.data)
+export const deleteApplication = (id) => request(`/api/admin/careers/applications/${id}`, { method: 'DELETE' })
+
+/** An applicant's resume as a Blob — fetched with the admin session, never a public link. */
+export async function fetchResume(id) {
+  const path = `/api/admin/careers/applications/${id}/resume`
+  let res = await raw(path)
+  if (res.status === 401) {
+    await refresh()
+    res = await raw(path)
+  }
+  if (!res.ok) {
+    const json = await res.json().catch(() => null)
+    throw new AdminApiError(json?.error?.message ?? `Could not open the resume (${res.status})`, res.status)
+  }
+  return res.blob()
+}
+
 export { AdminApiError }
