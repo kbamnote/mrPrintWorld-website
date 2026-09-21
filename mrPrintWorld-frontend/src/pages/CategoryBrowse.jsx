@@ -8,6 +8,8 @@ import Container from '../components/primitives/Container'
 import Reveal from '../components/primitives/Reveal'
 import Button from '../components/primitives/Button'
 import Icon from '../components/primitives/Icon'
+import { sizedImage, imageSrcSet, CARD_WIDTHS, CARD_SIZES } from '../lib/cloudinaryImage'
+import { useShowMore } from '../lib/useShowMore'
 
 /**
  * Browse a category or subcategory: /products/c/signage/outdoor-signage
@@ -23,6 +25,8 @@ export default function CategoryBrowse() {
 
   const [meta, setMeta] = useState({ data: null, loading: isApiEnabled, notFound: false })
   const { items, loading: productsLoading, error: productsError } = useProducts({ category: activeSlug })
+  // A screenful of cards at a time; more are added on the way down.
+  const { count, hasMore, sentinelRef } = useShowMore(items.length, activeSlug)
 
   useEffect(() => {
     if (!isApiEnabled) return
@@ -154,16 +158,20 @@ export default function CategoryBrowse() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 md:gap-8 lg:grid-cols-3">
-              {items.map((product, idx) => (
-                <Reveal key={product.slug} delay={idx * 0.05}>
+              {items.slice(0, count).map((product, idx) => (
+                // Capped: uncapped, the 400th card waited 20 seconds to fade in.
+                <Reveal key={product.slug} delay={Math.min(idx % 24, 8) * 0.05}>
                   <div className="flex h-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-line bg-white shadow-sm transition-shadow hover:shadow-card">
                     <div className="group relative aspect-[4/3] overflow-hidden bg-gray-100">
                       {product.image?.url ? (
                         <img
                           referrerPolicy="no-referrer"
-                          src={product.image.url}
+                          src={sizedImage(product.image.url, 480)}
+                          srcSet={imageSrcSet(product.image.url, CARD_WIDTHS)}
+                          sizes={CARD_SIZES}
                           alt={product.image.alt ?? product.name}
-                          loading="lazy"
+                          loading={idx < 6 ? 'eager' : 'lazy'}
+                          decoding="async"
                           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                       ) : (
@@ -194,6 +202,7 @@ export default function CategoryBrowse() {
                   </div>
                 </Reveal>
               ))}
+              {hasMore && <div ref={sentinelRef} className="col-span-full h-4" aria-hidden="true" />}
             </div>
           )}
         </Container>

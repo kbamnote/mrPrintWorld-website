@@ -34,6 +34,8 @@ export function useProducts({ category, featured, search, enabled = true } = {})
     // Fetch EVERY page. The API caps a single page at 60; asking for one page
     // silently hid 28 of 88 products, with nothing to indicate anything was
     // missing. Bounded at 10 pages so a runaway catalogue cannot loop forever.
+    // Each page is shown as it arrives, so the first products appear after one
+    // request rather than after all of them.
     ;(async () => {
       const all = []
       for (let page = 1; page <= 10; page += 1) {
@@ -41,15 +43,12 @@ export function useProducts({ category, featured, search, enabled = true } = {})
           { category, featured, search, page, limit: 60 },
           { signal: controller.signal },
         )
+        if (cancelled) return
         all.push(...items)
+        setState({ items: [...all], loading: false, error: null })
         if (!meta || page >= meta.pages) break
       }
-      return all
-    })()
-      .then((items) => {
-        if (!cancelled) setState({ items, loading: false, error: null })
-      })
-      .catch((err) => {
+    })().catch((err) => {
         if (cancelled || err.name === 'AbortError') return
         // A category that no longer exists (renamed or removed in the admin
         // panel) is simply empty, not an outage.

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useProducts } from '../../lib/useCatalogue'
 import { isApiEnabled, fetchCategories } from '../../lib/api'
 import { useCustomerAuth } from '../../lib/customerAuthContext'
+import { sizedImage, imageSrcSet, CARD_WIDTHS, CARD_SIZES } from '../../lib/cloudinaryImage'
+import { useShowMore } from '../../lib/useShowMore'
 import Container from '../primitives/Container'
 import Reveal from '../primitives/Reveal'
 import Button from '../primitives/Button'
@@ -55,6 +57,8 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
 
   const current = path[path.length - 1] ?? null
   const { items, loading, error } = useProducts({ category: current?.slug })
+  // A screenful of cards at a time; more are added on the way down.
+  const { count, hasMore, sentinelRef } = useShowMore(items.length, current?.slug ?? 'all')
 
   // One row per level of the chosen path: the top categories, then the
   // subcategories of whichever is chosen, and so on down. Every earlier row
@@ -119,9 +123,10 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
                       <span className={circle(selected, level > 0)}>
                         {node.image?.url ? (
                           <img
-                            src={node.image.url}
+                            src={sizedImage(node.image.url, 200)}
                             alt=""
                             loading="lazy"
+                            decoding="async"
                             referrerPolicy="no-referrer"
                             className="h-full w-full object-cover"
                           />
@@ -192,16 +197,19 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
 
         <div className="grid grid-cols-2 gap-4 md:gap-8 lg:grid-cols-3">
           {!loading &&
-            items.map((product, idx) => (
+            items.slice(0, count).map((product, idx) => (
               <Reveal key={product.slug} delay={Math.min(idx, 8) * 0.05}>
                 <div className="flex h-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-line bg-white shadow-sm transition-shadow hover:shadow-card">
                   <div className="group relative aspect-[4/3] overflow-hidden bg-gray-100">
                     {product.image?.url ? (
                       <img
                         referrerPolicy="no-referrer"
-                        src={product.image.url}
+                        src={sizedImage(product.image.url, 480)}
+                        srcSet={imageSrcSet(product.image.url, CARD_WIDTHS)}
+                        sizes={CARD_SIZES}
                         alt={product.image.alt ?? product.name}
-                        loading="lazy"
+                        loading={idx < 6 ? 'eager' : 'lazy'}
+                        decoding="async"
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (
@@ -229,6 +237,7 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
                 </div>
               </Reveal>
             ))}
+          {!loading && hasMore && <div ref={sentinelRef} className="col-span-full h-4" aria-hidden="true" />}
         </div>
       </Container>
     </section>
