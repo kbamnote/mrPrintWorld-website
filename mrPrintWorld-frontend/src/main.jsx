@@ -5,6 +5,7 @@ import '@fontsource-variable/kumbh-sans'
 import './index.css'
 import App from './App.jsx'
 import { initClickTracking } from './lib/analytics'
+import { installImageProtection } from './lib/protectImages'
 
 // Dynamic Google Analytics initialization from env
 const GA_ID = import.meta.env.VITE_GA_ID
@@ -27,6 +28,9 @@ if (GA_ID && typeof window !== 'undefined') {
 // Conversion tracking for every WhatsApp / call / email CTA. Safe to call
 // unconditionally — trackEvent() no-ops to console.debug when GA isn't loaded.
 initClickTracking()
+
+// No right-click / drag / long-press saving of the site's photos (not in admin).
+installImageProtection()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
