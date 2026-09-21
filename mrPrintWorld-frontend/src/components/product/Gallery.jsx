@@ -1,5 +1,26 @@
 import { useState } from 'react'
 import Icon from '../primitives/Icon'
+import { watermarked } from '../../lib/watermark'
+
+/**
+ * A product photo with the watermark on it. Should the watermarked version
+ * ever fail to load, the plain photo is shown rather than a broken image.
+ */
+function Photo({ src, width, ...rest }) {
+  const [plain, setPlain] = useState(false)
+  return (
+    <img
+      {...rest}
+      referrerPolicy="no-referrer"
+      src={plain ? src : watermarked(src, width)}
+      onError={() => setPlain(true)}
+      // Right-click save and drag-out would still hand over the watermarked
+      // photo; blocking them just avoids inviting it.
+      onContextMenu={(e) => e.preventDefault()}
+      draggable={false}
+    />
+  )
+}
 
 /**
  * Product photographs: one large, the rest as thumbnails beneath.
@@ -15,12 +36,7 @@ export default function Gallery({ images = [], name }) {
     <div>
       <div className="flex aspect-square items-center justify-center overflow-hidden rounded-[var(--radius-lg)] border border-line bg-white shadow-sm">
         {shown?.url ? (
-          <img
-            referrerPolicy="no-referrer"
-            src={shown.url}
-            alt={shown.alt ?? name}
-            className="h-full w-full object-cover"
-          />
+          <Photo key={shown.url} src={shown.url} width={1000} alt={shown.alt ?? name} className="h-full w-full object-cover" />
         ) : (
           <Icon name="Image" size={64} className="text-gray-300" />
         )}
@@ -39,13 +55,7 @@ export default function Gallery({ images = [], name }) {
                 i === active ? 'border-primary ring-2 ring-primary/30' : 'border-line hover:border-line-strong'
               }`}
             >
-              <img
-                referrerPolicy="no-referrer"
-                src={img.url}
-                alt=""
-                loading="lazy"
-                className="h-full w-full object-cover"
-              />
+              <Photo src={img.url} width={240} alt="" loading="lazy" className="h-full w-full object-cover" />
             </button>
           ))}
         </div>
