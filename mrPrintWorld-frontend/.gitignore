@@ -27,3 +27,6 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+
+# Source videos are kept locally; the site ships compressed copies in public/.
+src/assets/*.mp4
