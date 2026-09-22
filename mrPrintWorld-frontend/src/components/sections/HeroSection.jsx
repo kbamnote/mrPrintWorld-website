@@ -54,9 +54,10 @@ export default function HeroSection() {
           onCanPlay={(e) => e.currentTarget.classList.remove('opacity-0')}
           className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-1000"
         >
-          {/* Phones get a lighter copy (4.5 MB); larger screens the visually
-              lossless one (12.6 MB). Both are made from the designer's source
-              in src/assets, which is not shipped. */}
+          {/* Larger screens get the designer's original video, unchanged (only
+              the unheard sound track removed; 40 MB, fast-start so it plays
+              while downloading). Phones get a lighter copy (4.5 MB). The
+              source file stays in src/assets and is not shipped. */}
           <source src="/hero-mobile.mp4" type="video/mp4" media="(max-width: 767px)" />
           <source src="/hero.mp4" type="video/mp4" />
         </video>
