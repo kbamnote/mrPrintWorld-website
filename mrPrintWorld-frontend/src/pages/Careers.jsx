@@ -56,11 +56,13 @@ export default function Careers() {
 
   return (
     <>
+      {/* 
       <PageHeader
         eyebrow="Careers"
         title="Build your career in print"
         intro="We are growing, and looking for people who take pride in good work — from the design desk to the press to the customer's door."
       />
+      */}
 
       <section className="section-y bg-surface">
         <Container>
