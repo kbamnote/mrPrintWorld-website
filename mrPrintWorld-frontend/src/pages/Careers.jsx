@@ -64,6 +64,7 @@ export default function Careers() {
 
       <section className="section-y bg-surface">
         <Container>
+          {/* 
           <div className="mb-12 grid gap-4 md:grid-cols-3">
             {PERKS.map((perk, i) => (
               <Reveal key={perk.title} delay={i * 0.05}>
@@ -77,6 +78,7 @@ export default function Careers() {
               </Reveal>
             ))}
           </div>
+          */}
 
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
