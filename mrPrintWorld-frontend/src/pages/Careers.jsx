@@ -71,7 +71,7 @@ export default function Careers() {
       />
       */}
 
-      <section className="section-y bg-surface">
+      <section className="pb-16 pt-8 md:pt-10 bg-surface min-h-screen">
         <Container>
           {/* 
           <div className="mb-12 grid gap-4 md:grid-cols-3">

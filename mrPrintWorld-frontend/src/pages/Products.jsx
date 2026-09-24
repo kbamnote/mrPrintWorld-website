@@ -17,11 +17,13 @@ export default function Products() {
 
   return (
     <>
+      {/* 
       <PageHeader
         eyebrow="Our Products"
         title="Quality products, built to your specification."
         description="Browse our comprehensive range of printing products designed to meet your specific needs."
       />
+      */}
       <Catalogue />
     </>
   )

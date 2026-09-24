@@ -82,7 +82,7 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
     `text-xs leading-snug sm:text-sm ${selected ? 'font-semibold text-primary' : 'font-medium text-ink'}`
 
   return (
-    <section className="section-y bg-surface">
+    <section className="pb-16 pt-8 md:pt-10 bg-surface min-h-screen">
       <Container>
         {rows.map((row, level) => (
           <div
