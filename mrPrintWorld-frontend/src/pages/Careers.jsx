@@ -21,6 +21,11 @@ const PERKS = [
 export default function Careers() {
   const [state, setState] = useState({ loading: true, error: null, jobs: [] })
   const [department, setDepartment] = useState('all')
+  const [jobMode, setJobMode] = useState('regular')
+
+  useEffect(() => {
+    setDepartment('all')
+  }, [jobMode])
 
   useSeo({
     title: 'Careers at MRPrint World | Printing Jobs in Nagpur',
@@ -46,8 +51,10 @@ export default function Careers() {
   const internships = useMemo(() => state.jobs.filter((j) => j.type === 'Internship'), [state.jobs])
   const regularJobs = useMemo(() => state.jobs.filter((j) => j.type !== 'Internship'), [state.jobs])
 
-  const departments = useMemo(() => [...new Set(regularJobs.map((j) => j.department))].sort(), [regularJobs])
-  const shown = department === 'all' ? regularJobs : regularJobs.filter((j) => j.department === department)
+  const activeJobs = jobMode === 'regular' ? regularJobs : internships
+
+  const departments = useMemo(() => [...new Set(activeJobs.map((j) => j.department))].sort(), [activeJobs])
+  const shown = department === 'all' ? activeJobs : activeJobs.filter((j) => j.department === department)
 
   const chip = (active) =>
     `rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
@@ -82,9 +89,34 @@ export default function Careers() {
           </div>
           */}
 
+          <div className="mb-10 flex justify-center">
+            <div className="inline-flex rounded-full border border-line bg-white p-1 shadow-sm">
+              <button
+                type="button"
+                className={`rounded-full px-6 py-2.5 text-sm font-semibold transition-colors ${
+                  jobMode === 'regular' ? 'bg-primary text-white' : 'text-ink-soft hover:text-ink'
+                }`}
+                onClick={() => setJobMode('regular')}
+              >
+                Full-time Opportunities
+              </button>
+              <button
+                type="button"
+                className={`rounded-full px-6 py-2.5 text-sm font-semibold transition-colors ${
+                  jobMode === 'internship' ? 'bg-primary text-white' : 'text-ink-soft hover:text-ink'
+                }`}
+                onClick={() => setJobMode('internship')}
+              >
+                Internships
+              </button>
+            </div>
+          </div>
+
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h2 className="font-display text-2xl font-bold text-ink md:text-3xl">Open positions</h2>
+              <h2 className="font-display text-2xl font-bold text-ink md:text-3xl">
+                {jobMode === 'regular' ? 'Open positions' : 'Open internships'}
+              </h2>
               {!state.loading && !state.error && (
                 <p className="mt-1 text-sm text-ink-soft">
                   {shown.length} opening{shown.length === 1 ? '' : 's'}
@@ -163,43 +195,6 @@ export default function Careers() {
               </Reveal>
             ))}
           </div>
-
-          {internships.length > 0 && (
-            <div className="mt-16">
-              <h2 className="mb-6 font-display text-2xl font-bold text-ink md:text-3xl">Internships</h2>
-              <div className="grid gap-4 md:grid-cols-2">
-                {internships.map((job, i) => (
-                  <Reveal key={job.slug} delay={Math.min(i, 8) * 0.04}>
-                    <Link
-                      to={`/careers/${job.slug}`}
-                      className="group flex h-full flex-col rounded-[var(--radius-lg)] border border-line bg-white p-6 shadow-sm transition-shadow hover:shadow-card"
-                    >
-                      <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary">{job.department}</div>
-                      <h3 className="mb-2 text-lg font-bold text-ink group-hover:text-primary">{job.title}</h3>
-                      {job.summary && <p className="mb-4 line-clamp-2 text-sm text-ink-soft">{job.summary}</p>}
-                      <div className="mt-auto flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-soft">
-                        <span className="inline-flex items-center gap-1.5">
-                          <Icon name="map-pin" size={15} /> {job.location}
-                        </span>
-                        <span className="inline-flex items-center gap-1.5">
-                          <Icon name="briefcase" size={15} /> {job.type}
-                        </span>
-                        {job.experience && (
-                          <span className="inline-flex items-center gap-1.5">
-                            <Icon name="clock" size={15} /> {job.experience}
-                          </span>
-                        )}
-                      </div>
-                      {job.salary && <div className="mt-3 text-sm font-semibold text-ink">{job.salary}</div>}
-                      <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary">
-                        View &amp; apply <Icon name="arrow-right" size={16} />
-                      </span>
-                    </Link>
-                  </Reveal>
-                ))}
-              </div>
-            </div>
-          )}
         </Container>
       </section>
     </>
