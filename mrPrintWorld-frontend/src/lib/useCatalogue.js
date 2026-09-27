@@ -31,22 +31,34 @@ export function useProducts({ category, featured, search, enabled = true } = {})
 
     setState((s) => ({ ...s, loading: true, error: null }))
 
-    // Fetch EVERY page. The API caps a single page at 60; asking for one page
-    // silently hid 28 of 88 products, with nothing to indicate anything was
-    // missing. Bounded at 10 pages so a runaway catalogue cannot loop forever.
-    // Each page is shown as it arrives, so the first products appear after one
-    // request rather than after all of them.
+    // Fetch EVERY page. Asking for one page silently hid 28 of 88 products;
+    // stopping after ten pages of sixty later hid 292 of 892, and the page
+    // said "600 products" as if that were all of them. The only bound now is
+    // a guard against a runaway loop.
+    //
+    // The first page is shown as soon as it arrives; the rest follow four
+    // requests at a time, appended in order.
     ;(async () => {
-      const all = []
-      for (let page = 1; page <= 10; page += 1) {
-        const { items, meta } = await fetchProducts(
-          { category, featured, search, page, limit: 60 },
-          { signal: controller.signal },
+      const PER_PAGE = 100 // the API's maximum
+      const MAX_PAGES = 60 // 6,000 products — a guard, not a catalogue limit
+      const AT_A_TIME = 4
+
+      const get = (page) =>
+        fetchProducts({ category, featured, search, page, limit: PER_PAGE }, { signal: controller.signal })
+
+      const first = await get(1)
+      if (cancelled) return
+      const all = [...first.items]
+      setState({ items: [...all], loading: false, error: null })
+
+      const pages = Math.min(first.meta?.pages ?? 1, MAX_PAGES)
+      for (let page = 2; page <= pages; page += AT_A_TIME) {
+        const batch = await Promise.all(
+          Array.from({ length: Math.min(AT_A_TIME, pages - page + 1) }, (_, i) => get(page + i)),
         )
         if (cancelled) return
-        all.push(...items)
+        for (const result of batch) all.push(...result.items)
         setState({ items: [...all], loading: false, error: null })
-        if (!meta || page >= meta.pages) break
       }
     })().catch((err) => {
         if (cancelled || err.name === 'AbortError') return
