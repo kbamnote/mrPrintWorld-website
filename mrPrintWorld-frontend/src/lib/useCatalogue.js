@@ -10,6 +10,9 @@ import { isApiEnabled, fetchProducts, fetchProduct } from './api'
  * pages say so and offer a refresh instead of quietly showing stale data.
  */
 
+/** Page size, shared across hooks: dropped to 60 if this API is an older one. */
+let pageSize = 100
+
 /**
  * @param {object} params  { category, featured, search, enabled }
  *   `enabled: false` skips the request entirely (a page with nothing to ask for).
@@ -39,12 +42,22 @@ export function useProducts({ category, featured, search, enabled = true } = {})
     // The first page is shown as soon as it arrives; the rest follow four
     // requests at a time, appended in order.
     ;(async () => {
-      const PER_PAGE = 100 // the API's maximum
       const MAX_PAGES = 60 // 6,000 products — a guard, not a catalogue limit
       const AT_A_TIME = 4
 
-      const get = (page) =>
-        fetchProducts({ category, featured, search, page, limit: PER_PAGE }, { signal: controller.signal })
+      // 100 per page is the API's maximum — but an API deployed before that
+      // was raised refuses it (422), which would leave the page showing
+      // "Couldn't load products". So the first rejection drops to 60 for the
+      // rest of the session, and the catalogue still loads in full.
+      const get = async (page) => {
+        try {
+          return await fetchProducts({ category, featured, search, page, limit: pageSize }, { signal: controller.signal })
+        } catch (err) {
+          if (err.status !== 422 || pageSize === 60) throw err
+          pageSize = 60
+          return fetchProducts({ category, featured, search, page, limit: pageSize }, { signal: controller.signal })
+        }
+      }
 
       const first = await get(1)
       if (cancelled) return
