@@ -63,6 +63,9 @@ function Applications() {
   const [params, setParams] = useSearchParams()
   const status = params.get('status') ?? ''
   const job = params.get('job') ?? ''
+  // JOB — applied for a listed job; VIDARBHA — applied from a district card.
+  const source = params.get('source') ?? ''
+  const city = params.get('city') ?? ''
   const search = params.get('search') ?? ''
   const [typed, setTyped] = useState(search)
   const [jobs, setJobs] = useState([])
@@ -79,10 +82,10 @@ function Applications() {
   // The current list stays on screen until the new one arrives.
   const load = useCallback(() => {
     api
-      .listApplications({ status, job, search, limit: 100 })
+      .listApplications({ status, job, source, city, search, limit: 100 })
       .then(({ items, meta }) => setState({ loading: false, error: null, items, meta }))
       .catch((error) => setState({ loading: false, error, items: [], meta: null }))
-  }, [status, job, search])
+  }, [status, job, source, city, search])
 
   useEffect(load, [load])
   useEffect(() => {
@@ -107,6 +110,23 @@ function Applications() {
             {s.label} {state.meta ? `(${counts[key] ?? 0})` : ''}
           </button>
         ))}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {[
+          { id: '', label: 'Everything' },
+          { id: 'JOB', label: 'Job applications' },
+          { id: 'VIDARBHA', label: 'Vidarbha hiring' },
+        ].map((s) => (
+          <button key={s.id || 'all'} type="button" className={chip(source === s.id)} onClick={() => set('source', s.id)}>
+            {s.label}
+          </button>
+        ))}
+        {city && (
+          <button type="button" className={chip(true)} onClick={() => set('city', '')} title="Clear district">
+            {city} ×
+          </button>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2">

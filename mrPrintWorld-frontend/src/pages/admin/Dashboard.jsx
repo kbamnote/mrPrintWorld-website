@@ -89,7 +89,21 @@ export default function Dashboard() {
               attention={d.careers.newApplications > 0}
             />
             <Stat label="All applications" value={d.careers.applications} to="/admin/careers" />
+            <Stat
+              label="Vidarbha hiring"
+              hint="Applied from a district card"
+              value={d.careers.vidarbhaApplications ?? 0}
+              to="/admin/careers?source=VIDARBHA"
+            />
             <Stat label="Open jobs" hint="Shown on the website" value={d.careers.openJobs} to="/admin/careers?tab=jobs" />
+            <Stat
+              label="New partner enquiries"
+              hint="Channel partners, not yet contacted"
+              value={d.partners?.newEnquiries ?? 0}
+              to="/admin/careers?tab=partners&status=NEW"
+              attention={(d.partners?.newEnquiries ?? 0) > 0}
+            />
+            <Stat label="All partner enquiries" value={d.partners?.total ?? 0} to="/admin/careers?tab=partners" />
           </Section>
 
           <Section title="Catalogue" link={{ to: '/admin/categories', label: 'Categories & products' }}>

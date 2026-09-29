@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchJobs } from '../lib/api'
 import { useSeo, breadcrumbLd } from '../lib/seo'
-import PageHeader from '../components/layout/PageHeader'
+// Kept for the page header and "why work here" block, both commented out below.
+// import PageHeader from '../components/layout/PageHeader'
 import Container from '../components/primitives/Container'
 import Reveal from '../components/primitives/Reveal'
 import Button from '../components/primitives/Button'
@@ -20,6 +21,7 @@ const MODES = [
 /** The two that show the job list; the others render their own panel. */
 const LISTS_JOBS = ['regular', 'internship']
 
+/* eslint-disable-next-line no-unused-vars -- used by the commented-out block below. */
 const PERKS = [
   { icon: 'printing', title: 'Real print work', text: 'Offset, digital, large format and finishing under one roof — you see every job from design to delivery.' },
   { icon: 'trending-up', title: 'Room to grow', text: 'Learn new machines and skills on the job. Many of our supervisors started on the shop floor.' },
