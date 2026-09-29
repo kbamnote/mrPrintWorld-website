@@ -237,6 +237,12 @@ export const updateApplication = (id, body) =>
   request(`/api/admin/careers/applications/${id}`, { method: 'PATCH', body }).then((r) => r.data)
 export const deleteApplication = (id) => request(`/api/admin/careers/applications/${id}`, { method: 'DELETE' })
 
+export const listPartners = (params = {}) =>
+  request(`/api/admin/careers/partners?${qs(params)}`).then((r) => ({ items: r.data, meta: r.meta }))
+export const updatePartner = (id, body) =>
+  request(`/api/admin/careers/partners/${id}`, { method: 'PATCH', body }).then((r) => r.data)
+export const deletePartner = (id) => request(`/api/admin/careers/partners/${id}`, { method: 'DELETE' })
+
 /** An applicant's resume as a Blob — fetched with the admin session, never a public link. */
 export async function fetchResume(id) {
   const path = `/api/admin/careers/applications/${id}/resume`

@@ -130,16 +130,17 @@ export function fetchJob(slug, opts) {
  * Apply for a job. Sent as a form, because it can carry a resume file; the
  * JSON request helper above cannot.
  */
-export async function applyForJob(slug, formData) {
+export function applyForJob(slug, formData) {
+  return sendForm(`/api/public/careers/${encodeURIComponent(slug)}/apply`, formData)
+}
+
+/** POST a form — used where a request can carry a resume file. */
+async function sendForm(path, formData) {
   if (!isApiEnabled) throw new ApiError('API not configured', 0)
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(new ApiError('This took too long. Please try again.', 0)), 60_000)
   try {
-    const res = await fetch(`${BASE}/api/public/careers/${encodeURIComponent(slug)}/apply`, {
-      method: 'POST',
-      body: formData,
-      signal: controller.signal,
-    })
+    const res = await fetch(`${BASE}${path}`, { method: 'POST', body: formData, signal: controller.signal })
     const json = await res.json().catch(() => null)
     if (!res.ok || !json?.ok) {
       const details = json?.error?.details
@@ -150,6 +151,16 @@ export async function applyForJob(slug, formData) {
   } finally {
     clearTimeout(timer)
   }
+}
+
+/** Apply for work in a Vidarbha district, where no job need be listed. */
+export function applyVidarbha(city, formData) {
+  return sendForm(`/api/public/careers/vidarbha/${encodeURIComponent(city)}/apply`, formData)
+}
+
+/** A business asking to become a channel partner. */
+export function submitChannelPartner(body) {
+  return request('/api/public/careers/channel-partners', { method: 'POST', body }).then((r) => r.data)
 }
 
 /** Generic helpers for endpoints that return their own shapes. */

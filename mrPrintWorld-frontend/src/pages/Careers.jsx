@@ -7,6 +7,18 @@ import Container from '../components/primitives/Container'
 import Reveal from '../components/primitives/Reveal'
 import Button from '../components/primitives/Button'
 import Icon from '../components/primitives/Icon'
+import VidarbhaHiring from '../components/careers/VidarbhaHiring'
+import ChannelPartnerForm from '../components/careers/ChannelPartnerForm'
+
+/** The four things the Careers page offers. */
+const MODES = [
+  { id: 'regular', label: 'Full-time Opportunities' },
+  { id: 'internship', label: 'Internships' },
+  { id: 'vidarbha', label: 'Vidarbha Hiring' },
+  { id: 'partner', label: 'Channel Partner' },
+]
+/** The two that show the job list; the others render their own panel. */
+const LISTS_JOBS = ['regular', 'internship']
 
 const PERKS = [
   { icon: 'printing', title: 'Real print work', text: 'Offset, digital, large format and finishing under one roof — you see every job from design to delivery.' },
@@ -90,28 +102,27 @@ export default function Careers() {
           */}
 
           <div className="mb-10 flex justify-center">
-            <div className="inline-flex rounded-full border border-line bg-white p-1 shadow-sm">
-              <button
-                type="button"
-                className={`rounded-full px-6 py-2.5 text-sm font-semibold transition-colors ${
-                  jobMode === 'regular' ? 'bg-primary text-white' : 'text-ink-soft hover:text-ink'
-                }`}
-                onClick={() => setJobMode('regular')}
-              >
-                Full-time Opportunities
-              </button>
-              <button
-                type="button"
-                className={`rounded-full px-6 py-2.5 text-sm font-semibold transition-colors ${
-                  jobMode === 'internship' ? 'bg-primary text-white' : 'text-ink-soft hover:text-ink'
-                }`}
-                onClick={() => setJobMode('internship')}
-              >
-                Internships
-              </button>
+            <div className="inline-flex max-w-full flex-wrap justify-center rounded-[2rem] border border-line bg-white p-1 shadow-sm">
+              {MODES.map((mode) => (
+                <button
+                  key={mode.id}
+                  type="button"
+                  className={`rounded-full px-5 py-2.5 text-sm font-semibold transition-colors ${
+                    jobMode === mode.id ? 'bg-primary text-white' : 'text-ink-soft hover:text-ink'
+                  }`}
+                  onClick={() => setJobMode(mode.id)}
+                >
+                  {mode.label}
+                </button>
+              ))}
             </div>
           </div>
 
+          {jobMode === 'vidarbha' && <VidarbhaHiring />}
+          {jobMode === 'partner' && <ChannelPartnerForm />}
+
+          {LISTS_JOBS.includes(jobMode) && (
+            <>
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
               <h2 className="font-display text-2xl font-bold text-ink md:text-3xl">
@@ -195,6 +206,8 @@ export default function Careers() {
               </Reveal>
             ))}
           </div>
+            </>
+          )}
         </Container>
       </section>
     </>

@@ -20,11 +20,12 @@ const when = (d) => (d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric
  */
 export default function Careers() {
   const [params, setParams] = useSearchParams()
-  const tab = params.get('tab') === 'jobs' ? 'jobs' : 'applications'
+  const asked = params.get('tab')
+  const tab = ['jobs', 'partners'].includes(asked) ? asked : 'applications'
 
   const setTab = (next) => {
     const p = new URLSearchParams()
-    if (next === 'jobs') p.set('tab', 'jobs')
+    if (next !== 'applications') p.set('tab', next)
     setParams(p)
   }
   const tabClass = (active) =>
@@ -45,8 +46,13 @@ export default function Careers() {
         <button type="button" className={tabClass(tab === 'jobs')} onClick={() => setTab('jobs')}>
           Jobs
         </button>
+        <button type="button" className={tabClass(tab === 'partners')} onClick={() => setTab('partners')}>
+          Channel partners
+        </button>
       </div>
-      {tab === 'jobs' ? <Jobs /> : <Applications />}
+      {tab === 'jobs' && <Jobs />}
+      {tab === 'partners' && <Partners />}
+      {tab === 'applications' && <Applications />}
     </div>
   )
 }
