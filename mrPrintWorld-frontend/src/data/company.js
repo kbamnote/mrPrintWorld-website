@@ -96,7 +96,7 @@ export const headlineStats = [
 ]
 
 export const navLinks = [
-  { label: 'Home', to: '/' },
+  // { label: 'Home', to: '/' },
   { label: 'Services', to: '/services' },
   { label: 'Products', to: '/products' },
   { label: 'IT Solutions', to: '/it-solutions', isDropdown: true },
