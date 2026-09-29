@@ -76,7 +76,7 @@ export default function Navbar() {
                 </NavLink>
 
                 {l.isDropdown && (
-                  <div className="absolute left-1/2 top-full -translate-x-1/2 pt-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-50 w-80">
+                  <div className="absolute left-1/2 top-full -translate-x-1/2 pt-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-50 w-96">
                     <div className="rounded-2xl border border-line bg-white p-4 shadow-xl text-left">
                       <div className="mb-2 flex items-center justify-between">
                         <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[0.7rem] font-bold uppercase text-primary">
@@ -85,11 +85,21 @@ export default function Navbar() {
                         <span className="text-[0.75rem] font-semibold text-ink-soft">Tapify</span>
                       </div>
                       <h4 className="font-display text-base font-bold text-ink">
-                        Tapify — Smart NFC Cards
+                        Tapify — Smart NFC &amp; Digital Platform
                       </h4>
                       <p className="mt-1 text-xs text-ink-soft leading-relaxed">
-                        Smart NFC digital business cards, tap-to-share contact profiles, Google review collection cards &amp; digital IT branding.
+                        NFC Cards, Standees &amp; Keychains, AI Google Review Cards, E-Commerce, Meta Ads, GMB &amp; Social Posting.
                       </p>
+
+                      <div className="mt-3 grid grid-cols-2 gap-1.5 text-[0.725rem] font-medium text-ink bg-surface/70 p-2.5 rounded-xl border border-line">
+                        <span className="flex items-center gap-1.5"><Icon name="credit-card" size={13} className="text-primary" /> NFC Cards</span>
+                        <span className="flex items-center gap-1.5"><Icon name="layout" size={13} className="text-primary" /> NFC Standees</span>
+                        <span className="flex items-center gap-1.5"><Icon name="key" size={13} className="text-primary" /> NFC Keychains</span>
+                        <span className="flex items-center gap-1.5"><Icon name="star" size={13} className="text-primary" /> AI Review Cards</span>
+                        <span className="flex items-center gap-1.5"><Icon name="globe" size={13} className="text-primary" /> Web &amp; E-Commerce</span>
+                        <span className="flex items-center gap-1.5"><Icon name="target" size={13} className="text-primary" /> Meta Ads &amp; GMB</span>
+                      </div>
+
                       <div className="mt-3 flex flex-col gap-2 pt-2 border-t border-line">
                         <a
                           href="https://tapify.co.in"
@@ -104,7 +114,7 @@ export default function Navbar() {
                           to="/it-solutions"
                           className="text-center text-xs font-semibold text-ink-soft hover:text-primary py-1"
                         >
-                          Learn More About IT Solutions &rarr;
+                          Explore All IT Solutions &rarr;
                         </Link>
                       </div>
                     </div>
@@ -208,15 +218,17 @@ export default function Navbar() {
                     {l.label}
                   </NavLink>
                   {l.isDropdown && (
-                    <div className="mt-2 rounded-xl border border-line bg-surface/70 p-3">
-                      <p className="text-xs font-bold text-primary">Tapify — Smart NFC Business Cards</p>
-                      <p className="mt-0.5 text-xs text-ink-soft">Next-gen digital profiles &amp; IT branding solutions.</p>
+                    <div className="mt-2 rounded-xl border border-line bg-surface/70 p-3.5 space-y-2">
+                      <p className="text-xs font-bold text-primary">Tapify — Smart NFC &amp; Digital Growth</p>
+                      <p className="text-xs text-ink-soft leading-relaxed">
+                        NFC Cards, Standees, Keychains, AI Google Review Cards, E-Commerce &amp; Meta Ads Management.
+                      </p>
                       <a
                         href="https://tapify.co.in"
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={() => setOpen(false)}
-                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-primary underline"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-primary underline pt-1"
                       >
                         Visit tapify.co.in <Icon name="external-link" size={12} />
                       </a>
