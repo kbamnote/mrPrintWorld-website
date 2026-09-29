@@ -71,13 +71,15 @@ export default function ItSolutions() {
 
   return (
     <>
+      {/* 
       <PageHeader
         eyebrow="IT Solutions by Tapify"
         title="Digital Innovation Meets Physical Print"
         intro="Smart NFC Hardware, Professional Web Development, and All-in-One Digital Growth Tools for Modern Businesses."
       />
+      */}
 
-      <section className="section-y bg-surface">
+      <section className="pb-16 pt-8 md:pt-10 bg-surface min-h-screen">
         <Container>
           {/* Main Tapify Hero Banner */}
           <div className="overflow-hidden rounded-[2.5rem] border border-line bg-white shadow-card">
