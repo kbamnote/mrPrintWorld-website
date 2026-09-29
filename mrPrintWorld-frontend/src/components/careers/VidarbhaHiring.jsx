@@ -129,32 +129,108 @@ function CityForm({ city, onClose }) {
 
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className={labelClass} htmlFor="vid-name">Full name *</label>
-          <input id="vid-name" name="name" required minLength={2} maxLength={100} className={field} autoComplete="name" />
+          <label className={labelClass} htmlFor="vid-name">Full Name *</label>
+          <input id="vid-name" name="name" required minLength={2} maxLength={100} className={field} autoComplete="name" placeholder="Enter your full name" />
         </div>
         <div>
-          <label className={labelClass} htmlFor="vid-phone">Phone *</label>
-          <input id="vid-phone" name="phone" type="tel" required maxLength={18} className={field} autoComplete="tel" placeholder="+91" />
+          <label className={labelClass} htmlFor="vid-phone">Phone Number *</label>
+          <input id="vid-phone" name="phone" type="tel" required maxLength={18} className={field} autoComplete="tel" placeholder="+91 98765 43210" />
         </div>
         <div>
-          <label className={labelClass} htmlFor="vid-email">Email *</label>
-          <input id="vid-email" name="email" type="email" required maxLength={160} className={field} autoComplete="email" />
+          <label className={labelClass} htmlFor="vid-email">Email Address *</label>
+          <input id="vid-email" name="email" type="email" required maxLength={160} className={field} autoComplete="email" placeholder="name@example.com" />
         </div>
         <div>
-          <label className={labelClass} htmlFor="vid-role">Work you are looking for</label>
-          <input id="vid-role" name="role" maxLength={120} className={field} placeholder="e.g. Machine operator, Sales" />
+          <label className={labelClass} htmlFor="vid-district">District *</label>
+          <input id="vid-district" name="city" value={city} readOnly className={`${field} bg-gray-50 font-medium`} />
         </div>
         <div>
-          <label className={labelClass} htmlFor="vid-experience">Experience</label>
-          <input id="vid-experience" name="experience" maxLength={60} className={field} placeholder="e.g. 3 years" />
+          <label className={labelClass} htmlFor="vid-taluka">City / Taluka *</label>
+          <input id="vid-taluka" name="taluka" required maxLength={80} className={field} placeholder="e.g. Hingna, Umred" />
         </div>
         <div>
-          <label className={labelClass} htmlFor="vid-expected">Expected salary</label>
-          <input id="vid-expected" name="expectedSalary" maxLength={60} className={field} placeholder="per month" />
+          <label className={labelClass} htmlFor="vid-age">Age</label>
+          <input id="vid-age" name="age" type="number" min={18} max={70} className={field} placeholder="e.g. 25" />
         </div>
-        <div className="md:col-span-2">
+        <div>
+          <label className={labelClass} htmlFor="vid-occ">Current Occupation</label>
+          <input id="vid-occ" name="currentOccupation" maxLength={120} className={field} placeholder="e.g. Sales Executive, Business" />
+        </div>
+        <div>
+          <label className={labelClass} htmlFor="vid-salesexp">Sales Experience</label>
+          <select id="vid-salesexp" name="salesExperience" className={field} defaultValue="">
+            <option value="">Select Experience</option>
+            <option value="Fresher">Fresher (0 Years)</option>
+            <option value="1-2 Years">1 - 2 Years</option>
+            <option value="3-5 Years">3 - 5 Years</option>
+            <option value="5+ Years">5+ Years</option>
+          </select>
+        </div>
+        <div>
+          <label className={labelClass} htmlFor="vid-prevind">Previous Industry</label>
+          <input id="vid-prevind" name="previousIndustry" maxLength={120} className={field} placeholder="e.g. Printing, FMCG, Telecom" />
+        </div>
+        <div>
+          <label className={labelClass} htmlFor="vid-currsal">Current / Last Salary</label>
+          <input id="vid-currsal" name="currentSalary" maxLength={60} className={field} placeholder="e.g. ₹15,000 / month" />
+        </div>
+        <div>
+          <label className={labelClass} htmlFor="vid-expected">Expected Salary</label>
+          <input id="vid-expected" name="expectedSalary" maxLength={60} className={field} placeholder="e.g. ₹20,000 / month" />
+        </div>
+
+        {/* Requirements & Checklist (Yes/No) */}
+        <div className="md:col-span-2 mt-2 pt-4 border-t border-line">
+          <h4 className="font-bold text-sm text-ink mb-3">Work Requirements &amp; Assets</h4>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <label className={labelClass} htmlFor="vid-bike">Two-wheeler?</label>
+              <select id="vid-bike" name="hasTwoWheeler" className={field} defaultValue="Yes">
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="vid-android">Android Phone?</label>
+              <select id="vid-android" name="hasAndroidPhone" className={field} defaultValue="Yes">
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="vid-laptop">Laptop?</label>
+              <select id="vid-laptop" name="hasLaptop" className={field} defaultValue="No">
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="vid-field">Full-time Field Work?</label>
+              <select id="vid-field" name="fullTimeFieldWork" className={field} defaultValue="Yes">
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="vid-team">Team Handling Exp.?</label>
+              <select id="vid-team" name="teamHandlingExp" className={field} defaultValue="No">
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="vid-join">Immediate Joining?</label>
+              <select id="vid-join" name="immediateJoining" className={field} defaultValue="Yes">
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="md:col-span-2 pt-2">
           <label className={labelClass} htmlFor="vid-resume">
-            Resume <span className="font-normal text-ink-soft">(PDF or Word, up to 5 MB)</span>
+            CV / Resume Upload <span className="font-normal text-ink-soft">(PDF or Word, up to 5 MB)</span>
           </label>
           <input
             ref={fileRef}
@@ -168,8 +244,8 @@ function CityForm({ city, onClose }) {
           {fileError && <p className="mt-1 text-sm text-red-700">{fileError}</p>}
         </div>
         <div className="md:col-span-2">
-          <label className={labelClass} htmlFor="vid-message">Anything you would like to tell us</label>
-          <textarea id="vid-message" name="message" rows={3} maxLength={2000} className={field} />
+          <label className={labelClass} htmlFor="vid-message">Additional Notes / Message</label>
+          <textarea id="vid-message" name="message" rows={3} maxLength={2000} className={field} placeholder="Tell us anything else about your experience..." />
         </div>
       </div>
 

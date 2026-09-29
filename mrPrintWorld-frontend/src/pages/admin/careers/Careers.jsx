@@ -289,14 +289,24 @@ function ApplicationDetail({ application: a, onClose, onChanged }) {
 
       <dl className="rounded-[var(--radius-lg)] border border-line bg-white px-4 py-2">
         {row('Email', a.email)}
-        {row('City', a.city)}
-        {row('Experience', a.experience)}
+        {row('District', a.city)}
+        {row('City / Taluka', a.taluka)}
+        {row('Age', a.age)}
+        {row('Current Occupation', a.currentOccupation)}
+        {row('Sales Experience', a.salesExperience || a.experience)}
+        {row('Previous Industry', a.previousIndustry)}
         {row('Current salary', a.currentSalary)}
         {row('Expected salary', a.expectedSalary)}
+        {row('Two-wheeler', a.hasTwoWheeler)}
+        {row('Android Phone', a.hasAndroidPhone)}
+        {row('Laptop', a.hasLaptop)}
+        {row('Full-time field work', a.fullTimeFieldWork)}
+        {row('Team handling exp.', a.teamHandlingExp)}
+        {row('Immediate joining', a.immediateJoining)}
         {row('Resume', a.resume?.file ? `${a.resume.name} (${Math.max(1, Math.round((a.resume.size ?? 0) / 1024))} KB)` : 'Not uploaded')}
         {a.message && (
           <div className="py-1.5 text-sm">
-            <dt className="mb-1 text-ink-soft">Message</dt>
+            <dt className="mb-1 text-ink-soft">Message / Notes</dt>
             <dd className="whitespace-pre-line text-ink">{a.message}</dd>
           </div>
         )}
