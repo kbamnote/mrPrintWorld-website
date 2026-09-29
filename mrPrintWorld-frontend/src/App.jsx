@@ -24,6 +24,7 @@ const ProductDetail = lazy(() => import('./pages/ProductDetail'))
 const CategoryBrowse = lazy(() => import('./pages/CategoryBrowse'))
 const Portfolio = lazy(() => import('./pages/Portfolio'))
 const About = lazy(() => import('./pages/About'))
+const ItSolutions = lazy(() => import('./pages/ItSolutions'))
 const Achievements = lazy(() => import('./pages/Achievements'))
 const Contact = lazy(() => import('./pages/Contact'))
 const Careers = lazy(() => import('./pages/Careers'))
@@ -84,6 +85,7 @@ export default function App() {
 
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/about" element={<About />} />
+            <Route path="/it-solutions" element={<ItSolutions />} />
             <Route path="/achievements" element={<Achievements />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/careers" element={<Careers />} />

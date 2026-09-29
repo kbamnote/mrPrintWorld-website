@@ -99,8 +99,7 @@ export const navLinks = [
   { label: 'Home', to: '/' },
   { label: 'Services', to: '/services' },
   { label: 'Products', to: '/products' },
-  // Hidden from the header for now; the /portfolio page itself still works.
-  // { label: 'Work', to: '/portfolio' },
+  { label: 'IT Solutions', to: '/it-solutions', isDropdown: true },
   { label: 'Careers', to: '/careers' },
   { label: 'About', to: '/about' },
   { label: 'Achievements', to: '/achievements' },

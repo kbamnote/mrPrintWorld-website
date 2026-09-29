@@ -535,3 +535,249 @@ function JobForm({ job, onClose, onSaved }) {
     </form>
   )
 }
+
+/* ── Channel Partners ─────────────────────────────────────────────────── */
+
+const PARTNER_STATUSES = {
+  NEW: { label: 'New', tone: 'amber' },
+  CONTACTED: { label: 'Contacted', tone: 'blue' },
+  APPROVED: { label: 'Approved', tone: 'green' },
+  REJECTED: { label: 'Rejected', tone: 'red' },
+}
+
+function Partners() {
+  const [params, setParams] = useSearchParams()
+  const status = params.get('status') ?? ''
+  const search = params.get('search') ?? ''
+  const [typed, setTyped] = useState(search)
+  const [state, setState] = useState({ loading: true, error: null, items: [], meta: null })
+  const [openId, setOpenId] = useState(null)
+
+  const set = (key, value) => {
+    const next = new URLSearchParams(params)
+    if (value) next.set(key, value)
+    else next.delete(key)
+    setParams(next)
+  }
+
+  const load = useCallback(() => {
+    api
+      .listPartners({ status, search, limit: 100 })
+      .then(({ items, meta }) => setState({ loading: false, error: null, items, meta }))
+      .catch((error) => setState({ loading: false, error, items: [], meta: null }))
+  }, [status, search])
+
+  useEffect(load, [load])
+
+  const counts = state.meta?.counts ?? {}
+  const all = Object.values(counts).reduce((a, b) => a + b, 0)
+  const chip = (active) =>
+    `rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+      active ? 'border-primary bg-primary text-white' : 'border-line bg-white text-ink hover:border-primary'
+    }`
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        <button type="button" className={chip(!status)} onClick={() => set('status', '')}>
+          All {state.meta ? `(${all})` : ''}
+        </button>
+        {Object.entries(PARTNER_STATUSES).map(([key, s]) => (
+          <button key={key} type="button" className={chip(status === key)} onClick={() => set('status', key)}>
+            {s.label} {state.meta ? `(${counts[key] ?? 0})` : ''}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            set('search', typed.trim())
+          }}
+          className="flex gap-2"
+        >
+          <Input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="Name, firm, phone, email or city" />
+          <Btn type="submit" variant="outline">
+            Search
+          </Btn>
+        </form>
+      </div>
+
+      <ErrorBanner error={state.error} />
+
+      {state.loading ? (
+        <div className="flex justify-center py-16">
+          <Spinner />
+        </div>
+      ) : state.items.length === 0 ? (
+        <EmptyState
+          title="No partner enquiries here"
+          description={status || search ? 'Try another filter.' : 'Channel partner enquiries from the Careers page will appear here.'}
+        />
+      ) : (
+        <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-line bg-white">
+          <table className="w-full min-w-[46rem] text-sm">
+            <thead>
+              <tr className="border-b border-line text-left text-[0.7rem] uppercase tracking-wider text-ink-soft">
+                <th className="px-4 py-3 font-semibold">Applicant / Firm</th>
+                <th className="px-4 py-3 font-semibold">City</th>
+                <th className="px-4 py-3 font-semibold">Business type</th>
+                <th className="px-4 py-3 font-semibold">Date</th>
+                <th className="px-4 py-3 font-semibold">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {state.items.map((p) => (
+                <tr
+                  key={p.id}
+                  onClick={() => setOpenId(p.id)}
+                  className="cursor-pointer border-b border-line last:border-0 hover:bg-surface/60"
+                >
+                  <td className="px-4 py-3">
+                    <span className="font-medium text-ink">{p.name}</span>
+                    <span className="block text-xs text-ink-soft">
+                      {p.firm ? `${p.firm} · ` : ''}
+                      {p.phone}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-ink">{p.city}</td>
+                  <td className="px-4 py-3 text-ink-soft">{p.businessType || '—'}</td>
+                  <td className="px-4 py-3 text-ink-soft">{when(p.createdAt)}</td>
+                  <td className="px-4 py-3">
+                    <Badge tone={PARTNER_STATUSES[p.status]?.tone ?? 'neutral'}>
+                      {PARTNER_STATUSES[p.status]?.label ?? p.status}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <Drawer open={Boolean(openId)} onClose={() => setOpenId(null)}>
+        {openId && (
+          <PartnerDetail
+            key={openId}
+            partner={state.items.find((p) => p.id === openId)}
+            onClose={() => setOpenId(null)}
+            onChanged={load}
+          />
+        )}
+      </Drawer>
+    </div>
+  )
+}
+
+function PartnerDetail({ partner: p, onClose, onChanged }) {
+  const canDelete = useCanDelete()
+  const [notes, setNotes] = useState(p?.notes ?? '')
+  const [error, setError] = useState(null)
+  const [busy, setBusy] = useState(false)
+
+  if (!p) return null
+  const phoneDigits = p.phone.replace(/[^\d]/g, '')
+  const whatsapp = `https://wa.me/${phoneDigits.length === 10 ? `91${phoneDigits}` : phoneDigits}`
+
+  async function save(body) {
+    setBusy(true)
+    setError(null)
+    try {
+      await api.updatePartner(p.id, body)
+      onChanged()
+    } catch (err) {
+      setError(err)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function remove() {
+    if (!window.confirm(`Delete ${p.name}'s enquiry? This cannot be undone.`)) return
+    try {
+      await api.deletePartner(p.id)
+      onChanged()
+      onClose()
+    } catch (err) {
+      setError(err)
+    }
+  }
+
+  const row = (label, value) =>
+    value ? (
+      <div className="flex gap-3 py-1.5 text-sm">
+        <dt className="w-32 shrink-0 text-ink-soft">{label}</dt>
+        <dd className="text-ink">{value}</dd>
+      </div>
+    ) : null
+
+  return (
+    <div className="space-y-5 p-6">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="font-display text-xl font-bold text-ink">{p.name}</h2>
+          <p className="text-sm text-ink-soft">
+            Channel Partner Enquiry · {when(p.createdAt)}
+          </p>
+        </div>
+        <Btn variant="ghost" size="sm" onClick={onClose}>
+          Close
+        </Btn>
+      </div>
+
+      <ErrorBanner error={error} onDismiss={() => setError(null)} />
+
+      <div className="flex flex-wrap gap-2">
+        <a href={`tel:${p.phone}`} className="inline-flex items-center rounded-[var(--radius-card)] border border-line bg-white px-3 py-1.5 text-xs font-medium text-ink hover:bg-gray-50">
+          Call {p.phone}
+        </a>
+        <a href={whatsapp} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-[var(--radius-card)] border border-line bg-white px-3 py-1.5 text-xs font-medium text-ink hover:bg-gray-50">
+          WhatsApp
+        </a>
+        <a href={`mailto:${p.email}`} className="inline-flex items-center rounded-[var(--radius-card)] border border-line bg-white px-3 py-1.5 text-xs font-medium text-ink hover:bg-gray-50">
+          Email
+        </a>
+      </div>
+
+      <dl className="rounded-[var(--radius-lg)] border border-line bg-white px-4 py-2">
+        {row('Firm / Shop', p.firm)}
+        {row('Phone', p.phone)}
+        {row('Email', p.email)}
+        {row('City', p.city)}
+        {row('Business type', p.businessType)}
+        {row('Years in business', p.years)}
+        {p.message && (
+          <div className="py-1.5 text-sm">
+            <dt className="mb-1 text-ink-soft">Business details / Message</dt>
+            <dd className="whitespace-pre-line text-ink">{p.message}</dd>
+          </div>
+        )}
+      </dl>
+
+      <section className="space-y-3 rounded-[var(--radius-lg)] border border-line bg-white p-4">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-ink-soft">Status</h3>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(PARTNER_STATUSES).map(([key, s]) => (
+            <Btn key={key} size="sm" variant={p.status === key ? 'primary' : 'outline'} disabled={busy || p.status === key} onClick={() => save({ status: key })}>
+              {s.label}
+            </Btn>
+          ))}
+        </div>
+        <Field label="Notes for the team">
+          <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} placeholder="e.g. Discussed margins, follow-up scheduled for next week" />
+        </Field>
+        <Btn size="sm" variant="outline" disabled={busy || notes === (p.notes ?? '')} onClick={() => save({ notes })}>
+          Save notes
+        </Btn>
+        {p.reviewedAt && <p className="text-xs text-ink-soft">Last updated {when(p.reviewedAt)}</p>}
+      </section>
+
+      {canDelete && (
+        <Btn variant="danger" size="sm" onClick={remove}>
+          Delete enquiry
+        </Btn>
+      )}
+    </div>
+  )
+}

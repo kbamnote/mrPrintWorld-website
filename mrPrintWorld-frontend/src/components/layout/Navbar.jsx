@@ -61,18 +61,55 @@ export default function Navbar() {
 
           <ul className="hidden items-center lg:flex lg:gap-5 xl:gap-8">
             {navLinks.map((l) => (
-              <li key={l.to}>
+              <li key={l.to} className="relative group">
                 <NavLink
                   to={l.to}
                   end={l.to === '/'}
                   className={({ isActive }) =>
-                    `relative text-[0.95rem] font-medium transition-colors duration-200 after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-full after:origin-left after:bg-accent after:transition-transform after:duration-300 ${linkColor} ${
+                    `relative flex items-center gap-1 text-[0.95rem] font-medium transition-colors duration-200 after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-full after:origin-left after:bg-accent after:transition-transform after:duration-300 ${linkColor} ${
                       isActive ? 'after:scale-x-100' : 'after:scale-x-0'
                     }`
                   }
                 >
                   {l.label}
+                  {l.isDropdown && <Icon name="chevron-down" size={14} className="transition-transform duration-200 group-hover:rotate-180" />}
                 </NavLink>
+
+                {l.isDropdown && (
+                  <div className="absolute left-1/2 top-full -translate-x-1/2 pt-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-50 w-80">
+                    <div className="rounded-2xl border border-line bg-white p-4 shadow-xl text-left">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[0.7rem] font-bold uppercase text-primary">
+                          IT &amp; Digital Solutions
+                        </span>
+                        <span className="text-[0.75rem] font-semibold text-ink-soft">Tapify</span>
+                      </div>
+                      <h4 className="font-display text-base font-bold text-ink">
+                        Tapify — Smart NFC Cards
+                      </h4>
+                      <p className="mt-1 text-xs text-ink-soft leading-relaxed">
+                        Smart NFC digital business cards, tap-to-share contact profiles, Google review collection cards &amp; digital IT branding.
+                      </p>
+                      <div className="mt-3 flex flex-col gap-2 pt-2 border-t border-line">
+                        <a
+                          href="https://tapify.co.in"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between rounded-lg bg-primary/10 px-3 py-2 text-xs font-bold text-primary hover:bg-primary/20 transition-colors"
+                        >
+                          <span>Visit tapify.co.in</span>
+                          <Icon name="external-link" size={14} />
+                        </a>
+                        <Link
+                          to="/it-solutions"
+                          className="text-center text-xs font-semibold text-ink-soft hover:text-primary py-1"
+                        >
+                          Learn More About IT Solutions &rarr;
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -157,19 +194,35 @@ export default function Navbar() {
           >
             <div className="container-page flex flex-col py-6">
               {navLinks.map((l) => (
-                <NavLink
-                  key={l.to}
-                  to={l.to}
-                  end={l.to === '/'}
-                  onClick={() => setOpen(false)}
-                  className={({ isActive }) =>
-                    `border-b border-line py-4 font-display text-2xl font-medium ${
-                      isActive ? 'text-primary' : 'text-ink'
-                    }`
-                  }
-                >
-                  {l.label}
-                </NavLink>
+                <div key={l.to} className="border-b border-line py-3">
+                  <NavLink
+                    to={l.to}
+                    end={l.to === '/'}
+                    onClick={() => setOpen(false)}
+                    className={({ isActive }) =>
+                      `block font-display text-2xl font-medium ${
+                        isActive ? 'text-primary' : 'text-ink'
+                      }`
+                    }
+                  >
+                    {l.label}
+                  </NavLink>
+                  {l.isDropdown && (
+                    <div className="mt-2 rounded-xl border border-line bg-surface/70 p-3">
+                      <p className="text-xs font-bold text-primary">Tapify — Smart NFC Business Cards</p>
+                      <p className="mt-0.5 text-xs text-ink-soft">Next-gen digital profiles &amp; IT branding solutions.</p>
+                      <a
+                        href="https://tapify.co.in"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setOpen(false)}
+                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-primary underline"
+                      >
+                        Visit tapify.co.in <Icon name="external-link" size={12} />
+                      </a>
+                    </div>
+                  )}
+                </div>
               ))}
               <Button
                 to="/contact"
