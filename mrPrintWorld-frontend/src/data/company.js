@@ -99,7 +99,7 @@ export const navLinks = [
   // { label: 'Home', to: '/' },
   { label: 'Services', to: '/services' },
   { label: 'Products', to: '/products' },
-  { label: 'IT Solutions', to: '/it-solutions', isDropdown: true },
+  // { label: 'IT Solutions', to: '/it-solutions', isDropdown: true },
   { label: 'Careers', to: '/careers' },
   { label: 'About', to: '/about' },
   { label: 'Achievements', to: '/achievements' },
