@@ -2,3 +2,5 @@ User-agent: *
 Allow: /
 
 Sitemap: https://www.mrprintworld.com/sitemap.xml
+Sitemap: https://www.mrprintworld.com/sitemap-seo.xml
+Sitemap: https://www.mrprintworld.com/sitemap-index.xml

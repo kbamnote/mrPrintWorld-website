@@ -47,6 +47,9 @@ const StoreHome = lazy(() => import('./pages/StoreHome'))
 const TemplateGallery = lazy(() => import('./pages/TemplateGallery'))
 const TemplateEditor = lazy(() => import('./pages/TemplateEditor'))
 
+// Dedicated Programmatic Local SEO Landing Pages
+const SeoLandingPage = lazy(() => import('./pages/seo/SeoLandingPage'))
+
 // The whole admin panel behind a single lazy boundary — one chunk, fetched
 // only when an admin actually navigates to /admin.
 const AdminApp = lazy(() => import('./pages/admin/AdminApp'))
@@ -108,6 +111,10 @@ export default function App() {
             <Route path="/account/reseller" element={<Reseller />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
+            {/* Programmatic Local SEO Landing Pages for MRPRINT WORLD */}
+            <Route path="/locations/:slug" element={<SeoLandingPage />} />
+            <Route path="/:seoSlug" element={<SeoLandingPage />} />
+
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
