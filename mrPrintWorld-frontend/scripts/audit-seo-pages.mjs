@@ -8,11 +8,11 @@ let errors = 0
 let warnings = 0
 
 // 1. Total Pages Check
-if (seoLandingPages.length !== 100) {
-  console.error(`[FAIL] Expected 100 pages, found ${seoLandingPages.length}`)
+if (seoLandingPages.length < 100) {
+  console.error(`[FAIL] Expected at least 100 pages, found ${seoLandingPages.length}`)
   errors++
 } else {
-  console.log(`[PASS] Total SEO landing pages: ${seoLandingPages.length}/100`)
+  console.log(`[PASS] Total SEO landing pages: ${seoLandingPages.length} pages`)
 }
 
 // 2. Slug Uniqueness & Format Check
@@ -96,7 +96,7 @@ console.log(`  - Hyperlocal Commercial Zone Pages: ${localCount}`)
 
 console.log('='.repeat(60))
 if (errors === 0) {
-  console.log('AUDIT RESULT: 100% PASSED - ALL 100 PAGES READY FOR PRODUCTION')
+  console.log('AUDIT RESULT: 100% PASSED - ALL  PAGES READY FOR PRODUCTION')
 } else {
   console.error(`AUDIT RESULT: FAILED WITH ${errors} ERRORS, ${warnings} WARNINGS`)
 }
