@@ -26,7 +26,7 @@ export default function CategoryBrowse() {
   const [meta, setMeta] = useState({ data: null, loading: isApiEnabled, notFound: false })
   const { items, loading: productsLoading, error: productsError } = useProducts({ category: activeSlug })
   // A screenful of cards at a time; more are added on the way down.
-  const { count, hasMore, sentinelRef } = useShowMore(items.length, activeSlug)
+  const { count, hasMore, sentinelRef, loadMore, showAll } = useShowMore(items.length, activeSlug)
 
   useEffect(() => {
     if (!isApiEnabled) return
@@ -203,6 +203,22 @@ export default function CategoryBrowse() {
                 </Reveal>
               ))}
               {hasMore && <div ref={sentinelRef} className="col-span-full h-4" aria-hidden="true" />}
+            </div>
+          )}
+
+          {!productsLoading && hasMore && (
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 text-center">
+              <p className="text-sm text-ink-soft">
+                Showing {Math.min(count, items.length)} of {items.length} products
+              </p>
+              <div className="flex gap-3">
+                <Button onClick={loadMore} variant="outline" size="sm">
+                  Load More
+                </Button>
+                <Button onClick={showAll} variant="primary" size="sm">
+                  Show All ({items.length})
+                </Button>
+              </div>
             </div>
           )}
         </Container>

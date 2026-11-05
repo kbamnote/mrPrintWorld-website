@@ -1,18 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 
 /**
  * Shows a long list a screenful at a time, adding more as the visitor
- * scrolls near the end.
- *
- * Rendering four hundred product cards at once made the browser lay out and
- * start every one of them together. Now the first batch appears straight
- * away and the rest follow as they are needed.
+ * scrolls near the end or clicks load more.
  *
  * @param {number} total     how many items there are
  * @param {string} resetKey  changes when the list does (another category), which starts it over
- * @returns {{ count, hasMore, sentinelRef }} render `count` items, then the sentinel while `hasMore`
+ * @param {number} step      batch size (default raised to 100 so all uploaded products under 100 show at once)
+ * @returns {{ count, hasMore, sentinelRef, loadMore, showAll }}
  */
-export function useShowMore(total, resetKey, step = 24) {
+export function useShowMore(total, resetKey, step = 100) {
   // Kept with the key it belongs to, so a new list starts over without an
   // effect having to reset it.
   const [state, setState] = useState({ key: resetKey, count: step })
@@ -20,19 +17,29 @@ export function useShowMore(total, resetKey, step = 24) {
   const hasMore = count < total
   const sentinelRef = useRef(null)
 
+  const loadMore = useCallback(() => {
+    setState((s) => ({ key: resetKey, count: (s.key === resetKey ? s.count : step) + step }))
+  }, [resetKey, step])
+
+  const showAll = useCallback(() => {
+    setState({ key: resetKey, count: total })
+  }, [resetKey, total])
+
   useEffect(() => {
     const el = sentinelRef.current
     if (!el || !hasMore || typeof IntersectionObserver === 'undefined') return undefined
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some((e) => e.isIntersecting)) setState({ key: resetKey, count: count + step })
+        if (entries.some((e) => e.isIntersecting)) {
+          setState((s) => ({ key: resetKey, count: (s.key === resetKey ? s.count : step) + step }))
+        }
       },
       // Start the next batch well before the end is on screen.
       { rootMargin: '900px 0px' },
     )
     observer.observe(el)
     return () => observer.disconnect()
-  }, [hasMore, count, resetKey, step])
+  }, [hasMore, resetKey, step])
 
-  return { count, hasMore, sentinelRef }
+  return { count, hasMore, sentinelRef, loadMore, showAll }
 }

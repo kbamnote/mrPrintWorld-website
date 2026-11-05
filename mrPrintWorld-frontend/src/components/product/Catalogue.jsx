@@ -58,7 +58,7 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
   const current = path[path.length - 1] ?? null
   const { items, loading, error } = useProducts({ category: current?.slug })
   // A screenful of cards at a time; more are added on the way down.
-  const { count, hasMore, sentinelRef } = useShowMore(items.length, current?.slug ?? 'all')
+  const { count, hasMore, sentinelRef, loadMore, showAll } = useShowMore(items.length, current?.slug ?? 'all')
 
   // One row per level of the chosen path: the top categories, then the
   // subcategories of whichever is chosen, and so on down. Every earlier row
@@ -239,6 +239,22 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
             ))}
           {!loading && hasMore && <div ref={sentinelRef} className="col-span-full h-4" aria-hidden="true" />}
         </div>
+
+        {!loading && hasMore && (
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 text-center">
+            <p className="text-sm text-ink-soft">
+              Showing {Math.min(count, items.length)} of {items.length} products
+            </p>
+            <div className="flex gap-3">
+              <Button onClick={loadMore} variant="outline" size="sm">
+                Load More
+              </Button>
+              <Button onClick={showAll} variant="primary" size="sm">
+                Show All ({items.length})
+              </Button>
+            </div>
+          </div>
+        )}
       </Container>
     </section>
   )
