@@ -5,13 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/sitemap.mjs && node scripts/generate-seo-sitemap.mjs && vite build",
+    "build": "node scripts/generate-unified-sitemap.mjs && vite build && node scripts/prerender.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "og": "node scripts/og.mjs",
-    "sitemap": "node scripts/sitemap.mjs",
+    "sitemap": "node scripts/generate-unified-sitemap.mjs",
     "sitemap:seo": "node scripts/generate-seo-sitemap.mjs",
-    "seo:audit": "node scripts/audit-seo-pages.mjs"
+    "seo:audit": "node scripts/audit-seo-pages.mjs",
+    "prerender": "node scripts/prerender.mjs",
+    "seo:verify": "node scripts/verify-prerender.mjs"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
@@ -24,6 +26,7 @@
     "html-to-image": "^1.11.13",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "react-helmet-async": "^3.0.0",
     "react-router-dom": "^7.18.0",
     "tailwindcss": "^4.3.1",
     "three": "^0.184.0"

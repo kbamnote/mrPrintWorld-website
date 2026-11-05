@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import Logo from '../primitives/Logo'
 import Button from '../primitives/Button'
 import Icon from '../primitives/Icon'
+import SeoFooterDirectory from '../seo/SeoFooterDirectory'
 import {
   company,
   navLinks,
@@ -28,7 +29,7 @@ export default function Footer() {
         <div className="container-page flex flex-col gap-7 py-14 md:flex-row md:items-center md:justify-between">
           <div className="max-w-xl">
             <h2 className="text-title text-white">
-              Let’s give your brand the execution it deserves.
+              Let's give your brand the execution it deserves.
             </h2>
             <p className="mt-3 text-white/55">
               From a single card to a nationwide rollout — one partner, one standard.
@@ -140,6 +141,9 @@ export default function Footer() {
           </ul>
         </div>
       </div>
+
+      {/* Crawlable Local SEO Landing Pages Directory linking to all 100+ pages */}
+      <SeoFooterDirectory />
 
       {/* Legal bar */}
       <div className="border-t border-dark-line">

@@ -1,7 +1,7 @@
 import { useParams, useLocation } from 'react-router-dom'
 import { getSeoPageBySlug } from '../../data/seoLandingPages'
-import { useSeo, breadcrumbLd, serviceLd, faqLd } from '../../lib/seo'
 import NotFound from '../NotFound'
+import SEO from '../../components/seo/SEO'
 import SeoHero from '../../components/seo/SeoHero'
 import SeoSpecs from '../../components/seo/SeoSpecs'
 import SeoUseCases from '../../components/seo/SeoUseCases'
@@ -24,49 +24,17 @@ export default function SeoLandingPage() {
     return <NotFound />
   }
 
-  // Structured Data Schema Array
-  const schemas = [
-    breadcrumbLd([
-      { name: 'Home', path: '/' },
-      { name: 'Services', path: '/services' },
-      { name: page.serviceName, path: page.url },
-    ]),
-    serviceLd({
-      title: `${page.serviceName} in ${page.targetLocation}`,
-      summary: page.overview,
-    }),
-    faqLd(page.faqs),
-    {
-      '@context': 'https://schema.org',
-      '@type': 'LocalBusiness',
-      '@id': `https://www.mrprintworld.com${page.url}#localbusiness`,
-      name: 'MRPrint World Pvt. Ltd.',
-      telephone: '+917841840840',
-      email: 'info@mrprintworld.com',
-      url: `https://www.mrprintworld.com${page.url}`,
-      address: {
-        '@type': 'PostalAddress',
-        streetAddress: 'Shailesh Nagar, Behind Kohinoor Lawn, Wathoda',
-        addressLocality: 'Nagpur',
-        addressRegion: 'Maharashtra',
-        postalCode: '440008',
-        addressCountry: 'IN',
-      },
-      areaServed: [page.targetLocation, 'Nagpur', 'Vidarbha', 'Maharashtra'],
-    },
-  ]
-
-  // Dynamic SEO Injection
-  useSeo({
-    title: page.seoTitle,
-    description: page.metaDescription,
-    path: page.url,
-    robots: page.indexingStatus || 'index, follow',
-    schema: schemas,
-  })
-
   return (
     <article className="min-h-screen bg-white text-stone-900">
+      {/* Reusable Helmet SEO Component: title, description, self-referencing canonical, OG, schemas */}
+      <SEO
+        title={page.title || page.seoTitle}
+        description={page.description || page.metaDescription}
+        path={page.url}
+        faqs={page.faqs}
+      />
+
+      {/* Exactly one H1 rendered inside SeoHero */}
       <SeoHero page={page} />
       <SeoSpecs page={page} />
       <SeoUseCases page={page} />
