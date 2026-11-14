@@ -1,4 +1,4 @@
-import { useParams, Navigate, Link } from 'react-router-dom';
+import { useParams, Navigate, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useProduct, useProducts } from '../lib/useCatalogue';
 import { whatsappLink } from '../data/company';
 import { useSeo, breadcrumbLd } from '../lib/seo';
@@ -32,7 +32,9 @@ function DetailChips({ title, items }) {
 }
 
 export default function ProductDetail() {
-  const { slug } = useParams();
+  const { slug, code } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { product, loading, notFound } = useProduct(slug);
 
   // Related = same primary category, excluding this product. Sourced through
@@ -46,6 +48,50 @@ export default function ProductDetail() {
     (typeof product?.primaryCategory === 'object'
       ? product.primaryCategory.name
       : product?.categories?.[0]?.name) ?? '';
+
+  // Determine back navigation context and category label
+  const isStore = location.pathname.startsWith('/store/');
+  const storeBasePath = isStore && code ? `/store/${code}` : '/products';
+
+  const fromCategoryName = location.state?.fromCategory || (() => {
+    if (typeof sessionStorage !== 'undefined') {
+      try {
+        return sessionStorage.getItem('mrprint_last_category_name') || '';
+      } catch {}
+    }
+    return '';
+  })();
+
+  const backCategoryName = fromCategoryName || categoryName;
+
+  const savedTrail = location.state?.trail || (() => {
+    if (typeof sessionStorage !== 'undefined') {
+      try {
+        const stored = sessionStorage.getItem('mrprint_catalogue_trail');
+        if (stored) return JSON.parse(stored);
+      } catch {}
+    }
+    return null;
+  })();
+
+  const queryParam = Array.isArray(savedTrail) && savedTrail.length > 0
+    ? `?c=${savedTrail.join(',')}`
+    : (categorySlug ? `?c=${categorySlug}` : '');
+
+  const backUrl = `${storeBasePath}${queryParam}`;
+
+  const handleBack = () => {
+    const isInternal =
+      typeof document !== 'undefined' &&
+      document.referrer &&
+      document.referrer.includes(window.location.host);
+
+    if (isInternal && window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate(backUrl, { state: { trail: savedTrail || (categorySlug ? [categorySlug] : []) } });
+  };
 
   const whatsappUrl = whatsappLink({ product: product?.name ?? 'your requirement' });
 
@@ -62,6 +108,7 @@ export default function ProductDetail() {
           breadcrumbLd([
             { name: 'Home', url: '/' },
             { name: 'Products', url: '/products' },
+            ...(categoryName ? [{ name: categoryName, url: backUrl }] : []),
             { name: product.name, url: `/products/${product.slug}` },
           ]),
         ]
@@ -74,6 +121,17 @@ export default function ProductDetail() {
     return (
       <section className="pt-24 pb-12 md:pt-32 md:pb-20 bg-surface border-b border-line">
         <Container>
+          <div className="mb-8 flex items-center">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="group inline-flex items-center gap-2 rounded-[var(--radius-card)] border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink shadow-2xs transition-all hover:border-primary/40 hover:bg-primary/5 hover:text-primary cursor-pointer active:scale-[0.98]"
+              title="Return to products"
+            >
+              <Icon name="arrow-left" size={16} className="transition-transform duration-200 group-hover:-translate-x-1 text-primary" />
+              <span>Back to Products</span>
+            </button>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
             <div className="aspect-square animate-pulse rounded-[var(--radius-lg)] bg-gray-100" />
             <div className="space-y-4">
@@ -92,12 +150,33 @@ export default function ProductDetail() {
     <>
       <section className="pt-24 pb-12 md:pt-32 md:pb-20 bg-surface border-b border-line">
         <Container>
-          <div className="flex items-center text-sm text-ink-soft mb-8 flex-wrap gap-2">
-            <Link to="/" className="hover:text-primary transition-colors">Home</Link>
-            <span>/</span>
-            <Link to="/products" className="hover:text-primary transition-colors">Products</Link>
-            <span>/</span>
-            <span className="text-ink font-medium">{product.name}</span>
+          {/* Back button and breadcrumbs row */}
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="group inline-flex items-center gap-2 rounded-[var(--radius-card)] border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink shadow-2xs transition-all hover:border-primary/40 hover:bg-primary/5 hover:text-primary cursor-pointer active:scale-[0.98]"
+              title="Return to products"
+            >
+              <Icon name="arrow-left" size={16} className="transition-transform duration-200 group-hover:-translate-x-1 text-primary" />
+              <span>Back to {backCategoryName ? backCategoryName : 'Products'}</span>
+            </button>
+
+            <nav aria-label="Breadcrumb" className="flex items-center text-sm text-ink-soft flex-wrap gap-2">
+              <Link to="/" className="hover:text-primary transition-colors">Home</Link>
+              <span aria-hidden="true">/</span>
+              <Link to={backUrl} className="hover:text-primary transition-colors">Products</Link>
+              {backCategoryName && backCategoryName !== 'Products' && (
+                <>
+                  <span aria-hidden="true">/</span>
+                  <Link to={backUrl} className="hover:text-primary transition-colors font-medium">
+                    {backCategoryName}
+                  </Link>
+                </>
+              )}
+              <span aria-hidden="true">/</span>
+              <span className="text-ink font-semibold line-clamp-1 max-w-[200px] sm:max-w-xs">{product.name}</span>
+            </nav>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
@@ -127,7 +206,7 @@ export default function ProductDetail() {
                       <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {clean(product.specifications).map((spec, i) => (
                           <li key={i} className="flex items-start text-sm text-ink-soft">
-                            <Icon name="CheckCircle2" size={16} className="text-primary mt-1 mr-2 flex-shrink-0" />
+                            <Icon name="check" size={16} className="text-primary mt-1 mr-2 flex-shrink-0" />
                             <span>{spec}</span>
                           </li>
                         ))}
@@ -163,7 +242,7 @@ export default function ProductDetail() {
 
                 <div className="flex flex-col sm:flex-row gap-4 mt-auto pt-6 border-t border-line">
                   <Button href={whatsappUrl} target="_blank" rel="noopener noreferrer" variant="outline" size="lg" className="flex-1 justify-center border-green-500 text-green-600 hover:bg-green-50">
-                    <Icon name="MessageCircle" size={20} className="mr-2" />
+                    <Icon name="whatsapp" size={20} className="mr-2" />
                     WhatsApp Us
                   </Button>
                 </div>
@@ -182,7 +261,11 @@ export default function ProductDetail() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {relatedProducts.map((p, idx) => (
                 <Reveal key={p.slug} delay={idx * 0.1}>
-                  <Link to={`/products/${p.slug}`} className="group block bg-surface rounded-[var(--radius-lg)] border border-line shadow-sm overflow-hidden hover:shadow-card transition-shadow">
+                  <Link
+                    to={`/products/${p.slug}`}
+                    state={{ fromCategory: categoryName, fromCategorySlug: categorySlug, trail: savedTrail }}
+                    className="group block bg-surface rounded-[var(--radius-lg)] border border-line shadow-sm overflow-hidden hover:shadow-card transition-shadow"
+                  >
                     <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
                       {p.image?.url ? (
                         <img referrerPolicy="no-referrer" src={p.image.url} alt={p.image.alt ?? p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />

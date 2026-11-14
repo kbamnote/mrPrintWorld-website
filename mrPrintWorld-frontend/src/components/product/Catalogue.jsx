@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams, useLocation, Link } from 'react-router-dom'
 import { useProducts } from '../../lib/useCatalogue'
 import { isApiEnabled, fetchCategories } from '../../lib/api'
 import { useCustomerAuth } from '../../lib/customerAuthContext'
@@ -18,13 +19,40 @@ import Icon from '../primitives/Icon'
  * — the same way a customer expects a shop to work. The products shown are
  * always everything beneath the current category, so a parent is never empty.
  *
+ * Preserves category selection and drill-down across navigation via URL query params
+ * (?c=slug1,slug2) and sessionStorage.
+ *
  * Shared by the main Products page and every reseller store; `productHref`
  * decides where a card leads.
  */
 export default function Catalogue({ productHref = (slug) => `/products/${slug}`, showContact = true }) {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const location = useLocation()
+
   const [tree, setTree] = useState([])
+
   // Where the customer has drilled to, as category slugs.
-  const [trail, setTrail] = useState([])
+  // Initialized from router state, URL query parameter ?c=..., or sessionStorage.
+  const [trail, setTrail] = useState(() => {
+    if (location.state?.trail && Array.isArray(location.state.trail) && location.state.trail.length > 0) {
+      return location.state.trail
+    }
+    const cParam = searchParams.get('c') || searchParams.get('category')
+    if (cParam) {
+      const parts = cParam.split(',').map((s) => s.trim()).filter(Boolean)
+      if (parts.length > 0) return parts
+    }
+    if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+      try {
+        const saved = sessionStorage.getItem('mrprint_catalogue_trail')
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed
+        }
+      } catch {}
+    }
+    return []
+  })
 
   // The tree comes from the admin panel and only lists categories that hold
   // products this visitor can see — so it is re-read after sign-in, when a
@@ -41,6 +69,25 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
     }
   }, [isSignedIn, booting])
 
+  // Sync state if URL query param ?c= changes via browser back/forward buttons
+  useEffect(() => {
+    const cParam = searchParams.get('c') || searchParams.get('category')
+    if (cParam) {
+      const parts = cParam.split(',').map((s) => s.trim()).filter(Boolean)
+      if (parts.length > 0 && parts.join(',') !== trail.join(',')) {
+        setTrail(parts)
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.setItem('mrprint_catalogue_trail', JSON.stringify(parts))
+        }
+      }
+    } else if (searchParams.has('c') && trail.length > 0) {
+      setTrail([])
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem('mrprint_catalogue_trail')
+      }
+    }
+  }, [searchParams])
+
   // Resolve the trail against the current tree, so renamed or removed
   // categories cannot leave the page pointing at something that is gone.
   const path = useMemo(() => {
@@ -56,9 +103,12 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
   }, [tree, trail])
 
   const current = path[path.length - 1] ?? null
-  const { items, loading, error } = useProducts({ category: current?.slug })
+  // If tree is still loading but trail is present, use deepest slug in trail
+  const activeCategorySlug = current?.slug ?? (trail.length > 0 ? trail[trail.length - 1] : undefined)
+  const { items, loading, error } = useProducts({ category: activeCategorySlug })
+
   // A screenful of cards at a time; more are added on the way down.
-  const { count, hasMore, sentinelRef, loadMore, showAll } = useShowMore(items.length, current?.slug ?? 'all')
+  const { count, hasMore, sentinelRef, loadMore, showAll } = useShowMore(items.length, activeCategorySlug ?? 'all')
 
   // One row per level of the chosen path: the top categories, then the
   // subcategories of whichever is chosen, and so on down. Every earlier row
@@ -70,8 +120,57 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
 
   /** Choose a tile on a row. Choosing the chosen tile again closes that level. */
   function choose(level, slug) {
-    setTrail(trail[level] === slug ? trail.slice(0, level) : [...trail.slice(0, level), slug])
+    const next = trail[level] === slug ? trail.slice(0, level) : [...trail.slice(0, level), slug]
+    setTrail(next)
+    if (typeof sessionStorage !== 'undefined') {
+      if (next.length > 0) {
+        sessionStorage.setItem('mrprint_catalogue_trail', JSON.stringify(next))
+      } else {
+        sessionStorage.removeItem('mrprint_catalogue_trail')
+      }
+    }
+    setSearchParams(next.length > 0 ? { c: next.join(',') } : {}, { replace: true })
   }
+
+  function handleResetAll() {
+    setTrail([])
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('mrprint_catalogue_trail')
+    }
+    setSearchParams({}, { replace: true })
+  }
+
+  // Record product click so back button can restore exact scroll position
+  function handleProductClick(product) {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('mrprint_last_product', product.slug)
+      sessionStorage.setItem('mrprint_last_category_name', current?.name || '')
+      if (trail.length > 0) {
+        sessionStorage.setItem('mrprint_catalogue_trail', JSON.stringify(trail))
+      }
+    }
+  }
+
+  // Restore scroll to last viewed product if coming back from product detail
+  useEffect(() => {
+    if (loading || items.length === 0 || typeof sessionStorage === 'undefined') return
+    const lastProduct = sessionStorage.getItem('mrprint_last_product')
+    if (!lastProduct) return
+
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`product-${lastProduct}`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        el.classList.add('ring-2', 'ring-primary', 'ring-offset-2')
+        setTimeout(() => {
+          el.classList.remove('ring-2', 'ring-primary', 'ring-offset-2')
+        }, 1800)
+        sessionStorage.removeItem('mrprint_last_product')
+      }
+    }, 200)
+
+    return () => clearTimeout(timer)
+  }, [loading, items])
 
   const tile = 'group flex w-24 shrink-0 flex-col items-center gap-2 text-center sm:w-28'
   const circle = (selected, small) =>
@@ -100,7 +199,7 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
                 {level === 0 && (
                   <button
                     type="button"
-                    onClick={() => setTrail([])}
+                    onClick={handleResetAll}
                     aria-pressed={trail.length === 0}
                     className={tile}
                   >
@@ -199,8 +298,16 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
           {!loading &&
             items.slice(0, count).map((product, idx) => (
               <Reveal key={product.slug} delay={Math.min(idx, 8) * 0.05}>
-                <div className="flex h-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-line bg-white shadow-sm transition-shadow hover:shadow-card">
-                  <div className="group relative aspect-[4/3] overflow-hidden bg-gray-100">
+                <div
+                  id={`product-${product.slug}`}
+                  className="flex h-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-line bg-white shadow-sm transition-all duration-300 hover:shadow-card"
+                >
+                  <Link
+                    to={productHref(product.slug)}
+                    state={{ fromCategory: current?.name, fromCategorySlug: current?.slug, trail }}
+                    onClick={() => handleProductClick(product)}
+                    className="group relative aspect-[4/3] overflow-hidden bg-gray-100 block cursor-pointer"
+                  >
                     {product.image?.url ? (
                       <img
                         referrerPolicy="no-referrer"
@@ -217,19 +324,42 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
                         <Icon name="Image" size={48} strokeWidth={1} />
                       </div>
                     )}
-                  </div>
+                  </Link>
                   <div className="flex flex-grow flex-col p-4 md:p-6">
                     <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary">
                       {(product.categories ?? []).map((c) => (typeof c === 'string' ? c : c.name)).join(' · ')}
                     </div>
-                    <h3 className="mb-2 line-clamp-1 text-lg font-bold text-ink">{product.name}</h3>
+                    <h3 className="mb-2 line-clamp-1 text-lg font-bold text-ink">
+                      <Link
+                        to={productHref(product.slug)}
+                        state={{ fromCategory: current?.name, fromCategorySlug: current?.slug, trail }}
+                        onClick={() => handleProductClick(product)}
+                        className="hover:text-primary transition-colors"
+                      >
+                        {product.name}
+                      </Link>
+                    </h3>
                     <p className="mb-6 line-clamp-2 flex-grow text-sm text-ink-soft">{product.shortDescription}</p>
 
                     <div className="mt-auto flex flex-col gap-3 sm:flex-row">
-                      <Button to={productHref(product.slug)} variant="outline" size="sm" className="w-full justify-center">
+                      <Button
+                        to={productHref(product.slug)}
+                        state={{ fromCategory: current?.name, fromCategorySlug: current?.slug, trail }}
+                        onClick={() => handleProductClick(product)}
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-center"
+                      >
                         View Details
                       </Button>
-                      <Button to={productHref(product.slug)} variant="primary" size="sm" className="w-full justify-center">
+                      <Button
+                        to={productHref(product.slug)}
+                        state={{ fromCategory: current?.name, fromCategorySlug: current?.slug, trail }}
+                        onClick={() => handleProductClick(product)}
+                        variant="primary"
+                        size="sm"
+                        className="w-full justify-center"
+                      >
                         View Price
                       </Button>
                     </div>

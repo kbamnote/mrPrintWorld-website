@@ -14,6 +14,13 @@ const ICONS = {
       <path d="M13 6l6 6-6 6" />
     </>
   ),
+  'arrow-left': (
+    <>
+      <path d="M20 12H5" />
+      <path d="M11 18l-6-6 6-6" />
+    </>
+  ),
+  'chevron-left': <path d="m15 18-6-6 6-6" />,
   'arrow-up-right': (
     <>
       <path d="M7 17 17 7" />
