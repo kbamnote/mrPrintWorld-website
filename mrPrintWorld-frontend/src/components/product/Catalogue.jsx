@@ -22,6 +22,9 @@ import Icon from '../primitives/Icon'
  * Preserves category selection and drill-down across navigation via URL query params
  * (?c=slug1,slug2) and sessionStorage.
  *
+ * Product cards open in a new tab so customers never lose their place in the
+ * category tree when exploring products.
+ *
  * Shared by the main Products page and every reseller store; `productHref`
  * decides where a card leads.
  */
@@ -138,6 +141,16 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
       sessionStorage.removeItem('mrprint_catalogue_trail')
     }
     setSearchParams({}, { replace: true })
+  }
+
+  // Construct product URL carrying category context so new tabs can retain category navigation
+  const getProductUrl = (slug) => {
+    const base = productHref(slug)
+    if (trail.length > 0) {
+      const sep = base.includes('?') ? '&' : '?'
+      return `${base}${sep}c=${trail.join(',')}`
+    }
+    return base
   }
 
   // Record product click so back button can restore exact scroll position
@@ -296,77 +309,88 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
 
         <div className="grid grid-cols-2 gap-4 md:gap-8 lg:grid-cols-3">
           {!loading &&
-            items.slice(0, count).map((product, idx) => (
-              <Reveal key={product.slug} delay={Math.min(idx, 8) * 0.05}>
-                <div
-                  id={`product-${product.slug}`}
-                  className="flex h-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-line bg-white shadow-sm transition-all duration-300 hover:shadow-card"
-                >
-                  <Link
-                    to={productHref(product.slug)}
-                    state={{ fromCategory: current?.name, fromCategorySlug: current?.slug, trail }}
-                    onClick={() => handleProductClick(product)}
-                    className="group relative aspect-[4/3] overflow-hidden bg-gray-100 block cursor-pointer"
+            items.slice(0, count).map((product, idx) => {
+              const productUrl = getProductUrl(product.slug)
+              return (
+                <Reveal key={product.slug} delay={Math.min(idx, 8) * 0.05}>
+                  <div
+                    id={`product-${product.slug}`}
+                    className="flex h-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-line bg-white shadow-sm transition-all duration-300 hover:shadow-card"
                   >
-                    {product.image?.url ? (
-                      <img
-                        referrerPolicy="no-referrer"
-                        src={sizedImage(product.image.url, 480)}
-                        srcSet={imageSrcSet(product.image.url, CARD_WIDTHS)}
-                        sizes={CARD_SIZES}
-                        alt={product.image.alt ?? product.name}
-                        loading={idx < 6 ? 'eager' : 'lazy'}
-                        decoding="async"
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-gray-400">
-                        <Icon name="Image" size={48} strokeWidth={1} />
+                    <Link
+                      to={productUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      state={{ fromCategory: current?.name, fromCategorySlug: current?.slug, trail }}
+                      onClick={() => handleProductClick(product)}
+                      className="group relative aspect-[4/3] overflow-hidden bg-gray-100 block cursor-pointer"
+                    >
+                      {product.image?.url ? (
+                        <img
+                          referrerPolicy="no-referrer"
+                          src={sizedImage(product.image.url, 480)}
+                          srcSet={imageSrcSet(product.image.url, CARD_WIDTHS)}
+                          sizes={CARD_SIZES}
+                          alt={product.image.alt ?? product.name}
+                          loading={idx < 6 ? 'eager' : 'lazy'}
+                          decoding="async"
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-gray-400">
+                          <Icon name="Image" size={48} strokeWidth={1} />
+                        </div>
+                      )}
+                    </Link>
+                    <div className="flex flex-grow flex-col p-4 md:p-6">
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary">
+                        {(product.categories ?? []).map((c) => (typeof c === 'string' ? c : c.name)).join(' · ')}
                       </div>
-                    )}
-                  </Link>
-                  <div className="flex flex-grow flex-col p-4 md:p-6">
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary">
-                      {(product.categories ?? []).map((c) => (typeof c === 'string' ? c : c.name)).join(' · ')}
-                    </div>
-                    <h3 className="mb-2 line-clamp-1 text-lg font-bold text-ink">
-                      <Link
-                        to={productHref(product.slug)}
-                        state={{ fromCategory: current?.name, fromCategorySlug: current?.slug, trail }}
-                        onClick={() => handleProductClick(product)}
-                        className="hover:text-primary transition-colors"
-                      >
-                        {product.name}
-                      </Link>
-                    </h3>
-                    <p className="mb-6 line-clamp-2 flex-grow text-sm text-ink-soft">{product.shortDescription}</p>
+                      <h3 className="mb-2 line-clamp-1 text-lg font-bold text-ink">
+                        <Link
+                          to={productUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          state={{ fromCategory: current?.name, fromCategorySlug: current?.slug, trail }}
+                          onClick={() => handleProductClick(product)}
+                          className="hover:text-primary transition-colors"
+                        >
+                          {product.name}
+                        </Link>
+                      </h3>
+                      <p className="mb-6 line-clamp-2 flex-grow text-sm text-ink-soft">{product.shortDescription}</p>
 
-                    <div className="mt-auto flex flex-col gap-3 sm:flex-row">
-                      <Button
-                        to={productHref(product.slug)}
-                        state={{ fromCategory: current?.name, fromCategorySlug: current?.slug, trail }}
-                        onClick={() => handleProductClick(product)}
-                        variant="outline"
-                        size="sm"
-                        className="w-full justify-center"
-                      >
-                        View Details
-                      </Button>
-                      <Button
-                        to={productHref(product.slug)}
-                        state={{ fromCategory: current?.name, fromCategorySlug: current?.slug, trail }}
-                        onClick={() => handleProductClick(product)}
-                        variant="primary"
-                        size="sm"
-                        className="w-full justify-center"
-                      >
-                        View Price
-                      </Button>
+                      <div className="mt-auto flex flex-col gap-3 sm:flex-row">
+                        <Button
+                          to={productUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          state={{ fromCategory: current?.name, fromCategorySlug: current?.slug, trail }}
+                          onClick={() => handleProductClick(product)}
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-center"
+                        >
+                          View Details
+                        </Button>
+                        <Button
+                          to={productUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          state={{ fromCategory: current?.name, fromCategorySlug: current?.slug, trail }}
+                          onClick={() => handleProductClick(product)}
+                          variant="primary"
+                          size="sm"
+                          className="w-full justify-center"
+                        >
+                          View Price
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Reveal>
-            ))}
+                </Reveal>
+              )
+            })}
           {!loading && hasMore && <div ref={sentinelRef} className="col-span-full h-4" aria-hidden="true" />}
         </div>
 

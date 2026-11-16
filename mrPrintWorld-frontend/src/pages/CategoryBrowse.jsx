@@ -158,50 +158,75 @@ export default function CategoryBrowse() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 md:gap-8 lg:grid-cols-3">
-              {items.slice(0, count).map((product, idx) => (
-                // Capped: uncapped, the 400th card waited 20 seconds to fade in.
-                <Reveal key={product.slug} delay={Math.min(idx % 24, 8) * 0.05}>
-                  <div className="flex h-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-line bg-white shadow-sm transition-shadow hover:shadow-card">
-                    <div className="group relative aspect-[4/3] overflow-hidden bg-gray-100">
-                      {product.image?.url ? (
-                        <img
-                          referrerPolicy="no-referrer"
-                          src={sizedImage(product.image.url, 480)}
-                          srcSet={imageSrcSet(product.image.url, CARD_WIDTHS)}
-                          sizes={CARD_SIZES}
-                          alt={product.image.alt ?? product.name}
-                          loading={idx < 6 ? 'eager' : 'lazy'}
-                          decoding="async"
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-gray-400">
-                          <Icon name="Image" size={48} strokeWidth={1} />
+              {items.slice(0, count).map((product, idx) => {
+                const productUrl = `/products/${product.slug}?c=${activeSlug}`
+                return (
+                  <Reveal key={product.slug} delay={Math.min(idx % 24, 8) * 0.05}>
+                    <div className="flex h-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-line bg-white shadow-sm transition-shadow hover:shadow-card">
+                      <Link
+                        to={productUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group relative aspect-[4/3] overflow-hidden bg-gray-100 block cursor-pointer"
+                      >
+                        {product.image?.url ? (
+                          <img
+                            referrerPolicy="no-referrer"
+                            src={sizedImage(product.image.url, 480)}
+                            srcSet={imageSrcSet(product.image.url, CARD_WIDTHS)}
+                            sizes={CARD_SIZES}
+                            alt={product.image.alt ?? product.name}
+                            loading={idx < 6 ? 'eager' : 'lazy'}
+                            decoding="async"
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-gray-400">
+                            <Icon name="Image" size={48} strokeWidth={1} />
+                          </div>
+                        )}
+                      </Link>
+                      <div className="flex flex-grow flex-col p-4 md:p-6">
+                        <h3 className="mb-2 line-clamp-1 text-lg font-bold text-ink">
+                          <Link
+                            to={productUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:text-primary transition-colors"
+                          >
+                            {product.name}
+                          </Link>
+                        </h3>
+                        <p className="mb-6 line-clamp-2 flex-grow text-sm text-ink-soft">
+                          {product.shortDescription}
+                        </p>
+                        <div className="mt-auto flex flex-col gap-3 sm:flex-row">
+                          <Button
+                            to={productUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            variant="outline"
+                            size="sm"
+                            className="w-full justify-center"
+                          >
+                            View Details
+                          </Button>
+                          <Button
+                            to={productUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            variant="primary"
+                            size="sm"
+                            className="w-full justify-center"
+                          >
+                            View Price
+                          </Button>
                         </div>
-                      )}
-                    </div>
-                    <div className="flex flex-grow flex-col p-4 md:p-6">
-                      <h3 className="mb-2 line-clamp-1 text-lg font-bold text-ink">{product.name}</h3>
-                      <p className="mb-6 line-clamp-2 flex-grow text-sm text-ink-soft">
-                        {product.shortDescription}
-                      </p>
-                      <div className="mt-auto flex flex-col gap-3 sm:flex-row">
-                        <Button to={`/products/${product.slug}`} variant="outline" size="sm" className="w-full justify-center">
-                          View Details
-                        </Button>
-                        <Button
-                          to={`/products/${product.slug}`}
-                          variant="primary"
-                          size="sm"
-                          className="w-full justify-center"
-                        >
-                          View Price
-                        </Button>
                       </div>
                     </div>
-                  </div>
-                </Reveal>
-              ))}
+                  </Reveal>
+                )
+              })}
               {hasMore && <div ref={sentinelRef} className="col-span-full h-4" aria-hidden="true" />}
             </div>
           )}

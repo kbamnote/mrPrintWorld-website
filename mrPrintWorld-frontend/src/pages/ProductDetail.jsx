@@ -1,4 +1,4 @@
-import { useParams, Navigate, Link, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, Navigate, Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useProduct, useProducts } from '../lib/useCatalogue';
 import { whatsappLink } from '../data/company';
 import { useSeo, breadcrumbLd } from '../lib/seo';
@@ -35,6 +35,7 @@ export default function ProductDetail() {
   const { slug, code } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { product, loading, notFound } = useProduct(slug);
 
   // Related = same primary category, excluding this product. Sourced through
@@ -53,6 +54,10 @@ export default function ProductDetail() {
   const isStore = location.pathname.startsWith('/store/');
   const storeBasePath = isStore && code ? `/store/${code}` : '/products';
 
+  // Read trail from router state, URL query parameter ?c=..., or sessionStorage
+  const cParam = searchParams.get('c') || searchParams.get('category');
+  const urlTrail = cParam ? cParam.split(',').map((s) => s.trim()).filter(Boolean) : null;
+
   const fromCategoryName = location.state?.fromCategory || (() => {
     if (typeof sessionStorage !== 'undefined') {
       try {
@@ -64,7 +69,7 @@ export default function ProductDetail() {
 
   const backCategoryName = fromCategoryName || categoryName;
 
-  const savedTrail = location.state?.trail || (() => {
+  const savedTrail = location.state?.trail || urlTrail || (() => {
     if (typeof sessionStorage !== 'undefined') {
       try {
         const stored = sessionStorage.getItem('mrprint_catalogue_trail');
@@ -259,29 +264,34 @@ export default function ProductDetail() {
               <h2 className="text-2xl md:text-3xl font-display font-bold text-ink">Related Products</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {relatedProducts.map((p, idx) => (
-                <Reveal key={p.slug} delay={idx * 0.1}>
-                  <Link
-                    to={`/products/${p.slug}`}
-                    state={{ fromCategory: categoryName, fromCategorySlug: categorySlug, trail: savedTrail }}
-                    className="group block bg-surface rounded-[var(--radius-lg)] border border-line shadow-sm overflow-hidden hover:shadow-card transition-shadow"
-                  >
-                    <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
-                      {p.image?.url ? (
-                        <img referrerPolicy="no-referrer" src={p.image.url} alt={p.image.alt ?? p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          <Icon name="Image" size={40} strokeWidth={1} />
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4 md:p-6">
-                      <h3 className="text-lg font-bold text-ink mb-2 group-hover:text-primary transition-colors">{p.name}</h3>
-                      <p className="text-sm text-ink-soft line-clamp-2">{p.shortDescription}</p>
-                    </div>
-                  </Link>
-                </Reveal>
-              ))}
+              {relatedProducts.map((p, idx) => {
+                const relatedUrl = `/products/${p.slug}${queryParam}`;
+                return (
+                  <Reveal key={p.slug} delay={idx * 0.1}>
+                    <Link
+                      to={relatedUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      state={{ fromCategory: categoryName, fromCategorySlug: categorySlug, trail: savedTrail }}
+                      className="group block bg-surface rounded-[var(--radius-lg)] border border-line shadow-sm overflow-hidden hover:shadow-card transition-shadow cursor-pointer"
+                    >
+                      <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
+                        {p.image?.url ? (
+                          <img referrerPolicy="no-referrer" src={p.image.url} alt={p.image.alt ?? p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <Icon name="Image" size={40} strokeWidth={1} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4 md:p-6">
+                        <h3 className="text-lg font-bold text-ink mb-2 group-hover:text-primary transition-colors">{p.name}</h3>
+                        <p className="text-sm text-ink-soft line-clamp-2">{p.shortDescription}</p>
+                      </div>
+                    </Link>
+                  </Reveal>
+                );
+              })}
             </div>
           </Container>
         </section>
