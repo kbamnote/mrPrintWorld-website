@@ -12,16 +12,14 @@ import { sizedImage, imageSrcSet, CARD_WIDTHS, CARD_SIZES } from '../lib/cloudin
 import { useShowMore } from '../lib/useShowMore'
 
 /**
- * Browse a category or subcategory: /products/c/signage/outdoor-signage
+ * Browse a category or subcategory: /products/c/offset-printing/envelopes
  *
- * These pages are new — they did not exist in the static site — so they add
- * roughly fifteen indexable landing pages targeting the terms customers
- * actually search ("outdoor signage Nagpur") rather than only the generic
- * /products page.
+ * Dedicated landing pages for categories and subcategories showing that
+ * category's specific products with targeted SEO metadata and breadcrumbs.
  */
 export default function CategoryBrowse() {
-  const { category, subcategory } = useParams()
-  const activeSlug = subcategory ?? category
+  const { category, subcategory, sub2 } = useParams()
+  const activeSlug = sub2 ?? subcategory ?? category
 
   const [meta, setMeta] = useState({ data: null, loading: isApiEnabled, notFound: false })
   const { items, loading: productsLoading, error: productsError } = useProducts({ category: activeSlug })
@@ -50,13 +48,19 @@ export default function CategoryBrowse() {
   const title = meta.data?.name ?? 'Products'
   const crumbs = meta.data?.breadcrumb ?? []
 
+  const currentPath = sub2
+    ? `/products/c/${category}/${subcategory}/${sub2}`
+    : subcategory
+    ? `/products/c/${category}/${subcategory}`
+    : `/products/c/${category}`
+
   useSeo({
     title: meta.data ? `${meta.data.name} | MRPrint World` : 'Products | MRPrint World',
     description:
       meta.data?.seo?.description ??
       meta.data?.description ??
       `Browse ${title} from MRPrint World Pvt. Ltd. — printing, signage and branding in Nagpur.`,
-    path: subcategory ? `/products/c/${category}/${subcategory}` : `/products/c/${category}`,
+    path: currentPath,
     schema: meta.data
       ? [
           breadcrumbLd([
@@ -65,7 +69,7 @@ export default function CategoryBrowse() {
             ...crumbs.map((c) => ({ name: c.name, url: `/products/c/${c.slug}` })),
             {
               name: meta.data.name,
-              url: subcategory ? `/products/c/${category}/${subcategory}` : `/products/c/${category}`,
+              url: currentPath,
             },
           ]),
         ]
@@ -88,27 +92,37 @@ export default function CategoryBrowse() {
 
       <section className="section-y bg-surface">
         <Container>
-          <nav className="mb-8 flex flex-wrap items-center gap-2 text-sm text-ink-soft" aria-label="Breadcrumb">
-            <Link to="/products" className="transition-colors hover:text-primary">
-              All Products
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <Link
+              to="/products"
+              className="group inline-flex items-center gap-2 rounded-[var(--radius-card)] border border-line bg-white px-4 py-2 text-sm font-semibold text-ink shadow-2xs transition-all hover:border-primary/40 hover:bg-primary/5 hover:text-primary cursor-pointer active:scale-[0.98]"
+            >
+              <Icon name="arrow-left" size={16} className="transition-transform duration-200 group-hover:-translate-x-1 text-primary" />
+              <span>Back to All Products</span>
             </Link>
-            {crumbs.map((c) => (
-              <span key={c.slug} className="flex items-center gap-2">
-                <span aria-hidden="true">/</span>
-                <Link to={`/products/c/${c.slug}`} className="transition-colors hover:text-primary">
-                  {c.name}
-                </Link>
-              </span>
-            ))}
-            {meta.data && (
-              <span className="flex items-center gap-2">
-                <span aria-hidden="true">/</span>
-                <span className="font-medium text-ink">{meta.data.name}</span>
-              </span>
-            )}
-          </nav>
 
-          {/* Subcategory rail — only on a root category that has children */}
+            <nav className="flex flex-wrap items-center gap-2 text-sm text-ink-soft" aria-label="Breadcrumb">
+              <Link to="/products" className="transition-colors hover:text-primary">
+                All Products
+              </Link>
+              {crumbs.map((c) => (
+                <span key={c.slug} className="flex items-center gap-2">
+                  <span aria-hidden="true">/</span>
+                  <Link to={`/products/c/${c.slug}`} className="transition-colors hover:text-primary">
+                    {c.name}
+                  </Link>
+                </span>
+              ))}
+              {meta.data && (
+                <span className="flex items-center gap-2">
+                  <span aria-hidden="true">/</span>
+                  <span className="font-semibold text-ink">{meta.data.name}</span>
+                </span>
+              )}
+            </nav>
+          </div>
+
+          {/* Subcategory rail — when category has further subcategories */}
           {children.length > 0 && (
             <div className="mb-12 flex flex-wrap gap-2">
               {children.map((child) => (

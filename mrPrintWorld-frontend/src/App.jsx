@@ -77,6 +77,7 @@ export default function App() {
                 product slug. */}
             <Route path="/products/c/:category" element={<CategoryBrowse />} />
             <Route path="/products/c/:category/:subcategory" element={<CategoryBrowse />} />
+            <Route path="/products/c/:category/:subcategory/:sub2" element={<CategoryBrowse />} />
             <Route path="/products/:slug" element={<ProductDetail />} />
 
             {/* Reseller stores — products only. A product inside a store keeps

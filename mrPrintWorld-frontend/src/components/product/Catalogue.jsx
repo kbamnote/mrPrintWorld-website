@@ -19,14 +19,10 @@ import Icon from '../primitives/Icon'
  * — the same way a customer expects a shop to work. The products shown are
  * always everything beneath the current category, so a parent is never empty.
  *
- * Preserves category selection and drill-down across navigation via URL query params
- * (?c=slug1,slug2) and sessionStorage.
+ * Subcategory tiles (level > 0, like Envelopes) open the dedicated category
+ * page in a new browser tab showing that category's specific products.
  *
- * Product cards open in a new tab so customers never lose their place in the
- * category tree when exploring products.
- *
- * Shared by the main Products page and every reseller store; `productHref`
- * decides where a card leads.
+ * Product cards also open in a new tab so customers never lose their place.
  */
 export default function Catalogue({ productHref = (slug) => `/products/${slug}`, showContact = true }) {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -224,14 +220,15 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
                 )}
                 {row.nodes.map((node) => {
                   const selected = trail[level] === node.slug
-                  return (
-                    <button
-                      key={node.slug}
-                      type="button"
-                      onClick={() => choose(level, node.slug)}
-                      aria-pressed={selected}
-                      className={tile}
-                    >
+                  // Subcategories (level > 0) open in a new tab showing that category's products
+                  const isSubcategory = level > 0
+                  const isResellerStore = productHref('').startsWith('/store/')
+                  const categoryBrowseUrl = isSubcategory && !isResellerStore
+                    ? `/products/c/${trail[0]}/${node.slug}`
+                    : null
+
+                  const innerContent = (
+                    <>
                       <span className={circle(selected, level > 0)}>
                         {node.image?.url ? (
                           <img
@@ -249,6 +246,35 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
                         )}
                       </span>
                       <span className={label(selected)}>{node.name}</span>
+                    </>
+                  )
+
+                  if (categoryBrowseUrl) {
+                    return (
+                      <a
+                        key={node.slug}
+                        href={categoryBrowseUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => choose(level, node.slug)}
+                        aria-pressed={selected}
+                        className={tile}
+                        title={`Open ${node.name} in a new tab`}
+                      >
+                        {innerContent}
+                      </a>
+                    )
+                  }
+
+                  return (
+                    <button
+                      key={node.slug}
+                      type="button"
+                      onClick={() => choose(level, node.slug)}
+                      aria-pressed={selected}
+                      className={tile}
+                    >
+                      {innerContent}
                     </button>
                   )
                 })}
