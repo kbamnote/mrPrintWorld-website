@@ -29,8 +29,18 @@ const TIMEOUT_MS = 8000
  */
 let authToken = null
 
+// In-memory cache for ultra-fast instantaneous navigation across categories and products
+const apiCache = new Map()
+const inFlightRequests = new Map()
+
+export function clearApiCache() {
+  apiCache.clear()
+  inFlightRequests.clear()
+}
+
 export function setAuthToken(token) {
   authToken = token
+  clearApiCache()
 }
 
 class ApiError extends Error {
@@ -73,13 +83,48 @@ async function request(path, { method = 'GET', body, signal, timeoutMs = TIMEOUT
   }
 }
 
+/** Cache helper with in-flight request deduplication and configurable TTL */
+function cachedGet(key, fetcher, ttlMs = 5 * 60 * 1000) {
+  const cached = apiCache.get(key)
+  const now = Date.now()
+  if (cached && now - cached.timestamp < ttlMs) {
+    return Promise.resolve(cached.data)
+  }
+
+  // Deduplicate concurrent in-flight requests for the exact same key
+  if (inFlightRequests.has(key)) {
+    return inFlightRequests.get(key)
+  }
+
+  const promise = fetcher()
+    .then((data) => {
+      apiCache.set(key, { data, timestamp: Date.now() })
+      inFlightRequests.delete(key)
+      return data
+    })
+    .catch((err) => {
+      inFlightRequests.delete(key)
+      throw err
+    })
+
+  inFlightRequests.set(key, promise)
+  return promise
+}
+
 /* ── Catalogue ─────────────────────────────────────────────────────────── */
 
 export function fetchCategories(opts) {
+  if (!opts?.signal) {
+    return cachedGet('public:categories', () => request('/api/public/categories').then((r) => r.data), 5 * 60 * 1000)
+  }
   return request('/api/public/categories', opts).then((r) => r.data)
 }
 
 export function fetchCategory(slug, opts) {
+  const key = `public:category:${slug}`
+  if (!opts?.signal) {
+    return cachedGet(key, () => request(`/api/public/categories/${encodeURIComponent(slug)}`).then((r) => r.data), 5 * 60 * 1000)
+  }
   return request(`/api/public/categories/${encodeURIComponent(slug)}`, opts).then((r) => r.data)
 }
 
@@ -90,15 +135,25 @@ export function fetchProducts({ category, featured, search, page = 1, limit = 24
   if (search) qs.set('search', search)
   qs.set('page', String(page))
   qs.set('limit', String(limit))
+  
+  const key = `public:products:${qs.toString()}`
+  if (!opts?.signal) {
+    return cachedGet(key, () => request(`/api/public/products?${qs}`).then((r) => ({ items: r.data, meta: r.meta })), 2 * 60 * 1000)
+  }
   return request(`/api/public/products?${qs}`, opts).then((r) => ({ items: r.data, meta: r.meta }))
 }
 
 /** PATCH / PUT / DELETE on the customer session — used by the reseller dashboard. */
 export function apiSend(method, path, body, opts) {
+  clearApiCache()
   return request(path, { method, body, ...opts })
 }
 
 export function fetchProduct(slug, opts) {
+  const key = `public:product:${slug}`
+  if (!opts?.signal) {
+    return cachedGet(key, () => request(`/api/public/products/${encodeURIComponent(slug)}`).then((r) => r.data), 5 * 60 * 1000)
+  }
   return request(`/api/public/products/${encodeURIComponent(slug)}`, opts).then((r) => r.data)
 }
 

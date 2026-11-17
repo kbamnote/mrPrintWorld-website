@@ -20,9 +20,7 @@ import Icon from '../primitives/Icon'
  * always everything beneath the current category, so a parent is never empty.
  *
  * Subcategory tiles (level > 0, like Envelopes) open the dedicated category
- * page in a new browser tab showing that category's specific products.
- *
- * Product cards also open in a new tab so customers never lose their place.
+ * page on the same tab showing that category's specific products.
  */
 export default function Catalogue({ productHref = (slug) => `/products/${slug}`, showContact = true }) {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -139,7 +137,7 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
     setSearchParams({}, { replace: true })
   }
 
-  // Construct product URL carrying category context so new tabs can retain category navigation
+  // Construct product URL carrying category context so returning restores category state
   const getProductUrl = (slug) => {
     const base = productHref(slug)
     if (trail.length > 0) {
@@ -220,7 +218,7 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
                 )}
                 {row.nodes.map((node) => {
                   const selected = trail[level] === node.slug
-                  // Subcategories (level > 0) open in a new tab showing that category's products
+                  // Subcategories (level > 0) open the category page on the same tab
                   const isSubcategory = level > 0
                   const isResellerStore = productHref('').startsWith('/store/')
                   const categoryBrowseUrl = isSubcategory && !isResellerStore
@@ -251,18 +249,15 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
 
                   if (categoryBrowseUrl) {
                     return (
-                      <a
+                      <Link
                         key={node.slug}
-                        href={categoryBrowseUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => choose(level, node.slug)}
+                        to={categoryBrowseUrl}
                         aria-pressed={selected}
                         className={tile}
-                        title={`Open ${node.name} in a new tab`}
+                        title={`Browse ${node.name}`}
                       >
                         {innerContent}
-                      </a>
+                      </Link>
                     )
                   }
 
@@ -345,8 +340,6 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
                   >
                     <Link
                       to={productUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
                       state={{ fromCategory: current?.name, fromCategorySlug: current?.slug, trail }}
                       onClick={() => handleProductClick(product)}
                       className="group relative aspect-[4/3] overflow-hidden bg-gray-100 block cursor-pointer"
@@ -375,8 +368,6 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
                       <h3 className="mb-2 line-clamp-1 text-lg font-bold text-ink">
                         <Link
                           to={productUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
                           state={{ fromCategory: current?.name, fromCategorySlug: current?.slug, trail }}
                           onClick={() => handleProductClick(product)}
                           className="hover:text-primary transition-colors"
@@ -389,8 +380,6 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
                       <div className="mt-auto flex flex-col gap-3 sm:flex-row">
                         <Button
                           to={productUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
                           state={{ fromCategory: current?.name, fromCategorySlug: current?.slug, trail }}
                           onClick={() => handleProductClick(product)}
                           variant="outline"
@@ -401,8 +390,6 @@ export default function Catalogue({ productHref = (slug) => `/products/${slug}`,
                         </Button>
                         <Button
                           to={productUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
                           state={{ fromCategory: current?.name, fromCategorySlug: current?.slug, trail }}
                           onClick={() => handleProductClick(product)}
                           variant="primary"

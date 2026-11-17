@@ -179,8 +179,6 @@ export default function CategoryBrowse() {
                     <div className="flex h-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-line bg-white shadow-sm transition-shadow hover:shadow-card">
                       <Link
                         to={productUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
                         className="group relative aspect-[4/3] overflow-hidden bg-gray-100 block cursor-pointer"
                       >
                         {product.image?.url ? (
@@ -204,8 +202,6 @@ export default function CategoryBrowse() {
                         <h3 className="mb-2 line-clamp-1 text-lg font-bold text-ink">
                           <Link
                             to={productUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
                             className="hover:text-primary transition-colors"
                           >
                             {product.name}
@@ -217,8 +213,6 @@ export default function CategoryBrowse() {
                         <div className="mt-auto flex flex-col gap-3 sm:flex-row">
                           <Button
                             to={productUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
                             variant="outline"
                             size="sm"
                             className="w-full justify-center"
@@ -227,8 +221,6 @@ export default function CategoryBrowse() {
                           </Button>
                           <Button
                             to={productUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
                             variant="primary"
                             size="sm"
                             className="w-full justify-center"

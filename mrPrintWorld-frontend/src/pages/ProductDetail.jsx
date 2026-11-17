@@ -270,8 +270,6 @@ export default function ProductDetail() {
                   <Reveal key={p.slug} delay={idx * 0.1}>
                     <Link
                       to={relatedUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
                       state={{ fromCategory: categoryName, fromCategorySlug: categorySlug, trail: savedTrail }}
                       className="group block bg-surface rounded-[var(--radius-lg)] border border-line shadow-sm overflow-hidden hover:shadow-card transition-shadow cursor-pointer"
                     >
